@@ -1,6 +1,9 @@
 {
   "name": "echo",
   "private": true,
+  "workspaces":
+  [ "apps/*" ]
+  ,
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -12,6 +15,10 @@
     "prettier": "^3.5.3",
     "turbo": "^2.5.3",
     "typescript": "5.8.2"
+  },
+  "dependencies": {
+    "@changesets/cli": "2.26.2",
+    "@remix-run/changelog-github": "^0.0.5"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
