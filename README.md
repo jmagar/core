@@ -1,84 +1,43 @@
-# Turborepo starter
+# Memory Plane
 
-This Turborepo starter is maintained by the Turborepo core team.
+Simple memory management system for AI agents with per-space ingestion and search capabilities.
 
-## Using this example
+## Core APIs
 
-Run the following command:
+### 1. Ingest API
 
-```sh
-npx create-turbo@latest
-```
+- Endpoint per space for data ingestion
+- Queue-based processing per user
+- Creates and links graph nodes automatically
+- Optional review queue for controlled ingestion
 
-## What's inside?
+### 2. Search API
 
-This Turborepo includes the following packages/apps:
+- Simple text-based search
+- Input: query string
+- Output: relevant text matches
+- Scoped to specific memory space
 
-### Apps and Packages
+## Features (v1)
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+[ ] Auto-mode default with optional queue review
+[ ] Multiple Spaces support (unique URL per space)
+[ ] Basic rules engine for ingestion filters
+[ ] Clear, user-friendly guidelines
+[ ] Simple text search
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## Usage Guidelines
 
-### Utilities
+Store:
 
-This Turborepo has some additional tools already setup for you:
+- Conversation history
+- User preferences
+- Task context
+- Reference materials
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+Don't Store:
 
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm build
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm dev
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+- Sensitive data (PII)
+- Credentials
+- System logs
+- Temporary data
