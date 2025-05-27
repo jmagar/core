@@ -1,0 +1,30 @@
+import { z } from "zod";
+import { isValidDatabaseUrl } from "./utils/db";
+
+const EnvironmentSchema = z.object({
+  NODE_ENV: z.union([z.literal("development"), z.literal("production"), z.literal("test")]),
+  DATABASE_URL: z
+    .string()
+    .refine(
+      isValidDatabaseUrl,
+      "DATABASE_URL is invalid, for details please check the additional output above this message."
+    ),
+  DATABASE_CONNECTION_LIMIT: z.coerce.number().int().default(10),
+  DATABASE_POOL_TIMEOUT: z.coerce.number().int().default(60),
+  DATABASE_CONNECTION_TIMEOUT: z.coerce.number().int().default(20),
+  DIRECT_URL: z
+    .string()
+    .refine(
+      isValidDatabaseUrl,
+      "DIRECT_URL is invalid, for details please check the additional output above this message."
+    ),
+  DATABASE_READ_REPLICA_URL: z.string().optional(),
+  SESSION_SECRET: z.string(),
+
+  APP_ENV: z.string().default(process.env.NODE_ENV),
+  APP_ORIGIN: z.string().default("http://localhost:5173"),
+  POSTHOG_PROJECT_KEY: z.string().default(""),
+});
+
+export type Environment = z.infer<typeof EnvironmentSchema>;
+export const env = EnvironmentSchema.parse(process.env);

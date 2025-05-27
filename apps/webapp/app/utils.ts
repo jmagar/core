@@ -96,7 +96,6 @@ export function titleCase(original: string): string {
     .join(" ");
 }
 
-// Takes an api key (either trigger_live_xxxx or trigger_development_xxxx) and returns trigger_live_********
 export const obfuscateApiKey = (apiKey: string) => {
   const [prefix, slug, secretPart] = apiKey.split("_");
   return `${prefix}_${slug}_${"*".repeat(secretPart.length)}`;

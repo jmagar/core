@@ -2,7 +2,7 @@
   "exclude": [],
   "include": ["remix.env.d.ts", "global.d.ts", "**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "types": ["vitest/globals"],
+    "types": [],
     "lib": ["DOM", "DOM.Iterable", "DOM.AsyncIterable", "ES2020"],
     "isolatedModules": true,
     "esModuleInterop": true,
@@ -22,6 +22,6 @@
       "~/*": ["./app/*"],
       "@/*": ["./*"]
     },
-    "noEmit": true,
+    "noEmit": true
   }
 }

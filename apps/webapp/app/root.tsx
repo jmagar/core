@@ -1,15 +1,11 @@
-import {
-  Links,
-  Meta,
-  Outlet,
-  Scripts,
-  ScrollRestoration,
-} from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
+import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import { type UseDataFunctionReturn, typedjson, useTypedLoaderData } from "remix-typedjson";
 
 import tailwindStylesheetUrl from "~/tailwind.css";
 import { appEnvTitleTag } from "./utils";
-
+import { commitSession, getSession, type ToastMessage } from "./models/message.server";
+import { env } from "./env.server";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -22,8 +18,25 @@ export const links: LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
-  { rel: "stylesheet", href: tailwindStylesheetUrl }
+  { rel: "stylesheet", href: tailwindStylesheetUrl },
 ];
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const session = await getSession(request.headers.get("cookie"));
+  const toastMessage = session.get("toastMessage") as ToastMessage;
+  const posthogProjectKey = env.POSTHOG_PROJECT_KEY;
+
+  return typedjson(
+    {
+      user: await getUser(request),
+      toastMessage,
+      posthogProjectKey,
+      appEnv: env.APP_ENV,
+      appOrigin: env.APP_ORIGIN,
+    },
+    { headers: { "Set-Cookie": await commitSession(session) } }
+  );
+};
 
 export const meta: MetaFunction = ({ data }) => {
   const typedData = data as UseDataFunctionReturn<typeof loader>;
@@ -36,7 +49,7 @@ export const meta: MetaFunction = ({ data }) => {
     {
       name: "robots",
       content:
-        typeof window === "undefined" || window.location.hostname !== "cloud.trigger.dev"
+        typeof window === "undefined" || window.location.hostname !== "echo.mysigma.ai"
           ? "noindex, nofollow"
           : "index, follow",
     },
