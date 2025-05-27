@@ -23,20 +23,12 @@ model User {
   name        String?
   avatarUrl   String?
 
-  admin Boolean @default(false)
+  memoryFilter String? // Adding memory filter instructions
 
-  /// Preferences for the dashboard
-  dashboardPreferences Json?
+  admin Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  /// @deprecated
-  isOnCloudWaitlist      Boolean @default(false)
-  /// @deprecated
-  featureCloud           Boolean @default(false)
-  /// @deprecated
-  isOnHostedRepoWaitlist Boolean @default(false)
 
   marketingEmails       Boolean @default(true)
   confirmedBasicDetails Boolean @default(false)
@@ -44,6 +36,9 @@ model User {
   referralSource String?
 
   personalAccessTokens PersonalAccessToken[]
+  InvitationCode       InvitationCode?       @relation(fields: [invitationCodeId], references: [id])
+  invitationCodeId     String?
+  Space                Space[]
 }
 
 enum AuthenticationMethod {
@@ -89,4 +84,96 @@ model PersonalAccessToken {
   updatedAt DateTime @updatedAt
 
   authorizationCodes AuthorizationCode[]
+}
+
+model InvitationCode {
+  id   String @id @default(cuid())
+  code String @unique
+
+  users User[]
+
+  createdAt DateTime @default(now())
+}
+
+// Space model for user workspaces
+model Space {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  autoMode    Boolean @default(false)
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  // Space's enabled entities
+  enabledEntities SpaceEntity[]
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  IngestionQueue IngestionQueue[]
+}
+
+// Entity types that can be stored in the memory plane
+model Entity {
+  id       String @id @default(cuid())
+  name     String @unique // e.g., "User", "Issue", "Task", "Automation"
+  metadata Json // Store field definitions and their types
+
+  // Relations
+  spaceEntities SpaceEntity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Junction table for Space-Entity relationship (what entities are enabled in each space)
+model SpaceEntity {
+  id String @id @default(cuid())
+
+  // Relations
+  space   Space  @relation(fields: [spaceId], references: [id])
+  spaceId String
+
+  entity   Entity @relation(fields: [entityId], references: [id])
+  entityId String
+
+  // Custom settings for this entity in this space
+  settings Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([spaceId, entityId])
+}
+
+// Queue for processing ingestion tasks
+model IngestionQueue {
+  id String @id @default(cuid())
+
+  // Relations
+  space   Space  @relation(fields: [spaceId], references: [id])
+  spaceId String
+
+  // Queue metadata
+  data     Json // The actual data to be processed
+  status   IngestionStatus
+  priority Int             @default(0)
+
+  // Error handling
+  error      String?
+  retryCount Int     @default(0)
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  processedAt DateTime?
+}
+
+enum IngestionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
 }

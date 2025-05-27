@@ -5,7 +5,13 @@
     "build": {
       "dependsOn": [ "^build" ],
       "inputs": [ "$TURBO_DEFAULT$", ".env*" ],
-      "outputs": [ ".next/**", "!.next/cache/**" ]
+      "outputs": [
+        "dist/**",
+        "public/build/**",
+        "build/**",
+        "app/styles/tailwind.css",
+        ".cache"
+      ]
     },
     "lint": {
       "dependsOn": [ "^lint" ]
@@ -14,14 +20,17 @@
       "dependsOn": [ "^check-types" ]
     },
     "dev": {
-      "cache": false,
-      "persistent": true
+      "cache": false
     },
     "db:generate": {
       "cache": false
     },
     "db:migrate:deploy": {
       "cache": false
+    },
+    "db:migrate:create": {
+      "cache": false,
+      "interactive": true
     },
     "db:studio": {
       "cache": false
@@ -31,5 +40,23 @@
         "^generate"
       ]
     }
-  }
+  },
+  "globalDependencies": [
+    ".env"
+  ],
+  "globalEnv": [
+    "NODE_ENV",
+    "REMIX_APP_PORT",
+    "CI",
+    "DATABASE_URL",
+    "DIRECT_URL",
+    "SESSION_SECRET",
+    "APP_ORIGIN",
+    "LOGIN_ORIGIN",
+    "POSTHOG_PROJECT_KEY",
+    "AUTH_GOOGLE_CLIENT_ID",
+    "AUTH_GOOGLE_CLIENT_SECRET",
+    "APP_ENV",
+    "APP_LOG_LEVEL"
+  ]
 }

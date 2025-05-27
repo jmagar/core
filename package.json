@@ -2,24 +2,26 @@
   "name": "echo",
   "private": true,
   "workspaces":
-  [ "apps/*" ]
+  [ "apps/*", "packages/*" ]
   ,
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types",
-    "db:migrate": "turbo run db:migrate:deploy generate",
-    "db:seed": "turbo run db:seed",
-    "db:studio": "turbo run db:studio",
-    "db:populate": "turbo run db:populate",
-    "generate": "turbo run generate"
+    "build": "dotenv -- turbo run build",
+    "dev": "dotenv -- turbo run dev",
+    "lint": "dotenv -- turbo run lint",
+    "format": "dotenv -- prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "dotenv -- turbo run check-types",
+    "db:migrate": "dotenv -- turbo run db:migrate:deploy generate",
+    "db:migrate:create": "dotenv -- turbo run db:migrate:create generate",
+    "db:seed": "dotenv -- turbo run db:seed",
+    "db:studio": "dotenv -- turbo run db:studio",
+    "db:populate": "dotenv -- turbo run db:populate",
+    "generate": "dotenv -- turbo run generate"
   },
   "devDependencies": {
+    "dotenv-cli": "^7.4.4",
     "prettier": "^3.5.3",
     "turbo": "^2.5.3",
-    "typescript": "5.8.2"
+    "typescript": "5.5.4"
   },
   "dependencies": {
     "@changesets/cli": "2.26.2",

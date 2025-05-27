@@ -1,6 +1,11 @@
-import { json, type Session , createCookieSessionStorage } from "@remix-run/node";
+import {
+  json,
+  type Session,
+  createCookieSessionStorage,
+} from "@remix-run/node";
 import { redirect } from "remix-typedjson";
 import { env } from "~/env.server";
+import { createThemeSessionResolver } from "remix-themes";
 
 export type ToastMessage = {
   message: string;
@@ -29,7 +34,7 @@ export const { commitSession, getSession } = createCookieSessionStorage({
 export function setSuccessMessage(
   session: Session,
   message: string,
-  options?: ToastMessageOptions
+  options?: ToastMessageOptions,
 ) {
   session.flash("toastMessage", {
     message,
@@ -40,7 +45,11 @@ export function setSuccessMessage(
   } as ToastMessage);
 }
 
-export function setErrorMessage(session: Session, message: string, options?: ToastMessageOptions) {
+export function setErrorMessage(
+  session: Session,
+  message: string,
+  options?: ToastMessageOptions,
+) {
   session.flash("toastMessage", {
     message,
     type: "error",
@@ -53,7 +62,7 @@ export function setErrorMessage(session: Session, message: string, options?: Toa
 export async function setRequestErrorMessage(
   request: Request,
   message: string,
-  options?: ToastMessageOptions
+  options?: ToastMessageOptions,
 ) {
   const session = await getSession(request.headers.get("cookie"));
 
@@ -65,7 +74,7 @@ export async function setRequestErrorMessage(
 export async function setRequestSuccessMessage(
   request: Request,
   message: string,
-  options?: ToastMessageOptions
+  options?: ToastMessageOptions,
 ) {
   const session = await getSession(request.headers.get("cookie"));
 
@@ -86,7 +95,7 @@ export async function jsonWithSuccessMessage(
   data: any,
   request: Request,
   message: string,
-  options?: ToastMessageOptions
+  options?: ToastMessageOptions,
 ) {
   const session = await getSession(request.headers.get("cookie"));
 
@@ -105,7 +114,7 @@ export async function jsonWithErrorMessage(
   data: any,
   request: Request,
   message: string,
-  options?: ToastMessageOptions
+  options?: ToastMessageOptions,
 ) {
   const session = await getSession(request.headers.get("cookie"));
 
@@ -124,7 +133,7 @@ export async function redirectWithSuccessMessage(
   path: string,
   request: Request,
   message: string,
-  options?: ToastMessageOptions
+  options?: ToastMessageOptions,
 ) {
   const session = await getSession(request.headers.get("cookie"));
 
@@ -143,7 +152,7 @@ export async function redirectWithErrorMessage(
   path: string,
   request: Request,
   message: string,
-  options?: ToastMessageOptions
+  options?: ToastMessageOptions,
 ) {
   const session = await getSession(request.headers.get("cookie"));
 
@@ -161,7 +170,7 @@ export async function redirectWithErrorMessage(
 export async function redirectBackWithErrorMessage(
   request: Request,
   message: string,
-  options?: ToastMessageOptions
+  options?: ToastMessageOptions,
 ) {
   const url = new URL(request.url);
   return redirectWithErrorMessage(url.pathname, request, message, options);
@@ -170,7 +179,7 @@ export async function redirectBackWithErrorMessage(
 export async function redirectBackWithSuccessMessage(
   request: Request,
   message: string,
-  options?: ToastMessageOptions
+  options?: ToastMessageOptions,
 ) {
   const url = new URL(request.url);
   return redirectWithSuccessMessage(url.pathname, request, message, options);

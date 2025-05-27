@@ -1,40 +1,43 @@
-# Welcome to Remix!
+# Memory Plane
 
-- 📖 [Remix docs](https://remix.run/docs)
+Simple memory management system for AI agents with per-space ingestion and search capabilities.
 
-## Development
+## Core APIs
 
-Run the dev server:
+### 1. Ingest API
 
-```shellscript
-npm run dev
-```
+- Endpoint per space for data ingestion
+- Queue-based processing per user
+- Creates and links graph nodes automatically
+- Optional review queue for controlled ingestion
 
-## Deployment
+### 2. Search API
 
-First, build your app for production:
+- Simple text-based search
+- Input: query string
+- Output: relevant text matches
+- Scoped to specific memory space
 
-```sh
-npm run build
-```
+## Features (v1)
 
-Then run the app in production mode:
+[ ] Auto-mode default with optional queue review
+[ ] Multiple Spaces support (unique URL per space)
+[ ] Basic rules engine for ingestion filters
+[ ] Clear, user-friendly guidelines
+[ ] Simple text search
 
-```sh
-npm start
-```
+## Usage Guidelines
 
-Now you'll need to pick a host to deploy it to.
+Store:
 
-### DIY
+- Conversation history
+- User preferences
+- Task context
+- Reference materials
 
-If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
+Don't Store:
 
-Make sure to deploy the output of `npm run build`
-
-- `build/server`
-- `build/client`
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
+- Sensitive data (PII)
+- Credentials
+- System logs
+- Temporary data

@@ -1,8 +1,15 @@
 {
   "exclude": [],
-  "include": ["remix.env.d.ts", "global.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": [
+    "remix.env.d.ts",
+    "global.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "tailwind.config.js",
+    "tailwind.config.js"
+  ],
   "compilerOptions": {
-    "types": [],
+    "types": ["@remix-run/node", "vite/client"],
     "lib": ["DOM", "DOM.Iterable", "DOM.AsyncIterable", "ES2020"],
     "isolatedModules": true,
     "esModuleInterop": true,

@@ -1,5 +1,4 @@
-import type { UIMatch } from "@remix-run/react";
-import { useMatches } from "@remix-run/react";
+import { useMatches, type UIMatch } from "@remix-run/react";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -12,7 +11,7 @@ const DEFAULT_REDIRECT = "/";
  */
 export function safeRedirect(
   to: FormDataEntryValue | string | null | undefined,
-  defaultRedirect: string = DEFAULT_REDIRECT
+  defaultRedirect: string = DEFAULT_REDIRECT,
 ) {
   if (!to || typeof to !== "string") {
     return defaultRedirect;
@@ -31,7 +30,10 @@ export function safeRedirect(
  * @param {string} id The route id
  * @returns {JSON|undefined} The router data or undefined if not found
  */
-export function useMatchesData(id: string | string[], debug: boolean = false): UIMatch | undefined {
+export function useMatchesData(
+  id: string | string[],
+  debug: boolean = false,
+): UIMatch | undefined {
   const matchingRoutes = useMatches();
 
   if (debug) {
@@ -41,10 +43,13 @@ export function useMatchesData(id: string | string[], debug: boolean = false): U
   const paths = Array.isArray(id) ? id : [id];
 
   // Get the first matching route
-  const route = paths.reduce((acc, path) => {
-    if (acc) return acc;
-    return matchingRoutes.find((route) => route.id === path);
-  }, undefined as UIMatch | undefined);
+  const route = paths.reduce(
+    (acc, path) => {
+      if (acc) return acc;
+      return matchingRoutes.find((route) => route.id === path);
+    },
+    undefined as UIMatch | undefined,
+  );
 
   return route;
 }

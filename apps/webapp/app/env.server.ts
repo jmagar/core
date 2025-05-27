@@ -22,8 +22,13 @@ const EnvironmentSchema = z.object({
   SESSION_SECRET: z.string(),
 
   APP_ENV: z.string().default(process.env.NODE_ENV),
+  LOGIN_ORIGIN: z.string().default("http://localhost:5173"),
   APP_ORIGIN: z.string().default("http://localhost:5173"),
   POSTHOG_PROJECT_KEY: z.string().default(""),
+
+  // google auth
+  AUTH_GOOGLE_CLIENT_ID: z.string().optional(),
+  AUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
 });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;

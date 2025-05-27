@@ -9,12 +9,13 @@
   },
   "devDependencies": {
     "prisma": "5.4.1",
-    "rimraf": "6.0.1"
+    "rimraf": "6.0.1",
+    "esbuild": "^0.15.10"
   },
   "scripts": {
     "clean": "rimraf dist",
     "generate": "prisma generate",
-    "db:migrate:dev:create": "prisma migrate dev --create-only",
+    "db:migrate:create": "prisma migrate dev --preview-feature",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
