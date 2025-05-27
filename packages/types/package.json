@@ -1,0 +1,21 @@
+{
+  "name": "@recall/types",
+  "private": true,
+  "version": "0.0.1",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@prisma/client": "5.4.1"
+  },
+  "devDependencies": {
+    "prisma": "5.4.1",
+    "rimraf": "6.0.1",
+    "esbuild": "^0.15.10"
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "typecheck": "tsc --noEmit",
+    "build": "pnpm run clean && tsc --noEmit false --outDir dist --declaration",
+    "dev": "tsc --noEmit false --outDir dist --declaration --watch"
+  }
+}
