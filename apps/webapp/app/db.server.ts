@@ -6,7 +6,7 @@ import {
   type PrismaTransactionClient,
   type PrismaTransactionOptions,
   $transaction as transac,
-} from "@echo/database";
+} from "@recall/database";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 import { env } from "./env.server";
@@ -27,18 +27,20 @@ export async function $transaction<R>(
   prisma: PrismaClientOrTransaction,
   name: string,
   fn: (prisma: PrismaTransactionClient, span?: Span) => Promise<R>,
-  options?: PrismaTransactionOptions
+  options?: PrismaTransactionOptions,
 ): Promise<R | undefined>;
 export async function $transaction<R>(
   prisma: PrismaClientOrTransaction,
   fn: (prisma: PrismaTransactionClient) => Promise<R>,
-  options?: PrismaTransactionOptions
+  options?: PrismaTransactionOptions,
 ): Promise<R | undefined>;
 export async function $transaction<R>(
   prisma: PrismaClientOrTransaction,
   fnOrName: ((prisma: PrismaTransactionClient) => Promise<R>) | string,
-  fnOrOptions?: ((prisma: PrismaTransactionClient) => Promise<R>) | PrismaTransactionOptions,
-  options?: PrismaTransactionOptions
+  fnOrOptions?:
+    | ((prisma: PrismaTransactionClient) => Promise<R>)
+    | PrismaTransactionOptions,
+  options?: PrismaTransactionOptions,
 ): Promise<R | undefined> {
   if (typeof fnOrName === "string") {
     const fn = fnOrOptions as (prisma: PrismaTransactionClient) => Promise<R>;
@@ -55,7 +57,7 @@ export async function $transaction<R>(
           name: error.name,
         });
       },
-      options
+      options,
     );
   } else {
     return transac(
@@ -70,7 +72,7 @@ export async function $transaction<R>(
           name: error.name,
         });
       },
-      typeof fnOrOptions === "function" ? undefined : fnOrOptions
+      typeof fnOrOptions === "function" ? undefined : fnOrOptions,
     );
   }
 }
@@ -81,7 +83,7 @@ export const prisma = singleton("prisma", getClient);
 
 export const $replica: PrismaReplicaClient = singleton(
   "replica",
-  () => getReplicaClient() ?? prisma
+  () => getReplicaClient() ?? prisma,
 );
 
 function getClient() {
@@ -94,7 +96,9 @@ function getClient() {
     connection_timeout: env.DATABASE_CONNECTION_TIMEOUT.toString(),
   });
 
-  console.log(`🔌 setting up prisma client to ${redactUrlSecrets(databaseUrl)}`);
+  console.log(
+    `🔌 setting up prisma client to ${redactUrlSecrets(databaseUrl)}`,
+  );
 
   const client = new PrismaClient({
     datasources: {
@@ -122,7 +126,7 @@ function getClient() {
             { emit: "event", level: "query" },
             { emit: "stdout", level: "query" },
           ]
-        : []
+        : [],
     ),
   });
 
@@ -146,7 +150,9 @@ function getReplicaClient() {
     connection_timeout: env.DATABASE_CONNECTION_TIMEOUT.toString(),
   });
 
-  console.log(`🔌 setting up read replica connection to ${redactUrlSecrets(replicaUrl)}`);
+  console.log(
+    `🔌 setting up read replica connection to ${redactUrlSecrets(replicaUrl)}`,
+  );
 
   const replicaClient = new PrismaClient({
     datasources: {
@@ -174,7 +180,7 @@ function getReplicaClient() {
             { emit: "event", level: "query" },
             { emit: "stdout", level: "query" },
           ]
-        : []
+        : [],
     ),
   });
 
@@ -186,7 +192,10 @@ function getReplicaClient() {
   return replicaClient;
 }
 
-function extendQueryParams(hrefOrUrl: string | URL, queryParams: Record<string, string>) {
+function extendQueryParams(
+  hrefOrUrl: string | URL,
+  queryParams: Record<string, string>,
+) {
   const url = new URL(hrefOrUrl);
   const query = url.searchParams;
 
@@ -205,7 +214,7 @@ function redactUrlSecrets(hrefOrUrl: string | URL) {
   return url.href;
 }
 
-export type { PrismaClient } from "@echo/database";
+export type { PrismaClient } from "@recall/database";
 
 export const PrismaErrorSchema = z.object({
   code: z.string(),
@@ -220,7 +229,9 @@ function getDatabaseSchema() {
   const schemaFromSearchParam = databaseUrl.searchParams.get("schema");
 
   if (!schemaFromSearchParam) {
-    console.debug("❗ database schema unspecified, will default to `public` schema");
+    console.debug(
+      "❗ database schema unspecified, will default to `public` schema",
+    );
     return "public";
   }
 

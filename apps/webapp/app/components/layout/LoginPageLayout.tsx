@@ -12,11 +12,11 @@ interface QuoteType {
 const quotes: QuoteType[] = [
   {
     quote:
-      "Echo remembers that I prefer emails in dark mode and hate promotional content. It automatically filters and formats my communications just the way I like.",
+      "Recall remembers that I prefer emails in dark mode and hate promotional content. It automatically filters and formats my communications just the way I like.",
   },
   {
     quote:
-      "When I mention liking Nike's latest running shoes, Echo remembers this preference and helps surface relevant product launches and deals across my browsing.",
+      "When I mention liking Nike's latest running shoes, Recall remembers this preference and helps surface relevant product launches and deals across my browsing.",
   },
   {
     quote:

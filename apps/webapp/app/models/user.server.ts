@@ -1,7 +1,7 @@
-import type { Prisma, User } from "@echo/database";
+import type { Prisma, User } from "@recall/database";
 import type { GoogleProfile } from "remix-auth-google";
 import { prisma } from "~/db.server";
-export type { User } from "@echo/database";
+export type { User } from "@recall/database";
 
 type FindOrCreateGoogle = {
   authenticationMethod: "GOOGLE";
@@ -17,7 +17,9 @@ type LoggedInUser = {
   isNewUser: boolean;
 };
 
-export async function findOrCreateUser(input: FindOrCreateUser): Promise<LoggedInUser> {
+export async function findOrCreateUser(
+  input: FindOrCreateUser,
+): Promise<LoggedInUser> {
   return findOrCreateGoogleUser(input);
 }
 
@@ -137,11 +139,23 @@ export function updateUser({
 }) {
   return prisma.user.update({
     where: { id },
-    data: { name, email, marketingEmails, referralSource, confirmedBasicDetails: true },
+    data: {
+      name,
+      email,
+      marketingEmails,
+      referralSource,
+      confirmedBasicDetails: true,
+    },
   });
 }
 
-export async function grantUserCloudAccess({ id, inviteCode }: { id: string; inviteCode: string }) {
+export async function grantUserCloudAccess({
+  id,
+  inviteCode,
+}: {
+  id: string;
+  inviteCode: string;
+}) {
   return prisma.user.update({
     where: { id },
     data: {

@@ -67,7 +67,7 @@ export const meta: MetaFunction = ({ data }) => {
   const typedData = data as UseDataFunctionReturn<typeof loader>;
 
   return [
-    { title: `Echo${typedData && appEnvTitleTag(typedData.appEnv)}` },
+    { title: `Recall${typedData && appEnvTitleTag(typedData.appEnv)}` },
     {
       name: "viewport",
       content: "width=1024, initial-scale=1",
@@ -76,7 +76,7 @@ export const meta: MetaFunction = ({ data }) => {
       name: "robots",
       content:
         typeof window === "undefined" ||
-        window.location.hostname !== "echo.mysigma.ai"
+        window.location.hostname !== "recall.mysigma.ai"
           ? "noindex, nofollow"
           : "index, follow",
     },

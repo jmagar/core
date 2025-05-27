@@ -30,15 +30,15 @@ importers:
 
   apps/webapp:
     dependencies:
-      '@echo/database':
-        specifier: workspace:*
-        version: link:../../packages/database
       '@opentelemetry/api':
         specifier: 1.9.0
         version: 1.9.0
       '@radix-ui/react-slot':
         specifier: ^1.2.3
         version: 1.2.3(@types/react@18.3.23)(react@18.3.1)
+      '@recall/database':
+        specifier: workspace:*
+        version: link:../../packages/database
       '@remix-run/express':
         specifier: 2.16.7
         version: 2.16.7(express@4.21.2)(typescript@5.8.3)

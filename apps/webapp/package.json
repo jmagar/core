@@ -11,7 +11,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@echo/database": "workspace:*",
+    "@recall/database": "workspace:*",
     "@opentelemetry/api": "1.9.0",
     "@radix-ui/react-slot": "^1.2.3",
     "@remix-run/express": "2.16.7",
