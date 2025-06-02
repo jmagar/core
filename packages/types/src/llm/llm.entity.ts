@@ -1,0 +1,73 @@
+export enum LLMModelEnum {
+  GPT35TURBO = "GPT35TURBO",
+  GPT4TURBO = "GPT4TURBO",
+  GPT4O = "GPT4O",
+  GPT41 = "GPT41",
+  GPT41MINI = "GPT41MINI",
+  GPT41NANO = "GPT41NANO",
+  LLAMA3 = "LLAMA3",
+  CLAUDEOPUS = "CLAUDEOPUS",
+  CLAUDESONNET = "CLAUDESONNET",
+  CLAUDEHAIKU = "CLAUDEHAIKU",
+  GEMINI25FLASH = "GEMINI25FLASH",
+  GEMINI25PRO = "GEMINI25PRO",
+  GEMINI20FLASH = "GEMINI20FLASH",
+  GEMINI20FLASHLITE = "GEMINI20FLASHLITE",
+}
+
+export const LLMModelType = {
+  GPT35TURBO: "GPT35TURBO",
+  GPT4TURBO: "GPT4TURBO",
+  GPT4O: "GPT4O",
+  GPT41: "GPT41",
+  GPT41MINI: "GPT41MINI",
+  GPT41NANO: "GPT41NANO",
+  LLAMA3: "LLAMA3",
+  CLAUDEOPUS: "CLAUDEOPUS",
+  CLAUDESONNET: "CLAUDESONNET",
+  CLAUDEHAIKU: "CLAUDEHAIKU",
+  GEMINI25FLASH: "GEMINI25FLASH",
+  GEMINI25PRO: "GEMINI25PRO",
+  GEMINI20FLASH: "GEMINI20FLASH",
+  GEMINI20FLASHLITE: "GEMINI20FLASHLITE",
+};
+
+export enum LLMMappings {
+  GPT35TURBO = "gpt-3.5-turbo",
+  GPT4TURBO = "gpt-4-turbo",
+  GPT4O = "gpt-4o",
+  GPT41 = "gpt-4.1-2025-04-14",
+  GPT41MINI = "gpt-4.1-mini-2025-04-14",
+  GPT41NANO = "gpt-4.1-nano-2025-04-14",
+  LLAMA3 = "llama3",
+  CLAUDEOPUS = "claude-3-opus-20240229",
+  CLAUDESONNET = "claude-3-7-sonnet-20250219",
+  CLAUDEHAIKU = "claude-3-5-haiku-20241022",
+  GEMINI25FLASH = "gemini-2.5-flash-preview-04-17",
+  GEMINI25PRO = "gemini-2.5-pro-preview-03-25",
+  GEMINI20FLASH = "gemini-2.0-flash",
+  GEMINI20FLASHLITE = "gemini-2.0-flash-lite",
+}
+
+export const OpenAIModels = [
+  LLMModelEnum.GPT35TURBO,
+  LLMModelEnum.GPT4TURBO,
+  LLMModelEnum.GPT4O,
+  LLMModelEnum.GPT41,
+  LLMModelEnum.GPT41MINI,
+  LLMModelEnum.GPT41NANO,
+];
+export const ClaudeModels = [
+  LLMModelEnum.CLAUDEOPUS,
+  LLMModelEnum.CLAUDESONNET,
+  LLMModelEnum.CLAUDEHAIKU,
+];
+
+export const GeminiModels = [
+  LLMModelEnum.GEMINI25FLASH,
+  LLMModelEnum.GEMINI25PRO,
+  LLMModelEnum.GEMINI20FLASH,
+  LLMModelEnum.GEMINI20FLASHLITE,
+];
+
+export type LLMModelType = (typeof LLMModelType)[keyof typeof LLMModelType];
