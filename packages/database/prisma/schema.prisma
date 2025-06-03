@@ -39,6 +39,21 @@ model User {
   InvitationCode       InvitationCode?       @relation(fields: [invitationCodeId], references: [id])
   invitationCodeId     String?
   Space                Space[]
+  Workspace            Workspace?
+}
+
+model Workspace {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deleted   DateTime?
+
+  name String
+  slug String  @unique
+  icon String?
+
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
 }
 
 enum AuthenticationMethod {

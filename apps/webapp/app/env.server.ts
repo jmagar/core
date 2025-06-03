@@ -2,12 +2,16 @@ import { z } from "zod";
 import { isValidDatabaseUrl } from "./utils/db";
 
 const EnvironmentSchema = z.object({
-  NODE_ENV: z.union([z.literal("development"), z.literal("production"), z.literal("test")]),
+  NODE_ENV: z.union([
+    z.literal("development"),
+    z.literal("production"),
+    z.literal("test"),
+  ]),
   DATABASE_URL: z
     .string()
     .refine(
       isValidDatabaseUrl,
-      "DATABASE_URL is invalid, for details please check the additional output above this message."
+      "DATABASE_URL is invalid, for details please check the additional output above this message.",
     ),
   DATABASE_CONNECTION_LIMIT: z.coerce.number().int().default(10),
   DATABASE_POOL_TIMEOUT: z.coerce.number().int().default(60),
@@ -16,10 +20,11 @@ const EnvironmentSchema = z.object({
     .string()
     .refine(
       isValidDatabaseUrl,
-      "DIRECT_URL is invalid, for details please check the additional output above this message."
+      "DIRECT_URL is invalid, for details please check the additional output above this message.",
     ),
   DATABASE_READ_REPLICA_URL: z.string().optional(),
   SESSION_SECRET: z.string(),
+  ENCRYPTION_KEY: z.string(),
 
   APP_ENV: z.string().default(process.env.NODE_ENV),
   LOGIN_ORIGIN: z.string().default("http://localhost:5173"),

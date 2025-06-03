@@ -36,6 +36,7 @@
     "lucide-react": "^0.511.0",
     "morgan": "^1.10.0",
     "nanoid": "3.3.8",
+    "jose": "^5.2.3",
     "non.geist": "^1.0.2",
     "posthog-js": "^1.116.6",
     "react": "^18.2.0",
