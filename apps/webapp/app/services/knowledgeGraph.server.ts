@@ -10,7 +10,8 @@ import {
 import { LLMMappings, LLMModelEnum } from "@recall/types";
 import { logger } from "./logger.service";
 import crypto from "crypto";
-import { extract_message, extract_text } from "./prompts/extractNodes";
+import { dedupeNodes, extract_message, extract_text } from "./prompts/nodes";
+import { extract_statements } from "./prompts/statements";
 
 export enum EpisodeType {
   Conversation = "CONVERSATION",
@@ -41,7 +42,7 @@ export interface EpisodicNode {
  * Entities represent subjects, objects, or predicates in statements
  */
 export interface EntityNode {
-  uuid?: string;
+  uuid: string;
   name: string;
   type: string;
   attributes: Record<string, any>;
@@ -211,8 +212,8 @@ export class KnowledgeGraphService {
 
       // Step 5: Statement Extraction - Extract statements (triples) instead of direct edges
       const extractedStatements = await this.extractStatements(
-        resolvedNodes,
         episode,
+        resolvedNodes,
         previousEpisodes,
       );
 
@@ -292,21 +293,27 @@ export class KnowledgeGraphService {
       },
     );
 
-    const extractedEntities = JSON.parse(responseText || "{}").entities || [];
-
     // Convert to EntityNode objects
     const entities: EntityNode[] = [];
 
-    for (const entity of extractedEntities) {
-      entities.push({
-        uuid: crypto.randomUUID(),
-        name: entity.name,
-        type: entity.type,
-        attributes: entity.attributes || {},
-        nameEmbedding: [], // Will be populated later
-        createdAt: new Date(),
-        userId: episode.userId,
-      });
+    const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
+    if (outputMatch && outputMatch[1]) {
+      responseText = outputMatch[1].trim();
+      const extractedEntities = JSON.parse(responseText || "{}").entities || [];
+
+      entities.push(
+        ...(await Promise.all(
+          extractedEntities.map(async (entity: any) => ({
+            uuid: crypto.randomUUID(),
+            name: entity.name,
+            type: entity.type,
+            attributes: entity.attributes || {},
+            nameEmbedding: await this.getEmbedding(entity.name),
+            createdAt: new Date(),
+            userId: episode.userId,
+          })),
+        )),
+      );
     }
 
     return entities;
@@ -321,55 +328,102 @@ export class KnowledgeGraphService {
     previousEpisodes: EpisodicNode[],
   ): Promise<{ resolvedNodes: EntityNode[]; uuidMap: Map<string, string> }> {
     const uuidMap = new Map<string, string>();
-    const resolvedNodes: EntityNode[] = [];
 
-    for (const extractedNode of extractedNodes) {
-      // Generate embedding for the node name
-      const nameEmbedding = await this.getEmbedding(extractedNode.name);
+    const existingNodesLists = await Promise.all(
+      extractedNodes.map(async (extractedNode) => {
+        // Check if a similar node already exists in HelixDB
+        // Use vector similarity search to find similar entities
+        // Threshold is 0.85 - meaning at least 85% similarity (lower cosine distance)
+        const similarEntities = await helixClient.query("findSimilarEntities", {
+          queryEmbedding: extractedNode.nameEmbedding,
+          limit: 5, // Get top 5 matches
+          threshold: 0.85, // 85% similarity threshold
+        });
 
-      // Check if a similar node already exists in HelixDB
-      // Use vector similarity search to find similar entities
-      // Threshold is 0.85 - meaning at least 85% similarity (lower cosine distance)
-      const similarEntities = await helixClient.query("findSimilarEntities", {
-        queryEmbedding: nameEmbedding,
-        limit: 5, // Get top 5 matches
-        threshold: 0.85, // 85% similarity threshold
+        return similarEntities.nodes;
+      }),
+    );
+
+    if (!existingNodesLists || existingNodesLists.length === 0) {
+      extractedNodes.forEach((node) => {
+        uuidMap.set(node.uuid, node.uuid);
       });
-
-      const existingNodes = similarEntities.nodes;
-
-      // Get entity types dictionary or empty object if not provided
-      const entityTypesDict = entity_types || {};
-
-      if (similarEntities.length > 0) {
-        // If similar nodes exist, we need to decide if we want to merge with an existing one
-        // This could involve LLM to determine if they're the same entity
-        const existingNode = similarEntities[0];
-
-        // Map the extracted node UUID to the existing node UUID
-        uuidMap.set(extractedNode.uuid, existingNode.uuid);
-
-        // Add the existing node to our resolved nodes if not already present
-        if (!resolvedNodes.some((node) => node.uuid === existingNode.uuid)) {
-          resolvedNodes.push({
-            uuid: existingNode.uuid,
-            name: existingNode.name,
-            type: existingNode.type,
-            attributes: existingNode.attributes || {},
-            nameEmbedding: existingNode.nameEmbedding,
-            createdAt: new Date(existingNode.createdAt),
-            userId: existingNode.userId,
-          });
-        }
-      } else {
-        // This is a new entity, add embedding and keep as is
-        extractedNode.nameEmbedding = nameEmbedding;
-        resolvedNodes.push(extractedNode);
-        uuidMap.set(extractedNode.uuid, extractedNode.uuid);
-      }
+      return { resolvedNodes: extractedNodes, uuidMap };
     }
 
-    return { resolvedNodes, uuidMap };
+    // Prepare context for LLM
+    const extractedNodesContext = extractedNodes.map(
+      (node: EntityNode, i: number) => {
+        return {
+          id: i,
+          name: node.name,
+          entity_type: node.type,
+          entity_type_description: "Default Entity Type",
+          duplication_candidates: existingNodesLists[i].map(
+            (candidate: EntityNode, j: number) => ({
+              idx: j,
+              name: candidate.name,
+              entity_types: candidate.type,
+              ...candidate.attributes,
+            }),
+          ),
+        };
+      },
+    );
+
+    const context = {
+      extracted_nodes: extractedNodesContext,
+      episode_content: episode ? episode.content : "",
+      previous_episodes: previousEpisodes
+        ? previousEpisodes.map((ep) => ep.content)
+        : [],
+    };
+
+    const messages = dedupeNodes(context);
+
+    let responseText = "";
+
+    await this.makeModelCall(
+      false,
+      LLMModelEnum.GPT41,
+      messages as CoreMessage[],
+      (text) => {
+        responseText = text;
+      },
+    );
+
+    const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
+    if (outputMatch && outputMatch[1]) {
+      responseText = outputMatch[1].trim();
+      const parsedResponse = JSON.parse(responseText);
+      const nodeResolutions = parsedResponse.entity_resolutions || [];
+
+      // Process each node resolution to either map to an existing node or keep as new
+      const resolvedNodes = nodeResolutions.map((resolution: any) => {
+        const resolutionId = resolution.id ?? -1;
+        const duplicateIdx = resolution.duplicate_idx ?? -1;
+        const extractedNode = extractedNodes[resolutionId];
+
+        // If a duplicate was found, use the existing node, otherwise use the extracted node
+        const resolvedNode =
+          duplicateIdx >= 0 &&
+          duplicateIdx < existingNodesLists[resolutionId]?.length
+            ? existingNodesLists[resolutionId][duplicateIdx]
+            : extractedNode;
+
+        // Update the name if provided in the resolution
+        if (resolution.name) {
+          resolvedNode.name = resolution.name;
+        }
+
+        // Map the extracted UUID to the resolved UUID
+        uuidMap.set(extractedNode.uuid, resolvedNode.uuid);
+
+        return resolvedNode;
+      });
+
+      return { resolvedNodes, uuidMap };
+    }
   }
 
   /**
@@ -388,18 +442,16 @@ export class KnowledgeGraphService {
         content: ep.content,
         createdAt: ep.createdAt.toISOString(),
       })),
-      nodes: resolvedNodes.map((node) => ({
+      entities: resolvedNodes.map((node) => ({
         name: node.name,
         type: node.type,
         uuid: node.uuid,
       })),
       referenceTime: episode.validAt.toISOString(),
-      relationshipTypes: {}, // Could be populated with relationship definitions
     };
 
     // Get the statement extraction prompt from the prompt library
-    // Note: You might need to update your prompts to extract subject-predicate-object patterns
-    const messages = promptLibrary.extractEdges.edge.call(context);
+    const messages = extract_statements(context);
 
     let responseText = "";
 
@@ -413,65 +465,90 @@ export class KnowledgeGraphService {
     );
 
     // Parse the statements from the LLM response
-    // This will need to be updated based on your prompt format
     const extractedTriples = JSON.parse(responseText || "{}").edges || [];
 
-    // Convert to Triple objects with Statement nodes
-    const triples: Triple[] = [];
+    // Convert extracted triples to Triple objects with Statement nodes
+    const triples = await Promise.all(
+      // Fix: Type 'any'.
+      extractedTriples.map(async (triple: any) => {
+        // Find the subject and object nodes
+        const subjectNode = resolvedNodes.find(
+          (node) => node.name.toLowerCase() === triple.source.toLowerCase(),
+        );
 
-    for (const triple of extractedTriples) {
-      const subjectNode = resolvedNodes.find(
-        (node) =>
-          node.name.toLowerCase() === triple.sourceEntityName.toLowerCase(),
-      );
+        const objectNode = resolvedNodes.find(
+          (node) => node.name.toLowerCase() === triple.target.toLowerCase(),
+        );
 
-      const objectNode = resolvedNodes.find(
-        (node) =>
-          node.name.toLowerCase() === triple.targetEntityName.toLowerCase(),
-      );
-
-      // Find or create a predicate node for the relationship type
-      const predicateNode = resolvedNodes.find(
-        (node) =>
-          node.name.toLowerCase() === triple.relationshipType.toLowerCase(),
-      ) || {
-        uuid: crypto.randomUUID(),
-        name: triple.relationshipType,
-        type: "Predicate",
-        attributes: {},
-        nameEmbedding: [], // Will be populated later
-        createdAt: new Date(),
-        userId: episode.userId,
-      };
-
-      if (subjectNode && objectNode) {
-        // Generate embedding for the fact
-        const factEmbedding = await this.getEmbedding(triple.fact);
-
-        // Create a statement node
-        const statement: StatementNode = {
+        // Find or create a predicate node for the relationship type
+        const predicateNode = resolvedNodes.find(
+          (node) =>
+            node.name.toLowerCase() === triple.relationship.toLowerCase(),
+        ) || {
           uuid: crypto.randomUUID(),
-          fact: triple.fact,
-          groupId: crypto.randomUUID().slice(0, 8), // Could be used to group related statements
+          name: triple.relationship,
+          type: "Predicate",
+          attributes: {},
+          nameEmbedding: await this.getEmbedding(triple.relationship),
           createdAt: new Date(),
-          validAt: triple.validAt ? new Date(triple.validAt) : episode.validAt,
-          invalidAt: triple.invalidAt ? new Date(triple.invalidAt) : undefined,
-          attributesJson: JSON.stringify({}), // Could store additional metadata
-          embedding: factEmbedding,
           userId: episode.userId,
         };
 
-        triples.push({
-          statement,
-          subject: subjectNode,
-          predicate: predicateNode,
-          object: objectNode,
-          provenance: episode,
-        });
-      }
+        if (subjectNode && objectNode) {
+          // Create a statement node
+          const statement: StatementNode = {
+            uuid: crypto.randomUUID(),
+            fact: triple.fact,
+            factEmbedding: await this.getEmbedding(triple.fact),
+            createdAt: new Date(),
+            validAt: episode.validAt,
+            invalidAt: null,
+            attributes: triple.attributes || {},
+            userId: episode.userId,
+          };
+
+          return {
+            statement,
+            subject: subjectNode,
+            predicate: predicateNode,
+            object: objectNode,
+            provenance: episode,
+          };
+        }
+        return null;
+      }),
+    );
+
+    // Filter out null values (where subject or object wasn't found)
+    return triples.filter(Boolean) as Triple[];
+  }
+
+  private async resolvePredicateNodes(
+    triples: Triple[],
+    episode: EpisodicNode,
+  ) {
+    const predicateNodes: EntityNode[] = triples.map((triple: Triple) => {
+      return triple.predicate;
+    });
+
+    if (predicateNodes.length === 0) {
+      return;
     }
 
-    return triples;
+    const existingNodesLists = await Promise.all(
+      predicateNodes.map(async (predicateNode) => {
+        // Check if a similar node already exists in HelixDB
+        // Use vector similarity search to find similar entities
+        // Threshold is 0.85 - meaning at least 85% similarity (lower cosine distance)
+        const similarEntities = await helixClient.query("findSimilarEntities", {
+          queryEmbedding: predicateNode.nameEmbedding,
+          limit: 5, // Get top 5 matches
+          threshold: 0.85, // 85% similarity threshold
+        });
+
+        return similarEntities.nodes;
+      }),
+    );
   }
 
   /**
