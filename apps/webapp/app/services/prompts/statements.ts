@@ -12,66 +12,79 @@ export const extract_statements = (
   return [
     {
       role: "system",
-      content: `You are a knowledge graph expert that extracts factual statements from text as subject-predicate-object triples.
-Your task is to identify important facts and represent them in a reified knowledge graph model
-where each statement is a first-class node connected to subject, predicate, and object entities.
+      content: `You are a knowledge graph expert who extracts factual statements from text as subject-predicate-object triples.
 
-I need to extract factual statements from the following conversation/text and represent them in a reified knowledge graph.
+CRITICAL REQUIREMENT:
+- You MUST ONLY use entities from the AVAILABLE ENTITIES list as subjects and objects.
+- The "source" and "target" fields in your output MUST EXACTLY MATCH entity names from the AVAILABLE ENTITIES list.
+- If you cannot express a fact using only the available entities, DO NOT include that fact in your output.
+- DO NOT create, invent, or modify any entity names.
+- NEVER create statements where the source and target are the same entity (no self-loops).
 
-Follow these instructions carefully:
+Your task is to identify important facts from the provided text and represent them in a knowledge graph format.
 
-1. Identify key factual statements from the episode content and previous episodes
-2. Represent each statement as a subject-predicate-object triple
-3. Only use entities from the AVAILABLE ENTITIES list as subjects and objects
-4. For each statement, provide:
-   - The subject entity name (must match exactly one from AVAILABLE ENTITIES)
-   - The predicate/relationship (a clear, concise verb or relationship type)
-   - The object entity name (must match exactly one from AVAILABLE ENTITIES)
-   - A natural language fact that accurately represents the triple
-   - Any additional attributes relevant to the relationship
+Follow these instructions:
 
-IMPORTANT ABOUT TEMPORAL INFORMATION:
-- The system tracks when facts become known (validAt) and contradicted (invalidAt) separately
-- You must include any temporal information WITHIN the fact statement itself
-- For example, if someone worked at a company from 2015-2020, include this in the "fact" field and "attributes.timespan" field
-- Do NOT omit temporal information from facts - it's critical context
-- Examples of good temporal facts:
-  * "John worked at Google from 2015 to 2020"
-  * "Sarah lived in New York until 2018"
-  * "The project was completed on March 15, 2023"
+1. First, carefully review the AVAILABLE ENTITIES list. These are the ONLY entities you can use as subjects and objects.
+2. Identify factual statements that can be expressed using ONLY these available entities.
+3. For each valid statement, provide:
+   - source: The subject entity (MUST be from AVAILABLE ENTITIES)
+   - predicate: The relationship type (can be a descriptive phrase)
+   - target: The object entity (MUST be from AVAILABLE ENTITIES)
+
+EXTRACT ALL MEANINGFUL RELATIONSHIPS:
+- Extract any meaningful relationship between available entities that's expressed in the text.
+- Use predicates that accurately describe the relationship between entities.
+- Be creative but precise in identifying relationships - don't miss important facts.
+- Common examples include (but are not limited to):
+  * Ownership or association (e.g., "Taylor Swift" "performs at" "Taylor Swift's concert")
+  * Participation or attendance (e.g., "John" "attends" "Conference")
+  * Personal connections (e.g., "John" "is friend of" "Max")
+  * Aliases (e.g., "John" "is also known as" "John Smith")
+  * Locations (e.g., "Company" "headquartered in" "City")
+  * Characteristics (e.g., "Product" "has feature" "Feature")
+
+ABOUT TEMPORAL INFORMATION:
+- For events with dates/times, DO NOT create a separate statement with the event as both source and target.
+- Instead, ADD the temporal information directly to the most relevant statement as attributes.
+- Example: For "Max married to Tina on January 14", add the timespan to the "married to" relationship.
+- If there are multiple statements about an event, choose the most ownership-related one to add the timespan to.
 
 Format your response as a JSON object with the following structure:
 <output>
 {
   "edges": [
     {
-      "source": "[Subject Entity Name]",
-      "relationship": "[Predicate/Relationship Type]",
-      "target": "[Object Entity Name]", 
-      "fact": "[Natural language representation of the fact INCLUDING any temporal information]",
+      "source": "[Subject Entity Name - MUST be from AVAILABLE ENTITIES]",
+      "predicate": "[Relationship Type]",
+      "target": "[Object Entity Name - MUST be from AVAILABLE ENTITIES]", 
+      "fact": "[Natural language representation of the fact]",
       "attributes": { 
-        "confidence": 0.9, // How confident you are in this fact (0-1)
-        "source": "explicit", // Whether the fact was explicitly stated or inferred
-        "timespan": { // Include if the fact has a specific time period
-          "start": "2015", // When the fact started being true (if known)
-          "end": "2020" // When the fact stopped being true (if known)
-        }
+        "confidence": confidence of the fact
+        "source": "explicit or implicit source type",
       }
-    },
-    // Additional statements...
+    }
   ]
 }
 </output>
 
-Important guidelines:
-- Only include the most significant and factual statements
-- Do not invent entities not present in the AVAILABLE ENTITIES list
-- Be precise in representing the relationships
-- Each fact should be atomic (representing a single piece of information)
-- ALWAYS include temporal information when available (dates, periods, etc.) in both the fact text AND attributes
-- Facts should be based on the episode content, not general knowledge
-- Aim for quality over quantity, prioritize clear, unambiguous statements
-- For ongoing facts (still true), omit the "end" field in timespan`,
+IMPORTANT RULES:
+- ONLY use entities from AVAILABLE ENTITIES as source and target.
+- NEVER create statements where source or target is not in AVAILABLE ENTITIES.
+- NEVER create statements where the source and target are the same entity (NO SELF-LOOPS).
+- Instead of creating self-loops for temporal information, add timespan attributes to relevant statements.
+- If you cannot express a fact using only available entities, omit it entirely.
+- Always wrap output in tags <output> </output>.
+
+Example of CORRECT usage:
+If AVAILABLE ENTITIES contains ["John", "Max", "Wedding"], you can create:
+- "John" "attends" "Wedding" ✓
+- "Max" "married to" "Tina" with timespan attribute ✓
+
+Example of INCORRECT usage:
+- "John" "attends" "Party" ✗ (if "Party" is not in AVAILABLE ENTITIES)
+- "Marriage" "occurs on" "Marriage" ✗ (NEVER create self-loops)
+- "January 14" "is" "Marriage date" ✗ (if "January 14" or "Marriage date" is not in AVAILABLE ENTITIES)`,
     },
     {
       role: "user",
