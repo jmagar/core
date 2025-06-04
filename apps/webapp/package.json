@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "remix vite:build",
-    "dev": "node ./server.js",
+    "dev": "node ./server.mjs",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "remix-serve ./build/server/index.js",
     "typecheck": "tsc"
@@ -41,8 +41,10 @@
     "posthog-js": "^1.116.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "remix-auth": "^3.6.0",
-    "remix-auth-google": "^2.0.0",
+    "@remixicon/react": "^4.2.0",
+    "remix-auth": "^4.2.0",
+    "@coji/remix-auth-google": "^4.2.0",
+    "remix-auth-oauth2": "^3.4.1",
     "remix-themes": "^1.3.1",
     "remix-typedjson": "0.3.1",
     "remix-utils": "^7.7.0",

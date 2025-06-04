@@ -1,8 +1,13 @@
 import { createCookieSessionStorage } from "@remix-run/node";
 import { createThemeSessionResolver } from "remix-themes";
 import { env } from "~/env.server";
+import { type AuthUser } from "./authUser";
 
-export const sessionStorage = createCookieSessionStorage({
+let SESSION_KEY = "user";
+
+export const sessionStorage = createCookieSessionStorage<{
+  [SESSION_KEY]: AuthUser;
+}>({
   cookie: {
     name: "__session", // use any name you want here
     sameSite: "lax", // this helps with CSRF
@@ -25,6 +30,18 @@ export const themeStorage = createCookieSessionStorage({
     maxAge: 60 * 60 * 24 * 365, // 1 year
   },
 });
+
+export const getSessionFromStore = async (request: Request) => {
+  return await sessionStorage.getSession(request.headers.get("Cookie"));
+};
+
+export const saveSession = async (request: Request, user: AuthUser) => {
+  const session = await getSessionFromStore(request);
+  session.set(SESSION_KEY, user);
+  return new Headers({
+    "Set-Cookie": await sessionStorage.commitSession(session),
+  });
+};
 
 export const themeSessionResolver = createThemeSessionResolver(sessionStorage);
 

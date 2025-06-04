@@ -1,6 +1,6 @@
 import { redirect } from "@remix-run/node";
 import { getUserById } from "~/models/user.server";
-import { authenticator } from "./auth.server";
+import { sessionStorage } from "./sessionStorage.server";
 import { getImpersonationId } from "./impersonation.server";
 
 export async function getUserId(request: Request): Promise<string | undefined> {
@@ -8,8 +8,10 @@ export async function getUserId(request: Request): Promise<string | undefined> {
 
   if (impersonatedUserId) return impersonatedUserId;
 
-  let authUser = await authenticator.isAuthenticated(request);
-  return authUser?.userId;
+  let session = await sessionStorage.getSession(request.headers.get("cookie"));
+  let user = session.get("user");
+
+  return user?.userId;
 }
 
 export async function getUser(request: Request) {

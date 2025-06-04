@@ -1,5 +1,5 @@
 import type { Authenticator } from "remix-auth";
-import { GoogleStrategy } from "remix-auth-google";
+import { GoogleStrategy } from "@coji/remix-auth-google";
 import { env } from "~/env.server";
 import { findOrCreateUser } from "~/models/user.server";
 import type { AuthUser } from "./authUser";
@@ -8,34 +8,36 @@ import { logger } from "./logger.service";
 
 export function addGoogleStrategy(
   authenticator: Authenticator<AuthUser>,
-  clientID: string,
-  clientSecret: string
+  clientId: string,
+  clientSecret: string,
 ) {
   const googleStrategy = new GoogleStrategy(
     {
-      clientID,
+      clientId,
       clientSecret,
-      callbackURL: `${env.LOGIN_ORIGIN}/auth/google/callback`,
+      redirectURI: `${env.LOGIN_ORIGIN}/auth/google/callback`,
     },
-    async ({ extraParams, profile }) => {
+    async ({ tokens }) => {
+      const profile = await GoogleStrategy.userProfile(tokens);
       const emails = profile.emails;
 
       if (!emails) {
         throw new Error("Google login requires an email address");
       }
 
+      console.log(tokens);
+
       try {
         logger.debug("Google login", {
           emails,
           profile,
-          extraParams,
         });
 
         const { user, isNewUser } = await findOrCreateUser({
           email: emails[0].value,
           authenticationMethod: "GOOGLE",
           authenticationProfile: profile,
-          authenticationExtraParams: extraParams,
+          authenticationExtraParams: {},
         });
 
         await postAuthentication({ user, isNewUser, loginMethod: "GOOGLE" });
@@ -47,8 +49,8 @@ export function addGoogleStrategy(
         console.error(error);
         throw error;
       }
-    }
+    },
   );
 
-  authenticator.use(googleStrategy);
+  authenticator.use(googleStrategy as any, "google");
 }

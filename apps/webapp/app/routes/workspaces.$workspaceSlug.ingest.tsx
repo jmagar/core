@@ -9,7 +9,7 @@ const ParamsSchema = z.object({
 export const IngestBodyRequest = z.object({
   name: z.string(),
   episodeBody: z.string(),
-  referenceTime: z.date(),
+  referenceTime: z.string(),
   type: z.enum(["CONVERSATION", "TEXT"]), // Assuming these are the EpisodeType values
   source: z.string(),
   userId: z.string(),

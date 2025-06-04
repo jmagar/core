@@ -1,5 +1,5 @@
 import type { Prisma, User } from "@recall/database";
-import type { GoogleProfile } from "remix-auth-google";
+import type { GoogleProfile } from "@coji/remix-auth-google";
 import { prisma } from "~/db.server";
 export type { User } from "@recall/database";
 

@@ -23,4 +23,8 @@ export default defineConfig({
     }),
     tsconfigPaths(),
   ],
+  server: {
+    allowedHosts: true,
+    port: 3033,
+  },
 });
