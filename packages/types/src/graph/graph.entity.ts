@@ -1,7 +1,6 @@
 export enum EpisodeType {
-  Message = "message",
-  Code = "code",
-  Documentation = "documentation",
+  Conversation = "CONVERSATION",
+  Text = "TEXT",
 }
 
 export interface AddEpisodeParams {

@@ -27,4 +27,7 @@ export default defineConfig({
     allowedHosts: true,
     port: 3033,
   },
+  ssr: {
+    noExternal: ["helix-ts"],
+  },
 });

@@ -34,6 +34,11 @@ const EnvironmentSchema = z.object({
   // google auth
   AUTH_GOOGLE_CLIENT_ID: z.string().optional(),
   AUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
+
+  //Redis
+  REDIS_HOST: z.string().default("localhost"),
+  REDIS_PORT: z.coerce.number().default(6379),
+  REDIS_TLS_DISABLED: z.coerce.boolean().default(true),
 });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;

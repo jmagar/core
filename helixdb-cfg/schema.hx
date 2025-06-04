@@ -10,11 +10,11 @@ V::Episode {
     name: String,
     content: String,
     source: String,
-    type: String,
+    episodeType: String,
     userId: String,
-    createdAt: DateTime,
-    validAt: DateTime,
-    labels: Array<String>,
+    createdAt: I64,
+    validAt: I64,
+    labels: [String],
     space: String,
     sessionId: String
 }
@@ -22,9 +22,9 @@ V::Episode {
 V::Entity {
     name: String,
     summary: String,
-    type: String,
-    createdAt: DateTime,
-    attributes: String
+    entityType: String,
+    createdAt: Date,
+    attributes: String,
     userId: String,
     space: String
 }
@@ -33,46 +33,46 @@ V::Entity {
 // This allows tracking validity periods, provenance, and treating facts as objects themselves
 V::Statement {
     fact: String,
-    createdAt: DateTime,
-    validAt: DateTime,
-    invalidAt: DateTime,
-    attributes: String
+    createdAt: Date,
+    validAt: Date,
+    invalidAt: Date,
+    attributes: String,
     userId: String,
     space: String
 }
 
 // Subject of the statement (the entity the statement is about)
 E::HasSubject {
-    To: Entity,
     From: Statement,
+    To: Entity,
     Properties: {
-        createdAt: DateTime
+        createdAt: Date
     }
 }
 
 // Object of the statement (the entity that receives the action or is related to)
 E::HasObject {
-    To: Entity,
     From: Statement,
+    To: Entity,
     Properties: {
-        createdAt: DateTime
+        createdAt: Date
     }
 }
 
 // Predicate of the statement (the relationship type or verb)
 E::HasPredicate {
-    To: Entity,
     From: Statement,
+    To: Entity,
     Properties: {
-        createdAt: DateTime
+        createdAt: Date
     }
 }
 
 // Provenance connection - links a statement to its source episode
 E::HasProvenance {
-    To: Episode,
     From: Statement,
+    To: Episode,
     Properties: {
-        createdAt: DateTime
+        createdAt: Date
     }
 }

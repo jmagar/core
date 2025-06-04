@@ -1,4 +1,3 @@
-import HelixDB from "helix-ts";
 import { openai } from "@ai-sdk/openai";
 import {
   type CoreMessage,
@@ -7,16 +6,13 @@ import {
   type LanguageModelV1,
   streamText,
 } from "ai";
-import { LLMMappings, LLMModelEnum } from "@recall/types";
+import { EpisodeType, LLMMappings, LLMModelEnum } from "@recall/types";
 import { logger } from "./logger.service";
 import crypto from "crypto";
 import { dedupeNodes, extract_message, extract_text } from "./prompts/nodes";
 import { extract_statements } from "./prompts/statements";
 
-export enum EpisodeType {
-  Conversation = "CONVERSATION",
-  Text = "TEXT",
-}
+const HelixDB = await import("helix-ts").then((m) => m.default);
 
 /**
  * Interface for episodic node in the reified knowledge graph
@@ -173,6 +169,8 @@ export class KnowledgeGraphService {
     const startTime = Date.now();
     const now = new Date();
 
+    console.log(params);
+
     try {
       // Step 1: Context Retrieval - Get previous episodes for context
       const previousEpisodes = await this.retrieveEpisodes(
@@ -204,53 +202,53 @@ export class KnowledgeGraphService {
       );
 
       // Step 4: Entity Resolution - Resolve extracted nodes to existing nodes or create new ones
-      const { resolvedNodes, uuidMap } = await this.resolveExtractedNodes(
-        extractedNodes,
-        episode,
-        previousEpisodes,
-      );
+      // const { resolvedNodes, uuidMap } = await this.resolveExtractedNodes(
+      //   extractedNodes,
+      //   episode,
+      //   previousEpisodes,
+      // );
 
-      // Step 5: Statement Extraction - Extract statements (triples) instead of direct edges
-      const extractedStatements = await this.extractStatements(
-        episode,
-        resolvedNodes,
-        previousEpisodes,
-      );
+      // // Step 5: Statement Extraction - Extract statements (triples) instead of direct edges
+      // const extractedStatements = await this.extractStatements(
+      //   episode,
+      //   resolvedNodes,
+      //   previousEpisodes,
+      // );
 
-      // Step 6: Statement Resolution - Resolve statements and detect contradictions
-      const { resolvedStatements, invalidatedStatements } =
-        await this.resolveStatements(
-          extractedStatements,
-          episode,
-          resolvedNodes,
-        );
+      // // Step 6: Statement Resolution - Resolve statements and detect contradictions
+      // const { resolvedStatements, invalidatedStatements } =
+      //   await this.resolveStatements(
+      //     extractedStatements,
+      //     episode,
+      //     resolvedNodes,
+      //   );
 
-      // Step 7: Role Assignment & Attribute Extraction - Extract additional attributes for nodes
-      const hydratedNodes = await this.extractAttributesFromNodes(
-        resolvedNodes,
-        episode,
-        previousEpisodes,
-      );
+      // // Step 7: Role Assignment & Attribute Extraction - Extract additional attributes for nodes
+      // const hydratedNodes = await this.extractAttributesFromNodes(
+      //   resolvedNodes,
+      //   episode,
+      //   previousEpisodes,
+      // );
 
       // Step 8: Generate embeddings for semantic search
       // Note: In this implementation, embeddings are generated during extraction
       // but could be moved to a separate step for clarity
 
       // Step 10: Save everything to HelixDB using the reified + temporal structure
-      await this.saveToHelixDB(
-        episode,
-        hydratedNodes,
-        resolvedStatements,
-        invalidatedStatements,
-      );
+      // await this.saveToHelixDB(
+      //   episode,
+      //   hydratedNodes,
+      //   resolvedStatements,
+      //   invalidatedStatements,
+      // );
 
       const endTime = Date.now();
       const processingTimeMs = endTime - startTime;
 
       return {
         episodeUuid: episode.uuid,
-        nodesCreated: hydratedNodes.length,
-        statementsCreated: resolvedStatements.length,
+        // nodesCreated: hydratedNodes.length,
+        // statementsCreated: resolvedStatements.length,
         processingTimeMs,
       };
     } catch (error) {
@@ -326,7 +324,7 @@ export class KnowledgeGraphService {
     extractedNodes: EntityNode[],
     episode: EpisodicNode,
     previousEpisodes: EpisodicNode[],
-  ): Promise<{ resolvedNodes: EntityNode[]; uuidMap: Map<string, string> }> {
+  ) {
     const uuidMap = new Map<string, string>();
 
     const existingNodesLists = await Promise.all(
@@ -655,19 +653,14 @@ export class KnowledgeGraphService {
 
     // Get the detect_contradiction prompt from the prompt library
     // The prompt should be updated to handle reified statements specifically
-    const messages =
-      promptLibrary.detectContradiction.detect_json.call(promptContext);
+
+    // promptLibrary.detectContradiction.detect_json.call(promptContext);
 
     let responseText = "";
 
-    await this.makeModelCall(
-      false,
-      LLMModelEnum.GPT41,
-      messages as CoreMessage[],
-      (text) => {
-        responseText = text;
-      },
-    );
+    await this.makeModelCall(false, LLMModelEnum.GPT41, [], (text) => {
+      responseText = text;
+    });
 
     try {
       const result = JSON.parse(responseText);
@@ -728,7 +721,7 @@ export class KnowledgeGraphService {
         name: episode.name,
         content: episode.content,
         source: episode.source,
-        sourceDescription: episode.sourceDescription,
+        // sourceDescription: episode.sourceDescription,
         userId: episode.userId || null,
         labels: episode.labels || [],
         createdAt: episode.createdAt.toISOString(),
@@ -755,15 +748,15 @@ export class KnowledgeGraphService {
         await helixClient.query("saveStatement", {
           uuid: triple.statement.uuid,
           fact: triple.statement.fact,
-          groupId: triple.statement.groupId,
+          // groupId: triple.statement.groupId,
           userId: triple.statement.userId || null,
           createdAt: triple.statement.createdAt.toISOString(),
           validAt: triple.statement.validAt.toISOString(),
           invalidAt: triple.statement.invalidAt
             ? triple.statement.invalidAt.toISOString()
             : null,
-          attributesJson: triple.statement.attributesJson,
-          embedding: triple.statement.embedding || [],
+          // attributesJson: triple.statement.attributesJson,
+          // embedding: triple.statement.embedding || [],
         });
 
         // Create HasSubject edge
@@ -804,13 +797,13 @@ export class KnowledgeGraphService {
         await helixClient.query("saveStatement", {
           uuid: triple.statement.uuid,
           fact: triple.statement.fact,
-          groupId: triple.statement.groupId,
+          // groupId: triple.statement.groupId,
           userId: triple.statement.userId || null,
           createdAt: triple.statement.createdAt.toISOString(),
           validAt: triple.statement.validAt.toISOString(),
-          invalidAt: triple.statement.invalidAt.toISOString(), // This will be the episode.validAt timestamp
-          attributesJson: triple.statement.attributesJson,
-          embedding: triple.statement.embedding || [],
+          // invalidAt: triple.statement.invalidAt.toISOString(), // This will be the episode.validAt timestamp
+          // attributesJson: triple.statement.attributesJson,
+          // embedding: triple.statement.embedding || [],
         });
       }
     } catch (error) {

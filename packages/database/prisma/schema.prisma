@@ -167,8 +167,8 @@ model IngestionQueue {
   id String @id @default(cuid())
 
   // Relations
-  space   Space  @relation(fields: [spaceId], references: [id])
-  spaceId String
+  space   Space?  @relation(fields: [spaceId], references: [id])
+  spaceId String?
 
   // Queue metadata
   data     Json // The actual data to be processed
