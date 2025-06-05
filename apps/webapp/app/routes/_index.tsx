@@ -1,4 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
+import { createPersonalAccessToken } from "~/services/personalAccessToken.server";
 
 export const meta: MetaFunction = () => {
   return [

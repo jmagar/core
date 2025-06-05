@@ -2,7 +2,6 @@ import { EpisodeType } from "@recall/types";
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { z } from "zod";
 import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
-import { KnowledgeGraphService } from "../services/knowledgeGraph.server";
 import { getUserQueue } from "~/lib/ingest.queue";
 import { prisma } from "~/db.server";
 import { IngestionStatus } from "@recall/database";

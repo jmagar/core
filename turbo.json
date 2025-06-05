@@ -3,21 +3,15 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": [ "^build" ],
-      "inputs": [ "$TURBO_DEFAULT$", ".env*" ],
-      "outputs": [
-        "dist/**",
-        "public/build/**",
-        "build/**",
-        "app/styles/tailwind.css",
-        ".cache"
-      ]
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", "public/build/**", "build/**", "app/styles/tailwind.css", ".cache"]
     },
     "lint": {
-      "dependsOn": [ "^lint" ]
+      "dependsOn": ["^lint"]
     },
     "check-types": {
-      "dependsOn": [ "^check-types" ]
+      "dependsOn": ["^check-types"]
     },
     "dev": {
       "cache": false
@@ -36,14 +30,10 @@
       "cache": false
     },
     "generate": {
-      "dependsOn": [
-        "^generate"
-      ]
+      "dependsOn": ["^generate"]
     }
   },
-  "globalDependencies": [
-    ".env"
-  ],
+  "globalDependencies": [".env"],
   "globalEnv": [
     "NODE_ENV",
     "REMIX_APP_PORT",
@@ -61,6 +51,10 @@
     "ENCRYPTION_KEY",
     "REDIS_HOST",
     "REDIS_PORT",
-    "REDIS_TLS_DISABLED"
+    "REDIS_TLS_DISABLED",
+    "NEO4J_URI",
+    "NEO4J_USERNAME",
+    "NEO4J_PASSWORD",
+    "OPENAI_API_KEY"
   ]
 }

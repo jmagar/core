@@ -31,9 +31,7 @@ export interface EntityClassification {
 /**
  * Extract entities from an episode using message-based approach
  */
-export const extract_message = (
-  context: Record<string, any>,
-): CoreMessage[] => {
+export const extractMessage = (context: Record<string, any>): CoreMessage[] => {
   const sysPrompt = `You are an AI assistant that extracts entity nodes from conversational messages for a reified knowledge graph.
 Your primary task is to extract and classify significant entities mentioned in the conversation.
 
@@ -82,7 +80,13 @@ ${JSON.stringify(context.previousEpisodes || [], null, 2)}
 
 <CURRENT EPISODE>
 ${context.episodeContent}
-</CURRENT EPISODE>`;
+</CURRENT EPISODE>
+
+<ENTITY_TYPES>
+${JSON.stringify(context.entityTypes || {}, null, 2)}
+</ENTITY_TYPES>
+
+`;
 
   return [
     { role: "system", content: sysPrompt },
@@ -93,15 +97,15 @@ ${context.episodeContent}
 /**
  * Extract entities from text-based content
  */
-export const extract_text = (context: Record<string, any>): CoreMessage[] => {
+export const extractText = (context: Record<string, any>): CoreMessage[] => {
   const sysPrompt = `
-  You are an AI assistant that extracts entity nodes from text for a reified knowledge graph.
+You are an AI assistant that extracts entity nodes from text for a reified knowledge graph.
 Your primary task is to extract and classify significant entities mentioned in the provided text.
 
 In a reified knowledge graph, we need to identify subject and object entities that will be connected through statements.
 Focus on extracting:
-1. Subject entities (people, objects, concepts)
-2. Object entities (people, objects, concepts)
+1. Subject entities
+2. Object entities 
 
 Instructions:
 
@@ -119,7 +123,7 @@ You are given a TEXT. Your task is to extract **entity nodes** mentioned **expli
    - Do NOT extract dates, times, or other temporal information—these will be handled separately.
 
 4. **Formatting**:
-   - Be **explicit and unambiguous** in naming entities (e.g., use full names when available).
+   - Be **explicit and unambiguous** when naming entities (e.g., use full names when available).
 
 
 Format your response as a JSON object with the following structure:
@@ -138,6 +142,10 @@ Format your response as a JSON object with the following structure:
 <TEXT>
 ${context.episodeContent}
 </TEXT>
+
+<ENTITY_TYPES>
+${JSON.stringify(context.entityTypes || {}, null, 2)}
+</ENTITY_TYPES>
 `;
 
   return [
@@ -149,7 +157,7 @@ ${context.episodeContent}
 /**
  * Extract entities from an episode using JSON-based approach
  */
-export const extract_json = (context: Record<string, any>): CoreMessage[] => {
+export const extractJson = (context: Record<string, any>): CoreMessage[] => {
   const sysPrompt = `You are an AI assistant that extracts entity nodes from text. 
 Your primary task is to extract and classify significant entities mentioned in the content.`;
 
@@ -183,72 +191,6 @@ ${context.customPrompt || ""}
   return [
     { role: "system", content: sysPrompt },
     { role: "user", content: userPrompt },
-  ];
-};
-
-/**
- * Check for missed entities
- */
-export const reflexion = (context: Record<string, any>): CoreMessage[] => {
-  const sysPrompt = `You are an AI assistant that determines which entities have not been extracted from the given context`;
-
-  const userPrompt = `
-<PREVIOUS EPISODES>
-${JSON.stringify(context.previousEpisodes || [], null, 2)}
-</PREVIOUS EPISODES>
-
-<CURRENT EPISODE>
-${context.episodeContent}
-</CURRENT EPISODE>
-
-<EXTRACTED ENTITIES>
-${JSON.stringify(context.extractedEntities || [], null, 2)}
-</EXTRACTED ENTITIES>
-
-Given the above previous episodes, current episode, and list of extracted entities; determine if any entities haven't been
-extracted. Respond with a JSON object containing a "missedEntities" array of strings.
-`;
-
-  return [
-    { role: "system", content: sysPrompt },
-    { role: "user", content: userPrompt },
-  ];
-};
-
-/**
- * Extract additional attributes for entities
- */
-export const extract_attributes = (
-  context: Record<string, any>,
-): CoreMessage[] => {
-  return [
-    {
-      role: "system",
-      content:
-        "You are a helpful assistant that extracts entity properties from the provided text.",
-    },
-    {
-      role: "user",
-      content: `
-<EPISODES>
-${JSON.stringify(context.previousEpisodes || [], null, 2)}
-${JSON.stringify(context.episodeContent, null, 2)}
-</EPISODES>
-
-Given the above EPISODES and the following ENTITY, update any of its attributes based on the information provided
-in EPISODES. Use the provided attribute descriptions to better understand how each attribute should be determined.
-
-Guidelines:
-1. Do not hallucinate entity property values if they cannot be found in the current context.
-2. Only use the provided EPISODES and ENTITY to set attribute values.
-3. The summary attribute represents a summary of the ENTITY, and should be updated with new information about the Entity from the EPISODES. 
-    Summaries must be no longer than 250 words.
-
-<ENTITY>
-${JSON.stringify(context.node, null, 2)}
-</ENTITY>
-`,
-    },
   ];
 };
 

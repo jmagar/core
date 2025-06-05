@@ -1,8 +1,2 @@
-/**
- * Exports for the prompts module
- */
-
-// Export types from individual prompt modules
-export { type ExtractedEntity, type ExtractedEntities } from "./nodes";
-export { type Edge, type ExtractedEdges } from "./extractEdges";
-export { type ContradictionResult } from "./contradiction";
+export * from "./nodes";
+export * from "./statements";

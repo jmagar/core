@@ -39,6 +39,14 @@ const EnvironmentSchema = z.object({
   REDIS_HOST: z.string().default("localhost"),
   REDIS_PORT: z.coerce.number().default(6379),
   REDIS_TLS_DISABLED: z.coerce.boolean().default(true),
+
+  //Neo4j
+  NEO4J_URI: z.string(),
+  NEO4J_USERNAME: z.string(),
+  NEO4J_PASSWORD: z.string(),
+
+  //OpenAI
+  OPENAI_API_KEY: z.string(),
 });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;

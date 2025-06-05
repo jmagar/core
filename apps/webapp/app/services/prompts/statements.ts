@@ -1,12 +1,12 @@
+import { type Triple } from "@recall/types";
 import { type CoreMessage } from "ai";
-import { type Triple } from "../knowledgeGraph.server";
 
 /**
  * Extract statements (triples) from episode content in a reified knowledge graph model
  * This function generates a prompt for LLM to extract subject-predicate-object statements
  * and represent them as first-class nodes with proper connections
  */
-export const extract_statements = (
+export const extractStatements = (
   context: Record<string, any>,
 ): CoreMessage[] => {
   return [
@@ -106,75 +106,11 @@ ${JSON.stringify(context.entities, null, 2)}
 };
 
 /**
- * Detect contradictions between statements in the knowledge graph
- */
-export const detect_contradictions = (
-  context: Record<string, any>,
-): CoreMessage[] => {
-  return [
-    {
-      role: "system",
-      content:
-        "You are a knowledge graph reasoning expert that identifies contradictions between statements. " +
-        "Your task is to analyze pairs of statements and determine if they contradict each other " +
-        "based on their temporal validity and factual content.",
-    },
-    {
-      role: "user",
-      content: `
-I need to detect contradictions between statements in a temporal knowledge graph.
-
-<NEW STATEMENT>
-${context.newStatement}
-</NEW STATEMENT>
-
-<EXISTING STATEMENTS>
-${JSON.stringify(context.existingStatements, null, 2)}
-</EXISTING STATEMENTS>
-
-<REFERENCE TIME>
-${context.referenceTime}
-</REFERENCE TIME>
-
-Determine if the NEW STATEMENT contradicts any of the EXISTING STATEMENTS.
-A contradiction occurs when:
-
-1. Two statements assert incompatible facts about the same subject-predicate pair
-2. The statements overlap in their temporal validity periods
-
-For example, if one statement says "John works at Company A from January 2023" and another says 
-"John works at Company B from March 2023", these would contradict if a person can only work at one 
-company at a time.
-
-Format your response as a JSON object with the following structure:
-{
-  "hasContradiction": true/false,
-  "contradictedStatements": [
-    {
-      "statementId": "[ID of the contradicted statement]",
-      "reason": "[Explanation of why these statements contradict]",
-      "temporalRelationship": "[overlapping/containing/contained/after/before]"
-    }
-  ]
-}
-
-Important guidelines:
-- Consider the temporal validity of statements
-- Only mark as contradictions if statements are truly incompatible
-- Provide clear reasoning for each identified contradiction
-- Consider the context and domain constraints
-- If no contradictions exist, return an empty contradictedStatements array
-`,
-    },
-  ];
-};
-
-/**
  * Analyze similar statements to determine duplications and contradictions
  * This prompt helps the LLM evaluate semantically similar statements found through vector search
  * to determine if they are duplicates or contradictions
  */
-export const resolve_statements = (
+export const resolveStatementPrompt = (
   context: Record<string, any>,
 ): CoreMessage[] => {
   return [
