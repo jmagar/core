@@ -1,15 +1,8 @@
 import { openai } from "@ai-sdk/openai";
-import {
-  type CoreMessage,
-  embed,
-  generateText,
-  type LanguageModelV1,
-  streamText,
-} from "ai";
+import { type CoreMessage, embed } from "ai";
 import {
   entityTypes,
   EpisodeType,
-  LLMMappings,
   LLMModelEnum,
   type AddEpisodeParams,
   type EntityNode,
@@ -33,6 +26,7 @@ import {
   invalidateStatements,
   saveTriple,
 } from "./graphModels/statement";
+import { makeModelCall } from "~/lib/model.server";
 
 // Default number of previous episodes to retrieve for context
 const DEFAULT_EPISODE_WINDOW = 5;
@@ -155,7 +149,7 @@ export class KnowledgeGraphService {
 
     let responseText = "";
 
-    await this.makeModelCall(
+    await makeModelCall(
       false,
       LLMModelEnum.GPT41,
       messages as CoreMessage[],
@@ -217,7 +211,7 @@ export class KnowledgeGraphService {
     const messages = extractStatements(context);
 
     let responseText = "";
-    await this.makeModelCall(
+    await makeModelCall(
       false,
       LLMModelEnum.GPT41,
       messages as CoreMessage[],
@@ -393,7 +387,7 @@ export class KnowledgeGraphService {
     const messages = dedupeNodes(dedupeContext);
     let responseText = "";
 
-    await this.makeModelCall(
+    await makeModelCall(
       false,
       LLMModelEnum.GPT41,
       messages as CoreMessage[],
@@ -583,7 +577,7 @@ export class KnowledgeGraphService {
       let responseText = "";
 
       // Call the LLM to analyze all statements at once
-      await this.makeModelCall(false, LLMModelEnum.GPT41, messages, (text) => {
+      await makeModelCall(false, LLMModelEnum.GPT41, messages, (text) => {
         responseText = text;
       });
 
@@ -658,63 +652,5 @@ export class KnowledgeGraphService {
     }
 
     return { resolvedStatements, invalidatedStatements };
-  }
-
-  private async makeModelCall(
-    stream: boolean,
-    model: LLMModelEnum,
-    messages: CoreMessage[],
-    onFinish: (text: string, model: string) => void,
-  ) {
-    let modelInstance;
-    let finalModel: string = "unknown";
-
-    switch (model) {
-      case LLMModelEnum.GPT35TURBO:
-      case LLMModelEnum.GPT4TURBO:
-      case LLMModelEnum.GPT4O:
-      case LLMModelEnum.GPT41:
-      case LLMModelEnum.GPT41MINI:
-      case LLMModelEnum.GPT41NANO:
-        finalModel = LLMMappings[model];
-        modelInstance = openai(finalModel);
-        break;
-
-      case LLMModelEnum.CLAUDEOPUS:
-      case LLMModelEnum.CLAUDESONNET:
-      case LLMModelEnum.CLAUDEHAIKU:
-        finalModel = LLMMappings[model];
-        break;
-
-      case LLMModelEnum.GEMINI25FLASH:
-      case LLMModelEnum.GEMINI25PRO:
-      case LLMModelEnum.GEMINI20FLASH:
-      case LLMModelEnum.GEMINI20FLASHLITE:
-        finalModel = LLMMappings[model];
-        break;
-
-      default:
-        logger.warn(`Unsupported model type: ${model}`);
-        break;
-    }
-
-    if (stream) {
-      return await streamText({
-        model: modelInstance as LanguageModelV1,
-        messages,
-        onFinish: async ({ text }) => {
-          onFinish(text, finalModel);
-        },
-      });
-    }
-
-    const { text } = await generateText({
-      model: modelInstance as LanguageModelV1,
-      messages,
-    });
-
-    onFinish(text, finalModel);
-
-    return text;
   }
 }

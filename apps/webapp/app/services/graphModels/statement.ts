@@ -17,7 +17,7 @@ export async function saveTriple(triple: Triple): Promise<string> {
         MERGE (n:Statement {uuid: $uuid, userId: $userId})
         ON CREATE SET
           n.fact = $fact,
-          n.embedding = $embedding,
+          n.factEmbedding = $factEmbedding,
           n.createdAt = $createdAt,
           n.validAt = $validAt,
           n.invalidAt = $invalidAt,
@@ -26,7 +26,7 @@ export async function saveTriple(triple: Triple): Promise<string> {
           n.space = $space
         ON MATCH SET
           n.fact = $fact,
-          n.embedding = $embedding,
+          n.factEmbedding = $factEmbedding,
           n.validAt = $validAt,
           n.invalidAt = $invalidAt,
           n.attributesJson = $attributesJson,
@@ -37,7 +37,7 @@ export async function saveTriple(triple: Triple): Promise<string> {
   const statementParams = {
     uuid: triple.statement.uuid,
     fact: triple.statement.fact,
-    embedding: triple.statement.factEmbedding,
+    factEmbedding: triple.statement.factEmbedding,
     createdAt: triple.statement.createdAt.toISOString(),
     validAt: triple.statement.validAt.toISOString(),
     invalidAt: triple.statement.invalidAt

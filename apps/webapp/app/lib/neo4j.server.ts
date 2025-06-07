@@ -46,28 +46,66 @@ const runQuery = async (cypher: string, params = {}) => {
 // Initialize the database schema
 const initializeSchema = async () => {
   try {
-    // Run schema setup queries
+    // Create constraints for unique IDs
+    await runQuery(
+      "CREATE CONSTRAINT episode_uuid IF NOT EXISTS FOR (n:Episode) REQUIRE n.uuid IS UNIQUE",
+    );
+    await runQuery(
+      "CREATE CONSTRAINT entity_uuid IF NOT EXISTS FOR (n:Entity) REQUIRE n.uuid IS UNIQUE",
+    );
+    await runQuery(
+      "CREATE CONSTRAINT statement_uuid IF NOT EXISTS FOR (n:Statement) REQUIRE n.uuid IS UNIQUE",
+    );
+
+    // Create indexes for better query performance
+    await runQuery(
+      "CREATE INDEX episode_valid_at IF NOT EXISTS FOR (n:Episode) ON (n.validAt)",
+    );
+    await runQuery(
+      "CREATE INDEX statement_valid_at IF NOT EXISTS FOR (n:Statement) ON (n.validAt)",
+    );
+    await runQuery(
+      "CREATE INDEX statement_invalid_at IF NOT EXISTS FOR (n:Statement) ON (n.invalidAt)",
+    );
+    await runQuery(
+      "CREATE INDEX entity_name IF NOT EXISTS FOR (n:Entity) ON (n.name)",
+    );
+
+    // Create vector indexes for semantic search (if using Neo4j 5.0+)
     await runQuery(`
-      // Create constraints for unique IDs
-      CREATE CONSTRAINT episode_uuid IF NOT EXISTS FOR (n:Episode) REQUIRE n.uuid IS UNIQUE;
-      CREATE CONSTRAINT entity_uuid IF NOT EXISTS FOR (n:Entity) REQUIRE n.uuid IS UNIQUE;
-      CREATE CONSTRAINT statement_uuid IF NOT EXISTS FOR (n:Statement) REQUIRE n.uuid IS UNIQUE;
-      
-      // Create indexes for better query performance
-      CREATE INDEX episode_valid_at IF NOT EXISTS FOR (n:Episode) ON (n.validAt);
-      CREATE INDEX statement_valid_at IF NOT EXISTS FOR (n:Statement) ON (n.validAt);
-      CREATE INDEX statement_invalid_at IF NOT EXISTS FOR (n:Statement) ON (n.invalidAt);
-      CREATE INDEX entity_name IF NOT EXISTS FOR (n:Entity) ON (n.name);
-      
-      // Create vector indexes for semantic search (if using Neo4j 5.0+)
       CREATE VECTOR INDEX entity_embedding IF NOT EXISTS FOR (n:Entity) ON n.nameEmbedding
-      OPTIONS {indexConfig: {dimensions: 1536, similarity: "cosine"}};
-      
+      OPTIONS {indexConfig: {\`vector.dimensions\`: 1536, \`vector.similarity_function\`: 'cosine'}}
+    `);
+
+    await runQuery(`
       CREATE VECTOR INDEX statement_embedding IF NOT EXISTS FOR (n:Statement) ON n.factEmbedding
-      OPTIONS {indexConfig: {dimensions: 1536, similarity: "cosine"}};
-      
+      OPTIONS {indexConfig: {\`vector.dimensions\`: 1536, \`vector.similarity_function\`: 'cosine'}}
+    `);
+
+    await runQuery(`
       CREATE VECTOR INDEX episode_embedding IF NOT EXISTS FOR (n:Episode) ON n.contentEmbedding
-      OPTIONS {indexConfig: {dimensions: 1536, similarity: "cosine"}};
+      OPTIONS {indexConfig: {\`vector.dimensions\`: 1536, \`vector.similarity_function\`: 'cosine'}}
+    `);
+
+    // Create fulltext indexes for BM25 search
+    await runQuery(`
+      CREATE FULLTEXT INDEX statement_fact_index IF NOT EXISTS
+      FOR (n:Statement) ON EACH [n.fact]
+      OPTIONS {
+        indexConfig: {
+          \`fulltext.analyzer\`: 'english'
+        }
+      }
+    `);
+
+    await runQuery(`
+      CREATE FULLTEXT INDEX entity_name_index IF NOT EXISTS
+      FOR (n:Entity) ON EACH [n.name, n.description]
+      OPTIONS {
+        indexConfig: {
+          \`fulltext.analyzer\`: 'english'
+        }
+      }
     `);
 
     logger.info("Neo4j schema initialized successfully");
@@ -83,5 +121,7 @@ const closeDriver = async () => {
   await driver.close();
   logger.info("Neo4j driver closed");
 };
+
+// await initializeSchema();
 
 export { driver, verifyConnectivity, runQuery, initializeSchema, closeDriver };

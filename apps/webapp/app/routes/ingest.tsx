@@ -1,5 +1,5 @@
 import { EpisodeType } from "@recall/types";
-import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { z } from "zod";
 import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
 import { getUserQueue } from "~/lib/ingest.queue";
