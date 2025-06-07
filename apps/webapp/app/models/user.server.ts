@@ -1,7 +1,7 @@
-import type { Prisma, User } from "@recall/database";
+import type { Prisma, User } from "@core/database";
 import type { GoogleProfile } from "@coji/remix-auth-google";
 import { prisma } from "~/db.server";
-export type { User } from "@recall/database";
+export type { User } from "@core/database";
 
 type FindOrCreateGoogle = {
   authenticationMethod: "GOOGLE";

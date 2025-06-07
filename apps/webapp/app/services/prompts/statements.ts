@@ -1,4 +1,4 @@
-import { type Triple } from "@recall/types";
+import { type Triple } from "@core/types";
 import { type CoreMessage } from "ai";
 
 /**

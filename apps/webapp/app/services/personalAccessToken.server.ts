@@ -1,4 +1,4 @@
-import { type PersonalAccessToken } from "@recall/database";
+import { type PersonalAccessToken } from "@core/database";
 import { customAlphabet, nanoid } from "nanoid";
 import nodeCrypto from "node:crypto";
 import { z } from "zod";

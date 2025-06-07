@@ -3,7 +3,7 @@ import type {
   EpisodicNode,
   StatementNode,
   Triple,
-} from "@recall/types";
+} from "@core/types";
 import { runQuery } from "~/lib/neo4j.server";
 import { saveEntity } from "./entity";
 import { saveEpisode } from "./episode";

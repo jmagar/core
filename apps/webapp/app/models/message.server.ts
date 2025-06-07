@@ -2,8 +2,9 @@ import {
   json,
   type Session,
   createCookieSessionStorage,
+  redirect,
 } from "@remix-run/node";
-import { redirect } from "remix-typedjson";
+
 import { env } from "~/env.server";
 import { createThemeSessionResolver } from "remix-themes";
 

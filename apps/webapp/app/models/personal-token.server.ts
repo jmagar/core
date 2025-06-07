@@ -1,4 +1,4 @@
-import { type PersonalAccessToken } from "@recall/database";
+import { type PersonalAccessToken } from "@core/database";
 import { prisma } from "~/db.server";
 import nodeCrypto from "node:crypto";
 import { z } from "zod";

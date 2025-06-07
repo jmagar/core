@@ -33,7 +33,7 @@ export function useTypedMatchesData<T = AppData>({
 }
 
 export function useTypedMatchData<T = AppData>(
-  match: UIMatch | undefined
+  match: UIMatch | undefined,
 ): UseDataFunctionReturn<T> | undefined {
   if (!match) {
     return undefined;

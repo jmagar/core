@@ -9,7 +9,7 @@ import {
   type EpisodicNode,
   type StatementNode,
   type Triple,
-} from "@recall/types";
+} from "@core/types";
 import { logger } from "./logger.service";
 import crypto from "crypto";
 import { dedupeNodes, extractMessage, extractText } from "./prompts/nodes";

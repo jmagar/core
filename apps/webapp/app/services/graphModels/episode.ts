@@ -1,5 +1,5 @@
 import { runQuery } from "~/lib/neo4j.server";
-import type { EpisodicNode } from "@recall/types";
+import type { EpisodicNode } from "@core/types";
 
 export async function saveEpisode(episode: EpisodicNode): Promise<string> {
   const query = `

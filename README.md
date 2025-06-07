@@ -1,11 +1,10 @@
-
 <div align="center">
   <a href="https://mysigma.ai">
-    <img src="https://github.com/user-attachments/assets/3ae051f7-e77b-42b3-91d2-af69888e4d3f" width="200px" alt="Recall logo" />
+    <img src="https://github.com/user-attachments/assets/3ae051f7-e77b-42b3-91d2-af69888e4d3f" width="200px" alt="CORE logo" />
   </a>
 </div>
 
-# Recall
+# CORE
 
 Simple memory management system for AI agents with per-space ingestion and search capabilities.
 

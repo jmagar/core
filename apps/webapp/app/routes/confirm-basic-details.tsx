@@ -1,0 +1,151 @@
+import { z } from "zod";
+import { useActionData } from "@remix-run/react";
+import { type ActionFunctionArgs, json } from "@remix-run/node";
+import { useForm } from "@conform-to/react";
+import { getFieldsetConstraint, parse } from "@conform-to/zod";
+import { LoginPageLayout } from "~/components/layout/LoginPageLayout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { Button } from "~/components/ui";
+import { Input } from "~/components/ui/input";
+import { useState } from "react";
+import { requireUserId } from "~/services/session.server";
+import { redirectWithSuccessMessage } from "~/models/message.server";
+import { rootPath } from "~/utils/pathBuilder";
+import { createWorkspace } from "~/models/workspace.server";
+
+const schema = z.object({
+  workspaceName: z
+    .string()
+    .min(3, "Your workspace name must be at least 3 characters")
+    .max(50),
+  workspaceSlug: z
+    .string()
+    .min(3, "Your workspace slug must be at least 3 characters")
+    .max(50),
+});
+
+export async function action({ request }: ActionFunctionArgs) {
+  const userId = await requireUserId(request);
+
+  const formData = await request.formData();
+  const submission = parse(formData, { schema });
+
+  if (!submission.value || submission.intent !== "submit") {
+    return json(submission);
+  }
+
+  const { workspaceSlug, workspaceName } = submission.value;
+
+  try {
+    await createWorkspace({
+      slug: workspaceSlug,
+      integrations: [],
+      name: workspaceName,
+      userId,
+    });
+
+    return redirectWithSuccessMessage(
+      rootPath(),
+      request,
+      "Your details have been updated.",
+    );
+  } catch (e: any) {
+    return json({ errors: { body: e.message } }, { status: 400 });
+  }
+}
+
+export default function ConfirmBasicDetails() {
+  const lastSubmission = useActionData<typeof action>();
+  const [selectedApps, setSelectedApps] = useState<string[]>([]);
+
+  const [form, fields] = useForm({
+    lastSubmission: lastSubmission as any,
+    constraint: getFieldsetConstraint(schema),
+    onValidate({ formData }) {
+      console.log(parse(formData, { schema }));
+      return parse(formData, { schema });
+    },
+    onSubmit(event, context) {
+      console.log(event);
+    },
+    defaultValue: {
+      integrations: [],
+    },
+  });
+
+  return (
+    <LoginPageLayout>
+      <Card className="min-w-[500px] rounded-lg p-3 pt-1">
+        <CardHeader className="flex flex-col items-start px-0">
+          <CardTitle className="px-0">Onboarding</CardTitle>
+          <CardDescription>
+            We just need you to confirm a couple of details, it'll only take a
+            minute.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="pt-2 text-base">
+          <form method="post" {...form.props}>
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="workspaceName"
+                  className="text-muted-foreground mb-1 block text-sm"
+                >
+                  Workspace Name
+                </label>
+                <Input
+                  type="text"
+                  id="workspaceName"
+                  placeholder="Workspace name"
+                  name={fields.workspaceName.name}
+                  className="mt-1 block w-full text-base"
+                />
+                {fields.workspaceName.error && (
+                  <div className="text-sm text-red-500">
+                    {fields.workspaceName.error}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="workspaceSlug"
+                  className="text-muted-foreground mb-1 block text-sm"
+                >
+                  Workspace Slug
+                </label>
+                <Input
+                  type="text"
+                  id="workspaceSlug"
+                  placeholder="Give unique workspace slug"
+                  name={fields.workspaceSlug.name}
+                  className="mt-1 block w-full text-base"
+                />
+                {fields.workspaceSlug.error && (
+                  <div className="text-sm text-red-500">
+                    {fields.workspaceSlug.error}
+                  </div>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                variant="secondary"
+                className="rounded-lg px-4 py-2"
+              >
+                Submit
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </LoginPageLayout>
+  );
+}

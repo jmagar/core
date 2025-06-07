@@ -5,7 +5,7 @@ import { useChanged } from "./useChanged";
 import { useTypedMatchesData } from "./useTypedMatchData";
 
 export function useIsImpersonating(matches?: UIMatch[]) {
-  const data = useTypedMatchesData<typeof orgLoader>({
+  const data = useTypedMatchesData({
     id: "routes/_app.workspace.$workspaceSlug",
     matches,
   });
@@ -25,7 +25,7 @@ export function useUser(matches?: UIMatch[]): User {
   const maybeUser = useOptionalUser(matches);
   if (!maybeUser) {
     throw new Error(
-      "No user found in root loader, but user is required by useUser. If user is optional, try useOptionalUser instead."
+      "No user found in root loader, but user is required by useUser. If user is optional, try useOptionalUser instead.",
     );
   }
   return maybeUser;

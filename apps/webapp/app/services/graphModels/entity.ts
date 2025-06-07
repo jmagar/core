@@ -1,4 +1,4 @@
-import type { EntityNode } from "@recall/types";
+import type { EntityNode } from "@core/types";
 import { runQuery } from "~/lib/neo4j.server";
 
 export async function saveEntity(entity: EntityNode): Promise<string> {

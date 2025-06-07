@@ -1,5 +1,5 @@
 {
-  "name": "recall",
+  "name": "core",
   "private": true,
   "workspaces":
   [ "apps/*", "packages/*" ]

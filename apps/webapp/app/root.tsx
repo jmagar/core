@@ -37,6 +37,7 @@ import { RouteErrorDisplay } from "./components/ErrorDisplay";
 import { themeSessionResolver } from "./services/sessionStorage.server";
 import {
   PreventFlashOnWrongTheme,
+  Theme,
   ThemeProvider,
   useTheme,
 } from "remix-themes";
@@ -53,6 +54,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return typedjson(
     {
+      user: await getUser(request),
       toastMessage,
       theme: getTheme(),
       posthogProjectKey,
@@ -67,7 +69,7 @@ export const meta: MetaFunction = ({ data }) => {
   const typedData = data as UseDataFunctionReturn<typeof loader>;
 
   return [
-    { title: `Recall${typedData && appEnvTitleTag(typedData.appEnv)}` },
+    { title: `CORE${typedData && appEnvTitleTag(typedData.appEnv)}` },
     {
       name: "viewport",
       content: "width=1024, initial-scale=1",
@@ -76,7 +78,7 @@ export const meta: MetaFunction = ({ data }) => {
       name: "robots",
       content:
         typeof window === "undefined" ||
-        window.location.hostname !== "recall.mysigma.ai"
+        window.location.hostname !== "core.mysigma.ai"
           ? "noindex, nofollow"
           : "index, follow",
     },
@@ -119,7 +121,7 @@ function App() {
           <Links />
           <PreventFlashOnWrongTheme ssrTheme={Boolean(theme)} />
         </head>
-        <body className="bg-background h-full overflow-hidden">
+        <body className="bg-background h-full overflow-hidden font-sans">
           <Outlet />
           <ScrollRestoration />
 
@@ -137,7 +139,7 @@ function App() {
 export default function AppWithProviders() {
   const data = useLoaderData<typeof loader>();
   return (
-    <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
+    <ThemeProvider specifiedTheme={Theme.LIGHT} themeAction="/action/set-theme">
       <App />
     </ThemeProvider>
   );

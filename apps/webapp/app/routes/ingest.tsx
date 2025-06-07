@@ -1,10 +1,10 @@
-import { EpisodeType } from "@recall/types";
-import { json } from "@remix-run/node";
+import { EpisodeType } from "@core/types";
+import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { z } from "zod";
 import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
 import { getUserQueue } from "~/lib/ingest.queue";
 import { prisma } from "~/db.server";
-import { IngestionStatus } from "@recall/database";
+import { IngestionStatus } from "@core/database";
 
 export const IngestBodyRequest = z.object({
   name: z.string(),

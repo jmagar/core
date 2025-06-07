@@ -6,7 +6,7 @@ import {
   type PrismaTransactionClient,
   type PrismaTransactionOptions,
   $transaction as transac,
-} from "@recall/database";
+} from "@core/database";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 import { env } from "./env.server";
@@ -214,7 +214,7 @@ function redactUrlSecrets(hrefOrUrl: string | URL) {
   return url.href;
 }
 
-export type { PrismaClient } from "@recall/database";
+export type { PrismaClient } from "@core/database";
 
 export const PrismaErrorSchema = z.object({
   code: z.string(),

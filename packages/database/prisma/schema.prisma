@@ -52,6 +52,8 @@ model Workspace {
   slug String  @unique
   icon String?
 
+  integrations String[]
+
   userId String? @unique
   user   User?   @relation(fields: [userId], references: [id])
 }
