@@ -1,18 +1,14 @@
 "use client";
 
 import { useState, useMemo, forwardRef } from "react";
-import { Graph, GraphRef } from "./graph";
+import { Graph, type GraphRef } from "./graph";
 import { GraphPopovers } from "./graph-popover";
 import type { RawTriplet, NodePopupContent, EdgePopupContent } from "./type";
-import { toGraphTriplets } from "./type";
+
 import { createLabelColorMap, getNodeColor } from "./node-colors";
 
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { useTheme } from "remix-themes";
+import { toGraphTriplets } from "./utils";
 
 interface GraphVisualizationProps {
   triplets: RawTriplet[];
@@ -29,7 +25,7 @@ export const GraphVisualization = forwardRef<GraphRef, GraphVisualizationProps>(
       width = window.innerWidth * 0.85,
       height = window.innerHeight * 0.85,
       zoomOnMount = true,
-      className = "border border-border rounded-md h-[85vh] overflow-hidden relative",
+      className = "rounded-md h-full overflow-hidden relative",
     },
     ref,
   ) => {
@@ -120,11 +116,12 @@ export const GraphVisualization = forwardRef<GraphRef, GraphVisualizationProps>(
       setShowNodePopup(false);
       setShowEdgePopup(false);
     };
+
     return (
       <div className={className}>
         {/* Entity Types Legend Button */}
         <div className="absolute top-4 left-4 z-50">
-          <HoverCard>
+          {/* <HoverCard>
             <HoverCardTrigger asChild>
               <button className="bg-primary/10 text-primary hover:bg-primary/20 rounded-md px-2.5 py-1 text-xs transition-colors">
                 Entity Types
@@ -151,7 +148,7 @@ export const GraphVisualization = forwardRef<GraphRef, GraphVisualizationProps>(
                 </div>
               </div>
             </HoverCardContent>
-          </HoverCard>
+          </HoverCard> */}
         </div>
 
         {triplets.length > 0 ? (

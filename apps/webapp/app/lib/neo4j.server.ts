@@ -1,4 +1,5 @@
 import neo4j from "neo4j-driver";
+import { type RawTriplet } from "~/components/graph/type";
 import { env } from "~/env.server";
 import { logger } from "~/services/logger.service";
 
@@ -17,6 +18,8 @@ const driver = neo4j.driver(
   },
 );
 
+let schemaInitialized = false;
+
 // Test the connection
 const verifyConnectivity = async () => {
   try {
@@ -28,7 +31,6 @@ const verifyConnectivity = async () => {
     return false;
   }
 };
-
 // Run a Cypher query
 const runQuery = async (cypher: string, params = {}) => {
   const session = driver.session();
@@ -43,9 +45,94 @@ const runQuery = async (cypher: string, params = {}) => {
   }
 };
 
+// Get all nodes and relationships for a user
+export const getAllNodesForUser = async (userId: string) => {
+  const session = driver.session();
+  try {
+    const result = await session.run(
+      `MATCH (n)-[r]->(m)
+       WHERE n.userId = $userId OR m.userId = $userId
+       RETURN n, r, m`,
+      { userId },
+    );
+    return result.records;
+  } catch (error) {
+    logger.error(`Error getting nodes for user ${userId}: ${error}`);
+    throw error;
+  } finally {
+    await session.close();
+  }
+};
+
+export const getNodeLinks = async (userId: string) => {
+  const result = await getAllNodesForUser(userId);
+  const triplets: RawTriplet[] = [];
+
+  result.forEach((record) => {
+    const sourceNode = record.get("n");
+    const targetNode = record.get("m");
+    const edge = record.get("r");
+    triplets.push({
+      sourceNode: {
+        uuid: sourceNode.identity.toString(),
+        labels: sourceNode.labels,
+        attributes: sourceNode.properties,
+        name: sourceNode.properties.name || "",
+        created_at: sourceNode.properties.created_at || "",
+        updated_at: sourceNode.properties.updated_at || "",
+      },
+      edge: {
+        uuid: edge.identity.toString(),
+        type: edge.type,
+        source_node_uuid: sourceNode.identity.toString(),
+        target_node_uuid: targetNode.identity.toString(),
+        name: edge.properties.name || "",
+        created_at: edge.properties.created_at || "",
+        updated_at: edge.properties.updated_at || "",
+      },
+      targetNode: {
+        uuid: targetNode.identity.toString(),
+        labels: targetNode.labels,
+        attributes: targetNode.properties,
+        name: targetNode.properties.name || "",
+        created_at: targetNode.properties.created_at || "",
+        updated_at: targetNode.properties.updated_at || "",
+      },
+    });
+  });
+
+  return triplets;
+};
+
+export async function initNeo4jSchemaOnce() {
+  if (schemaInitialized) return;
+
+  const session = driver.session();
+
+  try {
+    // Check if schema already exists
+    const result = await session.run(`
+      SHOW INDEXES YIELD name WHERE name = "entity_name" RETURN name
+    `);
+
+    if (result.records.length === 0) {
+      // Run your schema creation here (indexes, constraints, etc.)
+      await initializeSchema();
+    }
+
+    schemaInitialized = true;
+  } catch (e: any) {
+    logger.error("Error in initialising", e);
+  } finally {
+    await session.close();
+  }
+}
+
 // Initialize the database schema
 const initializeSchema = async () => {
   try {
+    logger.info("Initialising neo4j schema");
+
     // Create constraints for unique IDs
     await runQuery(
       "CREATE CONSTRAINT episode_uuid IF NOT EXISTS FOR (n:Episode) REQUIRE n.uuid IS UNIQUE",
@@ -121,7 +208,5 @@ const closeDriver = async () => {
   await driver.close();
   logger.info("Neo4j driver closed");
 };
-
-// await initializeSchema();
 
 export { driver, verifyConnectivity, runQuery, initializeSchema, closeDriver };

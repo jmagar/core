@@ -68,11 +68,7 @@ export default function ConfirmBasicDetails() {
     lastSubmission: lastSubmission as any,
     constraint: getFieldsetConstraint(schema),
     onValidate({ formData }) {
-      console.log(parse(formData, { schema }));
       return parse(formData, { schema });
-    },
-    onSubmit(event, context) {
-      console.log(event);
     },
     defaultValue: {
       integrations: [],

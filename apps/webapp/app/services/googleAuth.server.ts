@@ -25,8 +25,6 @@ export function addGoogleStrategy(
         throw new Error("Google login requires an email address");
       }
 
-      console.log(tokens);
-
       try {
         logger.debug("Google login", {
           emails,

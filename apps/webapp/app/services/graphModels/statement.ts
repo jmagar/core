@@ -266,7 +266,6 @@ export async function getTripleForStatement({
   // Episode might be null
   const provenance: EpisodicNode = {
     uuid: episodeProps.uuid,
-    name: episodeProps.name,
     content: episodeProps.content,
     source: episodeProps.source,
     type: episodeProps.type,

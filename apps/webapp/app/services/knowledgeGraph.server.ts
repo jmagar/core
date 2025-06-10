@@ -64,7 +64,6 @@ export class KnowledgeGraphService {
       // Step 2: Episode Creation - Create or retrieve the episode
       const episode: EpisodicNode = {
         uuid: crypto.randomUUID(),
-        name: params.name,
         content: params.episodeBody,
         source: params.source,
         type: params.type || EpisodeType.Text,
@@ -115,7 +114,7 @@ export class KnowledgeGraphService {
       return {
         episodeUuid: episode.uuid,
         // nodesCreated: hydratedNodes.length,
-        // statementsCreated: resolvedStatements.length,
+        statementsCreated: resolvedStatements.length,
         processingTimeMs,
       };
     } catch (error) {

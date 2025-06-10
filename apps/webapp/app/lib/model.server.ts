@@ -1,4 +1,4 @@
-import { LLMMappings, LLMModelEnum } from "@recall/types";
+import { LLMMappings, LLMModelEnum } from "@core/types";
 import {
   type CoreMessage,
   type LanguageModelV1,

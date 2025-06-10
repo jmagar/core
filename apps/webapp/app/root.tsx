@@ -1,6 +1,5 @@
 import {
   Links,
-  LiveReload,
   Meta,
   Outlet,
   Scripts,
@@ -42,6 +41,7 @@ import {
   useTheme,
 } from "remix-themes";
 import clsx from "clsx";
+import { initNeo4jSchemaOnce } from "./lib/neo4j.server";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
@@ -49,6 +49,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const session = await getSession(request.headers.get("cookie"));
   const toastMessage = session.get("toastMessage") as ToastMessage;
   const { getTheme } = await themeSessionResolver(request);
+
+  await initNeo4jSchemaOnce();
 
   const posthogProjectKey = env.POSTHOG_PROJECT_KEY;
 
@@ -126,7 +128,6 @@ function App() {
           <ScrollRestoration />
 
           <Scripts />
-          <LiveReload />
         </body>
       </html>
     </>

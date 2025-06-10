@@ -30,6 +30,10 @@ export const GENERAL_NODE_TYPES = {
     name: "Event",
     description: "A meeting, deadline, or any time-based occurrence",
   },
+  ALIAS: {
+    name: "Alias",
+    description: "An alternative name or identifier for an entity",
+  },
 } as const;
 
 // App-specific node types

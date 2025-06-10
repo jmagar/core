@@ -24,10 +24,13 @@ export const apiRateLimiter = authorizationRateLimitMiddleware({
     stale: 60_000 * 20, // Date is stale after 20 minutes
   },
   limiterConfigOverride: async (authorizationValue) => {
-    const authenticatedEnv = await authenticateAuthorizationHeader(authorizationValue, {
-      allowPublicKey: true,
-      allowJWT: true,
-    });
+    const authenticatedEnv = await authenticateAuthorizationHeader(
+      authorizationValue,
+      {
+        allowPublicKey: true,
+        allowJWT: true,
+      },
+    );
 
     if (!authenticatedEnv || !authenticatedEnv.ok) {
       return;
@@ -61,4 +64,6 @@ export const apiRateLimiter = authorizationRateLimitMiddleware({
   },
 });
 
-export type RateLimitMiddleware = ReturnType<typeof authorizationRateLimitMiddleware>;
+export type RateLimitMiddleware = ReturnType<
+  typeof authorizationRateLimitMiddleware
+>;

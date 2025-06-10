@@ -991,7 +991,7 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
       const svgElement = d3.select(svgRef.current);
 
       // Update background
-      svgElement.style("background-color", theme.background);
+      svgElement.style("background-color", "var(--background-3)");
 
       // Update nodes - use getNodeColor for proper color assignment
       svgElement

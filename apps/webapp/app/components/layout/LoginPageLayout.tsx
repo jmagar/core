@@ -6,13 +6,14 @@ export function LoginPageLayout({ children }: { children: React.ReactNode }) {
   const [, setTheme] = useTheme();
 
   return (
-    <div className="flex h-screen w-screen flex-col items-center justify-center">
-      <div className="text-foreground flex flex-col items-center pt-8 font-mono">
-        <Logo width={50} height={50} />
-        C.O.R.E
-      </div>
-
-      <div className="flex h-full flex-grow items-center justify-center">
+    <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+      <div className="flex w-full max-w-sm flex-col gap-6">
+        <a href="#" className="flex items-center gap-2 self-center font-medium">
+          <div className="bg-background-3 flex size-6 items-center justify-center rounded-md">
+            <Logo width={20} height={20} />
+          </div>
+          <div className="font-mono">C.O.R.E.</div>
+        </a>
         {children}
       </div>
     </div>

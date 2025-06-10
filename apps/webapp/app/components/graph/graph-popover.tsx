@@ -75,10 +75,11 @@ export function GraphPopovers({
     if (!nodePopupContent) {
       return [];
     }
+
     const entityProperties = Object.fromEntries(
-      Object.entries(nodePopupContent.node.attributes || {}).filter(
-        ([key]) => key !== "labels",
-      ),
+      Object.entries(nodePopupContent.node.attributes || {}).filter(([key]) => {
+        return key !== "labels" && !key.includes("Embedding");
+      }),
     );
 
     return Object.entries(entityProperties).map(([key, value]) => ({
@@ -181,24 +182,6 @@ export function GraphPopovers({
                   </div>
                 </div>
               )}
-
-              {nodePopupContent?.node.labels?.length ? (
-                <div className="border-border border-t pt-2">
-                  <p className="mb-1 text-sm font-medium text-black dark:text-white">
-                    Labels:
-                  </p>
-                  <div className="mt-1 flex flex-wrap gap-2">
-                    {nodePopupContent.node.labels.map((label) => (
-                      <span
-                        key={label}
-                        className="bg-muted rounded-md px-2 py-1 text-xs"
-                      >
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
             </div>
           </div>
         </PopoverContent>
@@ -215,7 +198,7 @@ export function GraphPopovers({
           sideOffset={5}
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <div className="bg-muted mb-4 rounded-md p-2">
+          <div className="bg-grayAlpha-100 mb-4 rounded-md p-2">
             <p className="text-sm break-all">
               {edgePopupContent?.source.name || "Unknown"} →{" "}
               <span className="font-medium">

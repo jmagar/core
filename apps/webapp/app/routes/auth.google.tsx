@@ -13,7 +13,6 @@ export let loader: LoaderFunction = async ({ request }) => {
   try {
     // call authenticate as usual, in successRedirect use returnTo or a fallback
     const rf = await authenticator.authenticate("google", request);
-    console.log(rf);
 
     return rf;
   } catch (error) {

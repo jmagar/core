@@ -20,7 +20,10 @@ const { action, loader } = createActionApiRoute(
     corsStrategy: "all",
   },
   async ({ body, authentication }) => {
-    const results = await searchService.search(body.query, authentication.userId);
+    const results = await searchService.search(
+      body.query,
+      authentication.userId,
+    );
     return json(results);
   },
 );

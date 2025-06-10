@@ -24,8 +24,8 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   server: {
+    middlewareMode: true,
     allowedHosts: true,
-    port: 3033,
   },
   ssr: {
     noExternal: ["helix-ts"],

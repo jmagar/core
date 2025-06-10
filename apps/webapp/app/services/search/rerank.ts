@@ -1,4 +1,4 @@
-import { LLMModelEnum, type StatementNode } from "@recall/types";
+import { LLMModelEnum, type StatementNode } from "@core/types";
 import { combineAndDeduplicateStatements } from "./utils";
 import { type CoreMessage } from "ai";
 import { makeModelCall } from "~/lib/model.server";

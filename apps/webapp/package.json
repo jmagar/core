@@ -54,7 +54,6 @@
     "cross-env": "^7.0.3",
     "d3": "^7.9.0",
     "dayjs": "^1.11.10",
-
     "express": "^4.18.1",
     "ioredis": "^5.6.1",
     "isbot": "^4.1.0",
@@ -72,6 +71,7 @@
     "remix-themes": "^1.3.1",
     "remix-typedjson": "0.3.1",
     "remix-utils": "^7.7.0",
+    "react-resizable-panels": "^1.0.9",
     "tailwind-merge": "^2.6.0",
     "tailwind-scrollbar-hide": "^2.0.0",
     "tailwindcss-animate": "^1.0.7",

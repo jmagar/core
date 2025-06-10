@@ -1,5 +1,5 @@
 import { openai } from "@ai-sdk/openai";
-import type { StatementNode } from "@recall/types";
+import type { StatementNode } from "@core/types";
 import { embed } from "ai";
 import { logger } from "./logger.service";
 import { applyCrossEncoderReranking, applyWeightedRRF } from "./search/rerank";

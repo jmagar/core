@@ -1,4 +1,4 @@
-import type { EntityNode, StatementNode } from "@recall/types";
+import type { EntityNode, StatementNode } from "@core/types";
 import type { SearchOptions } from "../search.server";
 import type { Embedding } from "ai";
 import { logger } from "../logger.service";
@@ -35,8 +35,7 @@ export async function performBM25Search(
     };
 
     const records = await runQuery(cypher, params);
-    // return records.map((record) => record.get("s").properties as StatementNode);
-    return [];
+    return records.map((record) => record.get("s").properties as StatementNode);
   } catch (error) {
     logger.error("BM25 search error:", { error });
     return [];
@@ -81,7 +80,7 @@ export async function performVectorSearch(
       WHERE 
         s.validAt <= $validAt 
         AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)
-        AND (s.userId = $userId OR s.isPublic = true)
+        AND (s.userId = $userId)
       WITH s, vector.similarity.cosine(s.factEmbedding, $embedding) AS score
       WHERE score > 0.7
       RETURN s, score
@@ -95,8 +94,7 @@ export async function performVectorSearch(
     };
 
     const records = await runQuery(cypher, params);
-    // return records.map((record) => record.get("s").properties as StatementNode);
-    return [];
+    return records.map((record) => record.get("s").properties as StatementNode);
   } catch (error) {
     logger.error("Vector search error:", { error });
     return [];

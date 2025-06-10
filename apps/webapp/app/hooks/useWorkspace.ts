@@ -1,13 +1,14 @@
 import { type Workspace } from "@core/database";
 import { type UIMatch } from "@remix-run/react";
-import { type loader } from "~/routes/_index";
+
 import { useTypedMatchesData } from "./useTypedMatchData";
+import { loader } from "~/routes/home";
 
 export function useOptionalWorkspace(
   matches?: UIMatch[],
 ): Workspace | undefined {
   const routeMatch = useTypedMatchesData<typeof loader>({
-    id: "routes/_index",
+    id: "routes/home",
     matches,
   }) as any;
 

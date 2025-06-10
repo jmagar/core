@@ -9,7 +9,6 @@ export enum EpisodeType {
  */
 export interface EpisodicNode {
   uuid: string;
-  name: string;
   content: string;
   contentEmbedding?: number[];
   type: string;
