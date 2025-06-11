@@ -4,30 +4,6 @@
 
 import { type CoreMessage } from "ai";
 
-export interface ExtractedEntity {
-  name: string;
-  type: string;
-  attributes?: Record<string, any>;
-}
-
-export interface ExtractedEntities {
-  entities: ExtractedEntity[];
-}
-
-export interface MissedEntities {
-  missedEntities: string[];
-}
-
-export interface EntityClassificationTriple {
-  uuid: string;
-  name: string;
-  type: string | null;
-}
-
-export interface EntityClassification {
-  entityClassifications: EntityClassificationTriple[];
-}
-
 /**
  * Extract entities from an episode using message-based approach
  */
@@ -47,10 +23,14 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
 1. **Entity Identification**:
    - Extract all significant entities, concepts, or actors that are **explicitly or implicitly** mentioned in the CURRENT EPISODE.
    - **Exclude** entities mentioned only in the PREVIOUS EPISODES (they are for context only).
+   - For identity statements like "I am X" or "I'm X", extract BOTH the pronoun ("I") as a Alias entity AND the named entity (X).
+   - For pronouns that refer to named entities, extract them as separate Alias entities.
+
 
 2. **Entity Classification**:
    - Use the descriptions in ENTITY TYPES to classify each extracted entity.
    - Assign the appropriate type for each one.
+   - Classify pronouns (I, me, you, etc.) as Alias entities.
 
 3. **Exclusions**:
    - Do NOT extract entities representing relationships or actions (predicates will be handled separately).
@@ -58,6 +38,7 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
 
 4. **Formatting**:
    - Be **explicit and unambiguous** in naming entities (e.g., use full names when available).
+   - For pronouns, use the exact form as they appear in the text (e.g., "I", "me", "you").
 
 
 Format your response as a JSON object with the following structure:
@@ -113,10 +94,13 @@ You are given a TEXT. Your task is to extract **entity nodes** mentioned **expli
 
 1. **Entity Identification**:
    - Extract all significant entities, concepts, or actors that are **explicitly or implicitly** mentioned in the TEXT.
+   - For identity statements like "I am X" or "I'm X", extract BOTH the pronoun ("I") as a Alias entity AND the named entity (X).
+   - For pronouns that refer to named entities, extract them as separate Alias entities.
 
 2. **Entity Classification**:
    - Use the descriptions in ENTITY TYPES to classify each extracted entity.
    - Assign the appropriate type for each one.
+   - Classify pronouns (I, me, you, etc.) as Alias entities.
 
 3. **Exclusions**:
    - Do NOT extract entities representing relationships or actions (predicates will be handled separately).
@@ -124,7 +108,7 @@ You are given a TEXT. Your task is to extract **entity nodes** mentioned **expli
 
 4. **Formatting**:
    - Be **explicit and unambiguous** when naming entities (e.g., use full names when available).
-
+   - For pronouns, use the exact form as they appear in the text (e.g., "I", "me", "you").
 
 Format your response as a JSON object with the following structure:
 <output>

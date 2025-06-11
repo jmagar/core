@@ -4,6 +4,7 @@ import { embed } from "ai";
 import { logger } from "./logger.service";
 import { applyCrossEncoderReranking, applyWeightedRRF } from "./search/rerank";
 import {
+  getEpisodesByStatements,
   performBfsSearch,
   performBM25Search,
   performVectorSearch,
@@ -34,7 +35,7 @@ export class SearchService {
     query: string,
     userId: string,
     options: SearchOptions = {},
-  ): Promise<string[]> {
+  ): Promise<{ episodes: string[]; facts: string[] }> {
     // Default options
     const opts: Required<SearchOptions> = {
       limit: options.limit || 10,
@@ -71,7 +72,11 @@ export class SearchService {
     const filteredResults = this.applyAdaptiveFiltering(rankedStatements, opts);
 
     // 3. Return top results
-    return filteredResults.map((statement) => statement.fact);
+    const episodes = await getEpisodesByStatements(filteredResults);
+    return {
+      episodes: episodes.map((episode) => episode.content),
+      facts: filteredResults.map((statement) => statement.fact),
+    };
   }
 
   /**
@@ -84,12 +89,14 @@ export class SearchService {
   ): StatementNode[] {
     if (results.length === 0) return [];
 
+    let isRRF = false;
     // Extract scores from results
     const scoredResults = results.map((result) => {
       // Find the score based on reranking strategy used
       let score = 0;
       if ((result as any).rrfScore !== undefined) {
         score = (result as any).rrfScore;
+        isRRF = true;
       } else if ((result as any).mmrScore !== undefined) {
         score = (result as any).mmrScore;
       } else if ((result as any).crossEncoderScore !== undefined) {
@@ -117,16 +124,31 @@ export class SearchService {
     const minScore = Math.min(...scores);
     const scoreRange = maxScore - minScore;
 
-    // Define a minimum quality threshold as a fraction of the best score
-    // This is relative to the query's score distribution rather than an absolute value
-    const relativeThreshold = options.scoreThreshold || 0.3; // 30% of the best score by default
-    const absoluteMinimum = 0.1; // Absolute minimum threshold to prevent keeping very poor matches
+    let threshold = 0;
+    if (isRRF || scoreRange < 0.01) {
+      // For RRF or other compressed score ranges, use a percentile-based approach
+      // Keep top 70% (or whatever is specified in options) of results
+      const keepPercentage = 1 - (options.scoreThreshold || 0.3);
+      const keepCount = Math.max(
+        1,
+        Math.ceil(scoredResults.length * keepPercentage),
+      );
 
-    // Calculate the actual threshold as a percentage of the distance from min to max score
-    const threshold = Math.max(
-      absoluteMinimum,
-      minScore + scoreRange * relativeThreshold,
-    );
+      // Set threshold to the score of the last item we want to keep
+      threshold =
+        keepCount < scoredResults.length
+          ? scoredResults[keepCount - 1].score
+          : 0;
+    } else {
+      // For normal score distributions, use the relative threshold approach
+      const relativeThreshold = options.scoreThreshold || 0.3;
+      const absoluteMinimum = 0.1;
+
+      threshold = Math.max(
+        absoluteMinimum,
+        minScore + scoreRange * relativeThreshold,
+      );
+    }
 
     // Filter out low-quality results
     const filteredResults = scoredResults

@@ -1,4 +1,4 @@
-import type { EntityNode, StatementNode } from "@core/types";
+import type { EntityNode, StatementNode, EpisodicNode } from "@core/types";
 import type { SearchOptions } from "../search.server";
 import type { Embedding } from "ai";
 import { logger } from "../logger.service";
@@ -218,4 +218,21 @@ export function combineAndDeduplicateStatements(
       statements.map((statement) => [statement.uuid, statement]),
     ).values(),
   );
+}
+
+export async function getEpisodesByStatements(
+  statements: StatementNode[],
+): Promise<EpisodicNode[]> {
+  const cypher = `
+    MATCH (s:Statement)<-[:HAS_PROVENANCE]-(e:Episode)
+    WHERE s.uuid IN $statementUuids
+    RETURN distinct e
+  `;
+
+  const params = {
+    statementUuids: statements.map((s) => s.uuid),
+  };
+
+  const records = await runQuery(cypher, params);
+  return records.map((record) => record.get("e").properties as EpisodicNode);
 }

@@ -64,10 +64,14 @@ export async function saveTriple(triple: Triple): Promise<string> {
   MATCH (object:Entity {uuid: $objectUuid, userId: $userId})
   MATCH (episode:Episode {uuid: $episodeUuid, userId: $userId})
   
-  CREATE (episode)-[:HAS_PROVENANCE {uuid: $provenanceEdgeUuid, createdAt: $createdAt}]->(statement)
-  CREATE (statement)-[:HAS_SUBJECT {uuid: $subjectEdgeUuid, createdAt: $createdAt}]->(subject)
-  CREATE (statement)-[:HAS_PREDICATE {uuid: $predicateEdgeUuid, createdAt: $createdAt}]->(predicate)
-  CREATE (statement)-[:HAS_OBJECT {uuid: $objectEdgeUuid, createdAt: $createdAt}]->(object)
+  MERGE (episode)-[prov:HAS_PROVENANCE]->(statement)
+    ON CREATE SET prov.uuid = $provenanceEdgeUuid, prov.createdAt = $createdAt
+  MERGE (statement)-[subj:HAS_SUBJECT]->(subject)
+    ON CREATE SET subj.uuid = $subjectEdgeUuid, subj.createdAt = $createdAt
+  MERGE (statement)-[pred:HAS_PREDICATE]->(predicate)
+    ON CREATE SET pred.uuid = $predicateEdgeUuid, pred.createdAt = $createdAt
+  MERGE (statement)-[obj:HAS_OBJECT]->(object)
+    ON CREATE SET obj.uuid = $objectEdgeUuid, obj.createdAt = $createdAt
   
   RETURN statement.uuid as uuid
   `;
@@ -267,6 +271,7 @@ export async function getTripleForStatement({
   const provenance: EpisodicNode = {
     uuid: episodeProps.uuid,
     content: episodeProps.content,
+    originalContent: episodeProps.originalContent,
     source: episodeProps.source,
     type: episodeProps.type,
     createdAt: new Date(episodeProps.createdAt),

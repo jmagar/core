@@ -1,7 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { type CoreMessage, embed } from "ai";
 import {
-  entityTypes,
   EpisodeType,
   LLMModelEnum,
   type AddEpisodeParams,
@@ -27,6 +26,8 @@ import {
   saveTriple,
 } from "./graphModels/statement";
 import { makeModelCall } from "~/lib/model.server";
+import { Apps, getNodeTypes, getNodeTypesString } from "~/utils/presets/nodes";
+import { normalizePrompt } from "./prompts";
 
 // Default number of previous episodes to retrieve for context
 const DEFAULT_EPISODE_WINDOW = 5;
@@ -61,10 +62,16 @@ export class KnowledgeGraphService {
         source: params.source,
       });
 
+      const normalizedEpisodeBody = await this.normalizeEpisodeBody(
+        params.episodeBody,
+        params.source,
+      );
+
       // Step 2: Episode Creation - Create or retrieve the episode
       const episode: EpisodicNode = {
         uuid: crypto.randomUUID(),
-        content: params.episodeBody,
+        content: normalizedEpisodeBody,
+        originalContent: params.episodeBody,
         source: params.source,
         type: params.type || EpisodeType.Text,
         createdAt: now,
@@ -130,6 +137,12 @@ export class KnowledgeGraphService {
     episode: EpisodicNode,
     previousEpisodes: EpisodicNode[],
   ): Promise<EntityNode[]> {
+    // Get all app keys
+    const allAppEnumValues = Object.values(Apps);
+
+    // Get all node types
+    const entityTypes = getNodeTypes(allAppEnumValues);
+
     // Use the prompt library to get the appropriate prompts
     const context = {
       episodeContent: episode.content,
@@ -172,7 +185,9 @@ export class KnowledgeGraphService {
             name: entity.name,
             type: entity.type,
             attributes: entity.attributes || {},
-            nameEmbedding: await this.getEmbedding(entity.name),
+            nameEmbedding: await this.getEmbedding(
+              `${entity.type}: ${entity.name}`,
+            ),
             createdAt: new Date(),
             userId: episode.userId,
           })),
@@ -651,5 +666,36 @@ export class KnowledgeGraphService {
     }
 
     return { resolvedStatements, invalidatedStatements };
+  }
+
+  /**
+   * Normalize an episode by extracting entities and creating nodes and statements
+   */
+  private async normalizeEpisodeBody(episodeBody: string, source: string) {
+    let appEnumValues: Apps[] = [];
+    if (Apps[source.toUpperCase() as keyof typeof Apps]) {
+      appEnumValues = [Apps[source.toUpperCase() as keyof typeof Apps]];
+    }
+    const entityTypes = getNodeTypesString(appEnumValues);
+
+    const context = {
+      episodeContent: episodeBody,
+      entityTypes: entityTypes,
+      source,
+    };
+    const messages = normalizePrompt(context);
+    let responseText = "";
+    await makeModelCall(false, LLMModelEnum.GPT41, messages, (text) => {
+      responseText = text;
+    });
+    let normalizedEpisodeBody = "";
+    const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
+    if (outputMatch && outputMatch[1]) {
+      normalizedEpisodeBody = outputMatch[1].trim();
+    } else {
+      normalizedEpisodeBody = episodeBody;
+    }
+
+    return normalizedEpisodeBody;
   }
 }

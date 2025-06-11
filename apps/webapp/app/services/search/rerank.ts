@@ -89,7 +89,7 @@ export async function applyCrossEncoderReranking(
         {
           role: "system",
           content: `You are an expert tasked with determining whether the statement is relevant to the query
-            Respond with "True" if PASSAGE is relevant to QUERY and "False" otherwise.`,
+            Respond with "True" if STATEMENT is relevant to QUERY and "False" otherwise.`,
         },
         {
           role: "user",

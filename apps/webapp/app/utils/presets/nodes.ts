@@ -1,11 +1,13 @@
 export enum Apps {
   LINEAR = "LINEAR",
   SLACK = "SLACK",
+  SOL = "SOL",
 }
 
 export const AppNames = {
   [Apps.LINEAR]: "Linear",
   [Apps.SLACK]: "Slack",
+  [Apps.SOL]: "Sol",
 } as const;
 
 // General node types that are common across all apps
@@ -38,6 +40,33 @@ export const GENERAL_NODE_TYPES = {
 
 // App-specific node types
 export const APP_NODE_TYPES = {
+  [Apps.SOL]: {
+    TASK: {
+      name: "Sol Task",
+      description:
+        "An independent unit of work in Sol, such as a task, bug report, or feature request. Tasks can be associated with lists or linked as subtasks to other tasks.",
+    },
+    LIST: {
+      name: "Sol List",
+      description:
+        "A flexible container in Sol for organizing content such as tasks, text, or references. Lists are used for task tracking, information collections, or reference materials.",
+    },
+    PREFERENCE: {
+      name: "Sol Preference",
+      description:
+        "A user-stated intent, setting, or configuration in Sol, such as preferred formats, notification settings, timezones, or other customizations. Preferences reflect how a user wants the system to behave.",
+    },
+    COMMAND: {
+      name: "Sol Command",
+      description:
+        "A user-issued command or trigger phrase, often starting with '/' or '@', that directs the system or an app to perform a specific action. Commands should always be extracted as distinct, important user actions.",
+    },
+    AUTOMATION: {
+      name: "Sol Automation",
+      description:
+        "A workflow or rule in Sol that automatically performs actions based on specific conditions or triggers, such as recurring tasks, reminders, or integrations with other systems.",
+    },
+  },
   [Apps.LINEAR]: {
     ISSUE: {
       name: "Linear Issue",
@@ -101,4 +130,34 @@ export function getNodeTypes(apps: Array<keyof typeof APP_NODE_TYPES>) {
     general: GENERAL_NODE_TYPES,
     appSpecific: appSpecificTypes,
   };
+}
+
+export function getNodeTypesString(apps: Array<keyof typeof APP_NODE_TYPES>) {
+  let nodeTypesString = "";
+  const generalTypes = Object.entries(GENERAL_NODE_TYPES)
+    .map(([key, value]) => {
+      return `- ${key}: "${value.description}"`;
+    })
+    .join("\n");
+  nodeTypesString += `General Node Types:\n${generalTypes}\n\n`;
+
+  const appSpecificTypes = apps.reduce((acc, appName) => {
+    return {
+      ...acc,
+      [appName]: APP_NODE_TYPES[appName],
+    };
+  }, {});
+
+  const appSpecificTypesString = Object.entries(appSpecificTypes)
+    .map(([appName, types]) => {
+      return `For ${appName}:\n${Object.entries(types as any)
+        .map(([key, value]: any) => {
+          return `- ${key}: "${value.description}"`;
+        })
+        .join("\n")}\n\n`;
+    })
+    .join("\n\n");
+
+  nodeTypesString += `App-specific Node Types:\n${appSpecificTypesString}`;
+  return nodeTypesString;
 }

@@ -6,6 +6,7 @@ export async function saveEpisode(episode: EpisodicNode): Promise<string> {
     MERGE (e:Episode {uuid: $uuid})
     ON CREATE SET
       e.content = $content,
+      e.originalContent = $originalContent,
       e.contentEmbedding = $contentEmbedding,
       e.type = $type,
       e.source = $source,
@@ -18,6 +19,7 @@ export async function saveEpisode(episode: EpisodicNode): Promise<string> {
     ON MATCH SET
       e.content = $content,
       e.contentEmbedding = $contentEmbedding,
+      e.originalContent = $originalContent,
       e.type = $type,
       e.source = $source,
       e.validAt = $validAt,
@@ -30,6 +32,7 @@ export async function saveEpisode(episode: EpisodicNode): Promise<string> {
   const params = {
     uuid: episode.uuid,
     content: episode.content,
+    originalContent: episode.originalContent,
     source: episode.source,
     type: episode.type,
     userId: episode.userId || null,
@@ -59,6 +62,7 @@ export async function getEpisode(uuid: string): Promise<EpisodicNode | null> {
   return {
     uuid: episode.uuid,
     content: episode.content,
+    originalContent: episode.originalContent,
     contentEmbedding: episode.contentEmbedding,
     type: episode.type,
     source: episode.source,
@@ -112,6 +116,7 @@ export async function getRecentEpisodes(params: {
     return {
       uuid: episode.uuid,
       content: episode.content,
+      originalContent: episode.originalContent,
       contentEmbedding: episode.contentEmbedding,
       type: episode.type,
       source: episode.source,
