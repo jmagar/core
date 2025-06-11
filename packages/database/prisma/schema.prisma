@@ -61,6 +61,7 @@ model Workspace {
 
 enum AuthenticationMethod {
   GOOGLE
+  MAGIC_LINK
 }
 
 /// Used to generate PersonalAccessTokens, they're one-time use

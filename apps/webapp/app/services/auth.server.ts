@@ -1,9 +1,11 @@
 import { Authenticator } from "remix-auth";
+
 import type { AuthUser } from "./authUser";
 
 import { addGoogleStrategy } from "./googleAuth.server";
 
 import { env } from "~/env.server";
+import { addEmailLinkStrategy } from "./emailAuth.server";
 
 // Create an instance of the authenticator, pass a generic with what
 // strategies will return and will store in the session
@@ -19,6 +21,10 @@ if (env.AUTH_GOOGLE_CLIENT_ID && env.AUTH_GOOGLE_CLIENT_SECRET) {
     env.AUTH_GOOGLE_CLIENT_ID,
     env.AUTH_GOOGLE_CLIENT_SECRET,
   );
+}
+
+if (env.NODE_ENV === "development") {
+  addEmailLinkStrategy(authenticator);
 }
 
 export { authenticator, isGoogleAuthSupported };

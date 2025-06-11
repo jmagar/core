@@ -1,7 +1,13 @@
 import type { Prisma, User } from "@core/database";
 import type { GoogleProfile } from "@coji/remix-auth-google";
 import { prisma } from "~/db.server";
+import { env } from "~/env.server";
 export type { User } from "@core/database";
+
+type FindOrCreateMagicLink = {
+  authenticationMethod: "MAGIC_LINK";
+  email: string;
+};
 
 type FindOrCreateGoogle = {
   authenticationMethod: "GOOGLE";
@@ -10,7 +16,7 @@ type FindOrCreateGoogle = {
   authenticationExtraParams: Record<string, unknown>;
 };
 
-type FindOrCreateUser = FindOrCreateGoogle;
+type FindOrCreateUser = FindOrCreateMagicLink | FindOrCreateGoogle;
 
 type LoggedInUser = {
   user: User;
@@ -20,7 +26,55 @@ type LoggedInUser = {
 export async function findOrCreateUser(
   input: FindOrCreateUser,
 ): Promise<LoggedInUser> {
-  return findOrCreateGoogleUser(input);
+  switch (input.authenticationMethod) {
+    case "GOOGLE": {
+      return findOrCreateGoogleUser(input);
+    }
+    case "MAGIC_LINK": {
+      return findOrCreateMagicLinkUser(input);
+    }
+  }
+}
+
+export async function findOrCreateMagicLinkUser(
+  input: FindOrCreateMagicLink,
+): Promise<LoggedInUser> {
+  if (
+    env.WHITELISTED_EMAILS &&
+    !new RegExp(env.WHITELISTED_EMAILS).test(input.email)
+  ) {
+    throw new Error("This email is unauthorized");
+  }
+
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      email: input.email,
+    },
+  });
+
+  const adminEmailRegex = env.ADMIN_EMAILS
+    ? new RegExp(env.ADMIN_EMAILS)
+    : undefined;
+  const makeAdmin = adminEmailRegex ? adminEmailRegex.test(input.email) : false;
+
+  const user = await prisma.user.upsert({
+    where: {
+      email: input.email,
+    },
+    update: {
+      email: input.email,
+    },
+    create: {
+      email: input.email,
+      authenticationMethod: "MAGIC_LINK",
+      admin: makeAdmin, // only on create, to prevent automatically removing existing admins
+    },
+  });
+
+  return {
+    user,
+    isNewUser: !existingUser,
+  };
 }
 
 export async function findOrCreateGoogleUser({

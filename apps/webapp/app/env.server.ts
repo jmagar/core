@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidDatabaseUrl } from "./utils/db";
+import { isValidRegex } from "./utils/regex";
 
 const EnvironmentSchema = z.object({
   NODE_ENV: z.union([
@@ -25,6 +26,15 @@ const EnvironmentSchema = z.object({
   DATABASE_READ_REPLICA_URL: z.string().optional(),
   SESSION_SECRET: z.string(),
   ENCRYPTION_KEY: z.string(),
+  MAGIC_LINK_SECRET: z.string(),
+  WHITELISTED_EMAILS: z
+    .string()
+    .refine(isValidRegex, "WHITELISTED_EMAILS must be a valid regex.")
+    .optional(),
+  ADMIN_EMAILS: z
+    .string()
+    .refine(isValidRegex, "ADMIN_EMAILS must be a valid regex.")
+    .optional(),
 
   APP_ENV: z.string().default(process.env.NODE_ENV),
   LOGIN_ORIGIN: z.string().default("http://localhost:5173"),
@@ -47,6 +57,16 @@ const EnvironmentSchema = z.object({
 
   //OpenAI
   OPENAI_API_KEY: z.string(),
+
+  EMAIL_TRANSPORT: z.enum(["resend", "smtp", "aws-ses"]).optional(),
+  FROM_EMAIL: z.string().optional(),
+  REPLY_TO_EMAIL: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().optional(),
+  SMTP_SECURE: z.coerce.boolean().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
 });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;

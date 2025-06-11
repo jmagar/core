@@ -5,7 +5,7 @@ import { Graph, type GraphRef } from "./graph";
 import { GraphPopovers } from "./graph-popover";
 import type { RawTriplet, NodePopupContent, EdgePopupContent } from "./type";
 
-import { createLabelColorMap, getNodeColor } from "./node-colors";
+import { createLabelColorMap } from "./node-colors";
 
 import { useTheme } from "remix-themes";
 import { toGraphTriplets } from "./utils";

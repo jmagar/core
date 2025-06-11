@@ -2,7 +2,7 @@ import { type Workspace } from "@core/database";
 import { type UIMatch } from "@remix-run/react";
 
 import { useTypedMatchesData } from "./useTypedMatchData";
-import { loader } from "~/routes/home";
+import { type loader } from "~/routes/home";
 
 export function useOptionalWorkspace(
   matches?: UIMatch[],
