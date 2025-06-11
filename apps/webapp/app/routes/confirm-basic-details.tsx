@@ -62,7 +62,6 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function ConfirmBasicDetails() {
   const lastSubmission = useActionData<typeof action>();
-  const [selectedApps, setSelectedApps] = useState<string[]>([]);
 
   const [form, fields] = useForm({
     lastSubmission: lastSubmission as any,

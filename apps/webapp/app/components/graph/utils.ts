@@ -16,8 +16,7 @@ export function toGraphNode(node: Node): GraphNode {
     value: node.name,
     uuid: node.uuid,
     name: node.name,
-    created_at: node.created_at,
-    updated_at: node.updated_at,
+    createdAt: node.createdAt,
     attributes: node.attributes,
     summary: node.summary,
     labels: node.labels,
@@ -28,7 +27,7 @@ export function toGraphNode(node: Node): GraphNode {
 export function toGraphEdge(edge: Edge): GraphEdge {
   return {
     id: edge.uuid,
-    value: edge.name,
+    value: edge.type,
     ...edge,
   };
 }
@@ -90,9 +89,8 @@ export function createTriplets(edges: Edge[], nodes: Node[]): RawTriplet[] {
       target_node_uuid: node.uuid,
       // Use a special type that we can filter out in the Graph component
       type: "_isolated_node_",
-      name: "", // Empty name so it doesn't show a label
-      created_at: node.created_at,
-      updated_at: node.updated_at,
+
+      createdAt: node.createdAt,
     };
 
     return {

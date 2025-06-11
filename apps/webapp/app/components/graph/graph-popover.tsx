@@ -114,31 +114,8 @@ export function GraphPopovers({
               )}
             </div>
             <div className="space-y-3">
-              <p className="text-muted-foreground text-sm break-all">
-                <span className="mr-2 text-sm font-medium text-black dark:text-white">
-                  Name:
-                </span>
-                {nodePopupContent?.node.name || "Unknown"}
-              </p>
-              <p className="text-muted-foreground text-sm break-words">
-                <span className="mr-2 text-sm font-medium text-black dark:text-white">
-                  UUID:
-                </span>
-                {nodePopupContent?.node.uuid || "Unknown"}
-              </p>
-              <p className="text-muted-foreground text-sm break-words">
-                <span className="mr-2 text-sm font-medium text-black dark:text-white">
-                  Created:
-                </span>
-                {nodePopupContent?.node.created_at &&
-                  formatDate(nodePopupContent?.node.created_at)}
-              </p>
-
               {attributesToDisplay.length > 0 && (
-                <div className="border-border border-t pt-2">
-                  <p className="mb-2 text-sm font-medium text-black dark:text-white">
-                    Properties:
-                  </p>
+                <div>
                   <div className="space-y-1.5">
                     {attributesToDisplay.map(({ key, value }) => (
                       <p key={key} className="text-sm">
@@ -152,33 +129,6 @@ export function GraphPopovers({
                         </span>
                       </p>
                     ))}
-                  </div>
-                </div>
-              )}
-
-              {nodePopupContent?.node.summary && (
-                <div className="border-border border-t pt-2">
-                  <p className="mb-1 text-sm font-medium text-black dark:text-white">
-                    Summary:
-                  </p>
-                  <div
-                    className="relative max-h-[200px] overflow-y-auto"
-                    style={{
-                      scrollbarWidth: "thin",
-                      scrollbarColor: "rgba(155, 155, 155, 0.5) transparent",
-                      pointerEvents: "auto",
-                      touchAction: "auto",
-                      WebkitOverflowScrolling: "touch",
-                    }}
-                    onWheel={(e) => {
-                      e.stopPropagation();
-                      const target = e.currentTarget;
-                      target.scrollTop += e.deltaY;
-                    }}
-                  >
-                    <p className="text-muted-foreground pr-4 text-sm break-words">
-                      {nodePopupContent.node.summary}
-                    </p>
                   </div>
                 </div>
               )}
@@ -200,11 +150,7 @@ export function GraphPopovers({
         >
           <div className="bg-grayAlpha-100 mb-4 rounded-md p-2">
             <p className="text-sm break-all">
-              {edgePopupContent?.source.name || "Unknown"} →{" "}
-              <span className="font-medium">
-                {edgePopupContent?.relation.name || "Unknown"}
-              </span>{" "}
-              → {edgePopupContent?.target.name || "Unknown"}
+              Episode → {edgePopupContent?.target.name || "Unknown"}
             </p>
           </div>
           <div className="space-y-2">
@@ -220,63 +166,14 @@ export function GraphPopovers({
                 <span className="mr-2 text-sm font-medium text-black dark:text-white">
                   Type:
                 </span>
-                {edgePopupContent?.relation.name || "Unknown"}
+                {edgePopupContent?.relation.type || "Unknown"}
               </p>
-              {edgePopupContent?.relation.fact && (
-                <p className="text-muted-foreground text-sm break-all">
-                  <span className="mr-2 text-sm font-medium text-black dark:text-white">
-                    Fact:
-                  </span>
-                  {edgePopupContent.relation.fact}
-                </p>
-              )}
-              {edgePopupContent?.relation.episodes?.length ? (
-                <div>
-                  <p className="text-sm font-medium text-black dark:text-white">
-                    Episodes:
-                  </p>
-                  <div className="mt-1 flex gap-2">
-                    {edgePopupContent.relation.episodes.map((episode) => (
-                      <span
-                        key={episode}
-                        className="bg-muted rounded-md px-2 py-1 text-xs"
-                      >
-                        {episode}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
               <p className="text-muted-foreground text-sm break-all">
                 <span className="mr-2 text-sm font-medium text-black dark:text-white">
                   Created:
                 </span>
-                {formatDate(edgePopupContent?.relation.created_at)}
+                {formatDate(edgePopupContent?.relation.createdAt)}
               </p>
-              {edgePopupContent?.relation.valid_at && (
-                <p className="text-muted-foreground text-sm break-all">
-                  <span className="mr-2 text-sm font-medium text-black dark:text-white">
-                    Valid From:
-                  </span>
-                  {formatDate(edgePopupContent.relation.valid_at)}
-                </p>
-              )}
-              {edgePopupContent?.relation.expired_at && (
-                <p className="text-muted-foreground text-sm break-all">
-                  <span className="mr-2 text-sm font-medium text-black dark:text-white">
-                    Expired At:
-                  </span>
-                  {formatDate(edgePopupContent.relation.expired_at)}
-                </p>
-              )}
-              {edgePopupContent?.relation.invalid_at && (
-                <p className="text-muted-foreground text-sm break-all">
-                  <span className="mr-2 text-sm font-medium text-black dark:text-white">
-                    Invalid At:
-                  </span>
-                  {formatDate(edgePopupContent.relation.invalid_at)}
-                </p>
-              )}
             </div>
           </div>
         </PopoverContent>

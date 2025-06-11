@@ -6,32 +6,31 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
 import { DashboardIcon } from "@radix-ui/react-icons";
-import { Code, LucideFileStack } from "lucide-react";
+import { Code, Search } from "lucide-react";
 import { NavMain } from "./nav-main";
 import { useUser } from "~/hooks/useUser";
 import { NavUser } from "./nav-user";
 import { useWorkspace } from "~/hooks/useWorkspace";
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Dashboard",
-      url: "/",
+      url: "/home/dashboard",
       icon: DashboardIcon,
     },
     {
       title: "API",
-      url: "/api",
+      url: "/home/api",
       icon: Code,
+    },
+    {
+      title: "Logs",
+      url: "/home/logs",
+      icon: Search,
     },
   ],
 };
@@ -45,16 +44,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
-              <a href="#">
-                <span className="text-base font-semibold">
-                  {workspace.name}
-                </span>
-              </a>
-            </SidebarMenuButton>
+            <span className="text-base font-semibold">{workspace.name}</span>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -62,7 +52,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="p-0">
         <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>

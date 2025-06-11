@@ -1,4 +1,3 @@
-import { useLocalCommonState } from "~/hooks/use-local-state";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -15,17 +14,34 @@ import {
   type ActionFunctionArgs,
 } from "@remix-run/server-runtime";
 import { requireUserId } from "~/services/session.server";
-import { useActionData } from "@remix-run/react";
 import { addToQueue, IngestBodyRequest } from "~/lib/ingest.server";
 import { getNodeLinks } from "~/lib/neo4j.server";
 import { useTypedLoaderData } from "remix-typedjson";
 
 import { GraphVisualization } from "~/components/graph/graph-visualization";
+import { Search } from "~/components/dashboard";
+import { SearchBodyRequest } from "./search";
+import { SearchService } from "~/services/search.server";
 
 export async function action({ request }: ActionFunctionArgs) {
   const userId = await requireUserId(request);
-
   const formData = await request.formData();
+
+  // Check if this is a search request by looking for query parameter
+  if (formData.has("query")) {
+    // Handle ingest request
+    const submission = parse(formData, { schema: SearchBodyRequest });
+    const searchService = new SearchService();
+
+    if (!submission.value || submission.intent !== "submit") {
+      return json(submission);
+    }
+
+    const results = await searchService.search(submission.value.query, userId);
+    return json(results);
+  }
+
+  // Handle ingest request
   const submission = parse(formData, { schema: IngestBodyRequest });
 
   if (!submission.value || submission.intent !== "submit") {
@@ -45,8 +61,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function Dashboard() {
   const nodeLinks = useTypedLoaderData<typeof loader>();
 
-  const actionData = useActionData<typeof action>();
-
   const [size, setSize] = useState(15);
 
   return (
@@ -57,8 +71,8 @@ export default function Dashboard() {
         order={1}
         id="home"
       >
-        <div className="home flex h-full flex-col overflow-y-auto p-3">
-          <h2 className="text-xl"> Graph </h2>
+        <div className="home flex h-full flex-col overflow-y-auto p-3 text-base">
+          <h3 className="text-lg font-medium">Graph</h3>
           <p className="text-muted-foreground"> Your memory graph </p>
 
           <div className="bg-background-3 mt-2 grow rounded">
@@ -86,7 +100,10 @@ export default function Dashboard() {
             <TabsTrigger value="retrieve">Retrieve</TabsTrigger>
           </TabsList>
           <TabsContent value="ingest">
-            <Ingest actionData={actionData} />
+            <Ingest />
+          </TabsContent>
+          <TabsContent value="retrieve">
+            <Search />
           </TabsContent>
         </Tabs>
       </ResizablePanel>

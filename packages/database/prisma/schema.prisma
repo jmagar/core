@@ -54,8 +54,9 @@ model Workspace {
 
   integrations String[]
 
-  userId String? @unique
-  user   User?   @relation(fields: [userId], references: [id])
+  userId         String?          @unique
+  user           User?            @relation(fields: [userId], references: [id])
+  IngestionQueue IngestionQueue[]
 }
 
 enum AuthenticationMethod {
@@ -174,8 +175,12 @@ model IngestionQueue {
 
   // Queue metadata
   data     Json // The actual data to be processed
+  output   Json? // The processed output data
   status   IngestionStatus
   priority Int             @default(0)
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
   // Error handling
   error      String?

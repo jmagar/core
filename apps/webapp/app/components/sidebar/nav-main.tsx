@@ -1,14 +1,11 @@
-import { useUser } from "~/hooks/useUser";
 import {
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
-import { NavUser } from "./nav-user";
-import { useLocation } from "@remix-run/react";
+import { useLocation, useNavigate } from "@remix-run/react";
 
 export const NavMain = ({
   items,
@@ -20,6 +17,7 @@ export const NavMain = ({
   }[];
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <SidebarGroup>
@@ -30,6 +28,7 @@ export const NavMain = ({
               <SidebarMenuButton
                 tooltip={item.title}
                 isActive={location.pathname.includes(item.url)}
+                onClick={() => navigate(item.url)}
               >
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>

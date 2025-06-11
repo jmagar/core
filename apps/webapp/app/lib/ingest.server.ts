@@ -40,15 +40,17 @@ async function processUserJob(userId: string, job: any) {
     await prisma.ingestionQueue.update({
       where: { id: job.data.queueId },
       data: {
+        output: episodeDetails,
         status: IngestionStatus.COMPLETED,
       },
     });
 
     // your processing logic
-  } catch (err) {
+  } catch (err: any) {
     await prisma.ingestionQueue.update({
       where: { id: job.data.queueId },
       data: {
+        error: err.message,
         status: IngestionStatus.FAILED,
       },
     });
@@ -86,12 +88,28 @@ export const addToQueue = async (
   body: z.infer<typeof IngestBodyRequest>,
   userId: string,
 ) => {
+  const user = await prisma.user.findFirst({
+    where: {
+      id: userId,
+    },
+    include: {
+      Workspace: true,
+    },
+  });
+
+  if (!user?.Workspace?.id) {
+    throw new Error(
+      "Workspace ID is required to create an ingestion queue entry.",
+    );
+  }
+
   const queuePersist = await prisma.ingestionQueue.create({
     data: {
-      spaceId: body.spaceId,
+      spaceId: body.spaceId ? body.spaceId : null,
       data: body,
       status: IngestionStatus.PENDING,
       priority: 1,
+      workspaceId: user.Workspace.id,
     },
   });
 

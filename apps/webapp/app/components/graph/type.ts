@@ -4,8 +4,7 @@ export interface Node {
   summary?: string;
   labels?: string[];
   attributes?: Record<string, any>;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
 }
 
 export interface Edge {
@@ -13,14 +12,7 @@ export interface Edge {
   source_node_uuid: string;
   target_node_uuid: string;
   type: string;
-  name: string;
-  fact?: string;
-  episodes?: string[];
-  created_at: string;
-  updated_at: string;
-  valid_at?: string;
-  expired_at?: string;
-  invalid_at?: string;
+  createdAt: string;
 }
 
 export interface RawTriplet {

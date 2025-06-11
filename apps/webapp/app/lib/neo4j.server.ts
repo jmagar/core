@@ -78,25 +78,21 @@ export const getNodeLinks = async (userId: string) => {
         labels: sourceNode.labels,
         attributes: sourceNode.properties,
         name: sourceNode.properties.name || "",
-        created_at: sourceNode.properties.created_at || "",
-        updated_at: sourceNode.properties.updated_at || "",
+        createdAt: sourceNode.properties.createdAt || "",
       },
       edge: {
         uuid: edge.identity.toString(),
         type: edge.type,
         source_node_uuid: sourceNode.identity.toString(),
         target_node_uuid: targetNode.identity.toString(),
-        name: edge.properties.name || "",
-        created_at: edge.properties.created_at || "",
-        updated_at: edge.properties.updated_at || "",
+        createdAt: edge.properties.createdAt || "",
       },
       targetNode: {
         uuid: targetNode.identity.toString(),
         labels: targetNode.labels,
         attributes: targetNode.properties,
         name: targetNode.properties.name || "",
-        created_at: targetNode.properties.created_at || "",
-        updated_at: targetNode.properties.updated_at || "",
+        createdAt: edge.properties.createdAt || "",
       },
     });
   });
