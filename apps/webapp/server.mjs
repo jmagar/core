@@ -3,49 +3,54 @@ import compression from "compression";
 import express from "express";
 import morgan from "morgan";
 
-const viteDevServer =
-  process.env.NODE_ENV === "production"
-    ? undefined
-    : await import("vite").then((vite) =>
-        vite.createServer({
-          server: { middlewareMode: true },
-        }),
-      );
+let viteDevServer;
+let remixHandler;
 
-const remixHandler = createRequestHandler({
-  build: viteDevServer
+async function init() {
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await import("vite");
+    viteDevServer = await vite.createServer({
+      server: { middlewareMode: true },
+    });
+  }
+
+  const build = viteDevServer
     ? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
-    : await import("./build/server/index.js"),
-});
+    : await import("./build/server/index.js");
 
-const app = express();
+  remixHandler = createRequestHandler({ build });
 
-app.use(compression());
+  const app = express();
 
-// http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
-app.disable("x-powered-by");
+  app.use(compression());
 
-// handle asset requests
-if (viteDevServer) {
-  app.use(viteDevServer.middlewares);
-} else {
-  // Vite fingerprints its assets so we can cache forever.
-  app.use(
-    "/assets",
-    express.static("build/client/assets", { immutable: true, maxAge: "1y" }),
+  // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
+  app.disable("x-powered-by");
+
+  // handle asset requests
+  if (viteDevServer) {
+    app.use(viteDevServer.middlewares);
+  } else {
+    // Vite fingerprints its assets so we can cache forever.
+    app.use(
+      "/assets",
+      express.static("build/client/assets", { immutable: true, maxAge: "1y" }),
+    );
+  }
+
+  // Everything else (like favicon.ico) is cached for an hour. You may want to be
+  // more aggressive with this caching.
+  app.use(express.static("build/client", { maxAge: "1h" }));
+
+  app.use(morgan("tiny"));
+
+  // handle SSR requests
+  app.all("*", remixHandler);
+
+  const port = process.env.REMIX_APP_PORT || 3000;
+  app.listen(port, () =>
+    console.log(`Express server listening at http://localhost:${port}`),
   );
 }
 
-// Everything else (like favicon.ico) is cached for an hour. You may want to be
-// more aggressive with this caching.
-app.use(express.static("build/client", { maxAge: "1h" }));
-
-app.use(morgan("tiny"));
-
-// handle SSR requests
-app.all("*", remixHandler);
-
-const port = process.env.REMIX_APP_PORT || 3000;
-app.listen(port, () =>
-  console.log(`Express server listening at http://localhost:${port}`),
-);
+init().catch(console.error);

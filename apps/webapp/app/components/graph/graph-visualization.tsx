@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useMemo, forwardRef } from "react";
 import { Graph, type GraphRef } from "./graph";
 import { GraphPopovers } from "./graph-popover";
@@ -7,7 +5,6 @@ import type { RawTriplet, NodePopupContent, EdgePopupContent } from "./type";
 
 import { createLabelColorMap } from "./node-colors";
 
-import { useTheme } from "remix-themes";
 import { toGraphTriplets } from "./utils";
 
 interface GraphVisualizationProps {
@@ -29,9 +26,6 @@ export const GraphVisualization = forwardRef<GraphRef, GraphVisualizationProps>(
     },
     ref,
   ) => {
-    const [resolvedTheme] = useTheme();
-    const isDarkMode = resolvedTheme === "dark";
-
     // Graph state for popovers
     const [showNodePopup, setShowNodePopup] = useState<boolean>(false);
     const [showEdgePopup, setShowEdgePopup] = useState<boolean>(false);

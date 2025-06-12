@@ -28,6 +28,7 @@ export default defineConfig({
     allowedHosts: true,
   },
   ssr: {
-    noExternal: ["helix-ts"],
+    noExternal: ["@core/database", "tailwindcss"],
+    external: ["@prisma/client"],
   },
 });

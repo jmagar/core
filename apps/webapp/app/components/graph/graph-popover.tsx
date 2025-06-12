@@ -1,5 +1,3 @@
-"use client";
-
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import type { NodePopupContent, EdgePopupContent } from "./type";
 import { getNodeColor } from "./node-colors";

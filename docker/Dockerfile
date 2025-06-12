@@ -5,7 +5,7 @@ FROM ${NODE_IMAGE} AS pruner
 WORKDIR /core
 
 COPY --chown=node:node . .
-RUN npx -q turbo@1.10.9 prune --scope=webapp --docker
+RUN npx -q turbo@2.5.3 prune --scope=webapp --docker
 RUN find . -name "node_modules" -type d -prune -exec rm -rf '{}' +
 
 # Base strategy to have layer caching
@@ -60,10 +60,11 @@ WORKDIR /core
 RUN corepack enable
 ENV NODE_ENV production
 
+
 COPY --from=base /usr/bin/dumb-init /usr/bin/dumb-init
 COPY --from=pruner --chown=node:node /core/out/full/ .
 COPY --from=production-deps --chown=node:node /core .
-COPY --from=builder --chown=node:node /core/apps/webapp/build/server.js ./apps/webapp/build/server.js
+COPY --from=builder --chown=node:node /core/apps/webapp/server.mjs ./apps/webapp/server.mjs
 COPY --from=builder --chown=node:node /core/apps/webapp/build ./apps/webapp/build
 COPY --from=builder --chown=node:node /core/apps/webapp/public ./apps/webapp/public
 COPY --from=builder --chown=node:node /core/scripts ./scripts
