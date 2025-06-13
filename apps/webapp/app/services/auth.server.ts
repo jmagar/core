@@ -23,7 +23,7 @@ if (env.AUTH_GOOGLE_CLIENT_ID && env.AUTH_GOOGLE_CLIENT_SECRET) {
   );
 }
 
-if (env.NODE_ENV === "development") {
+if (env.ENABLE_EMAIL_LOGIN) {
   addEmailLinkStrategy(authenticator);
 }
 

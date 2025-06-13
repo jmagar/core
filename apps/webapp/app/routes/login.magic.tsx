@@ -46,8 +46,8 @@ export const meta: MetaFunction = ({ matches }) => {
 };
 
 export async function loader({ request }: LoaderFunctionArgs): Promise<any> {
-  if (env.NODE_ENV !== "development") {
-    return typedjson({ isDevelopment: false });
+  if (!env.ENABLE_EMAIL_LOGIN) {
+    return typedjson({ emailLoginEnabled: false });
   }
 
   const userId = await getUserId(request);
@@ -67,7 +67,7 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<any> {
 
   return typedjson(
     {
-      isDevelopment: true,
+      emailLoginEnabled: true,
       magicLinkSent: session.has("core:magiclink"),
       magicLinkError,
     },
@@ -78,8 +78,8 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<any> {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  if (env.NODE_ENV !== "development") {
-    throw new Error("Magic link login is only available in development mode");
+  if (!env.ENABLE_EMAIL_LOGIN) {
+    throw new Error("Magic link login is not enabled");
   }
 
   const clonedRequest = request.clone();
@@ -110,11 +110,11 @@ export default function LoginMagicLinkPage() {
   const data = useTypedLoaderData<typeof loader>();
   const navigate = useNavigation();
 
-  if (!data.isDevelopment) {
+  if (!data.emailLoginEnabled) {
     return (
       <LoginPageLayout>
         <Paragraph className="text-center">
-          Magic link login is only available in development mode.
+          Magic link login is not enabled.
         </Paragraph>
       </LoginPageLayout>
     );

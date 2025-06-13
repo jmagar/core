@@ -31,6 +31,8 @@ export const Ingest = () => {
       },
       { method: "POST", action: "/home/dashboard" },
     );
+
+    setText("");
   };
 
   const isLoading = fetcher.state === "submitting";

@@ -35,7 +35,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       {
         redirectTo,
         showGoogleAuth: isGoogleAuthSupported,
-        isDevelopment: env.NODE_ENV === "development",
+        emailLoginEnabled: env.ENABLE_EMAIL_LOGIN,
       },
       {
         headers: {
@@ -47,7 +47,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return typedjson({
       redirectTo: null,
       showGoogleAuth: isGoogleAuthSupported,
-      isDevelopment: env.NODE_ENV === "development",
+      emailLoginEnabled: env.ENABLE_EMAIL_LOGIN,
     });
   }
 }
@@ -80,7 +80,7 @@ export default function LoginPage() {
                 </Button>
               )}
 
-              {data.isDevelopment && (
+              {data.emailLoginEnabled && (
                 <Button
                   variant="secondary"
                   size="lg"
