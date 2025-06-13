@@ -3,9 +3,7 @@ version: "3.8"
 services:
   core:
     container_name: core-app
-    build:
-      context: ../
-      dockerfile: ./docker/Dockerfile
+    image: redplanethq/core:${VERSION}
     environment:
       - NODE_ENV=${NODE_ENV}
       - DATABASE_URL=${DATABASE_URL}

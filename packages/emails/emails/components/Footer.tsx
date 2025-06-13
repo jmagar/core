@@ -8,7 +8,7 @@ export function Footer() {
       <Hr style={hr} />
       <Text style={footer}>
         ©Sol.ai
-        <Link style={footerAnchor} href="https://core.heysol.dev/">
+        <Link style={footerAnchor} href="https://core.heysol.ai/">
           C.O.R.E
         </Link>
       </Text>
