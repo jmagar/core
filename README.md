@@ -127,11 +127,11 @@ You can also interact with C.O.R.E. programmatically via its APIs.
 
 #### 🛠️ In Progress / Planned
 
-- [ ] Multiple Spaces support (unique URL per space)
-- [ ] User-controlled sharing: Add memory to multiple tools or keep it private
-- [ ] Basic rules engine for ingestion filters
+- [ ] Multiple Spaces support (unique URL per space). A "space" lets you group and control memory for specific tools or contexts.
+- [ ] User-controlled sharing: Add memory to multiple tools or keep it private within a space.
+- [ ] Basic rules engine for ingestion filters.
 - [ ] Granular API Key Permissions: Allow API keys to be scoped to specific spaces and actions (e.g., read, write, ingest, search), so users can control access per space and per operation.
-- [ ] Full Session and Space Support: Ensure all endpoints and UI fully support sessionId and spaceId for true multi-tenancy and session-based context.
+- [ ] Improved Session and Space Support: Currently, you can pass `sessionId` in the ingest API to associate data with a conversation. We plan to enhance session-based CRUD operations, so you can manage, retrieve, and organize memory by session as well as by space, enabling true multi-tenancy and conversation context.
 - [ ] Audit Logging & API Key Management: Add audit logs for API usage and allow users to view, revoke, and rotate API keys.
 - [ ] Role-Based Access Control (RBAC): Enable roles (admin, member, viewer) per space for better team collaboration and security.
 - [ ] Webhooks/Notifications: Allow users to receive real-time notifications or webhooks on ingestion, search, or other events.
