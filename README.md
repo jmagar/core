@@ -4,15 +4,32 @@
   </a>
 </div>
 
-# C.O.R.E.
+## C.O.R.E.
 
 **Contextual Observation & Recall Engine**
 
-C.O.R.E. is a private memory management system designed to give users full control over their data. It enables you to create a personal memory space, where you can ingest, organize, and search your information. You can selectively share or connect this memory with multiple tools, putting you in charge of what gets recalled and where.
+C.O.R.E lets you create a private, portable, open-source memory space for LLMs, all stored locally for full data control. You decide what to share or connect with other tools, managing exactly what gets recalled and where.
+
+C.O.R.E was built for two reasons:
+1. To give you complete ownership of your memory, stored locally and accessible across any app needing LLM context.
+2. To help SOL (your AI assistant) access your context, facts, and preferences for more relevant and personalized responses.
+
+## How is C.O.R.E different from other Memory Providers?
+
+C.O.R.E uses a **temporal knowledge graph**, not basic vector or key-value memory. This enables structured recall—capturing not just what was said, but who said it, when, and why it mattered.
+
+You can ask, “_What changed in our pricing since Q1?_” and see precise updates, people involved, and the timeline. Or, “_What does Mike know about Project Phoenix?_” and get answers based on meetings or discussions she joined.
+
+C.O.R.E supports **temporal reasoning**, **relational memory**, and **traceability** —ideal for AI assistants needing structured, historical, and inferential memory.
 
 ## Getting Started
 
-Follow these steps to run C.O.R.E. locally:
+### Prerequisites
+1. Docker
+2. OpenAI API Key
+
+
+### Run C.O.R.E locally by 
 
 1. **Copy Environment Variables**
 
@@ -37,8 +54,8 @@ Follow these steps to run C.O.R.E. locally:
 4. **Login with Magic Link**
 
    - Choose the "Magic Link" login option.
-   - Enter your email address.
-   - The magic link will be output in the terminal logs. Copy and paste it into your browser to complete login.
+   - Enter your email.
+   - Copy the magic link from terminal logs and open it in your browser.
 
 5. **Create Your Private Space & Ingest Data**
 
@@ -127,14 +144,14 @@ You can also interact with C.O.R.E. programmatically via its APIs.
 
 #### 🛠️ In Progress / Planned
 
-- [ ] Multiple Spaces support (unique URL per space). A "space" lets you group and control memory for specific tools or contexts.
-- [ ] User-controlled sharing: Add memory to multiple tools or keep it private within a space.
-- [ ] Basic rules engine for ingestion filters.
-- [ ] Granular API Key Permissions: Allow API keys to be scoped to specific spaces and actions (e.g., read, write, ingest, search), so users can control access per space and per operation.
-- [ ] Improved Session and Space Support: Currently, you can pass `sessionId` in the ingest API to associate data with a conversation. We plan to enhance session-based CRUD operations, so you can manage, retrieve, and organize memory by session as well as by space, enabling true multi-tenancy and conversation context.
-- [ ] Audit Logging & API Key Management: Add audit logs for API usage and allow users to view, revoke, and rotate API keys.
-- [ ] Role-Based Access Control (RBAC): Enable roles (admin, member, viewer) per space for better team collaboration and security.
-- [ ] Webhooks/Notifications: Allow users to receive real-time notifications or webhooks on ingestion, search, or other events.
+- [ ] Multiple Spaces with unique URLs
+- [ ] User-controlled sharing and privacy
+- [ ] Ingestion filters rules
+- [ ] Granular API Key Permissions
+- [ ] Improved Session and Space Support
+- [ ] Audit Logging & API Key Management
+- [ ] Role-Based Access Control
+- [ ] Webhooks & Notifications
 
 ## Usage Guidelines
 
