@@ -10,7 +10,7 @@
 
 C.O.R.E lets you create a private, portable, open-source memory space for LLMs, all stored locally for full data control. You decide what to share or connect with other tools, managing exactly what gets recalled and where.
 
-C.O.R.E was built for two reasons:
+C.O.R.E is built for two reasons:
 1. To give you complete ownership of your memory, stored locally and accessible across any app needing LLM context.
 2. To help SOL (your AI assistant) access your context, facts, and preferences for more relevant and personalized responses.
 
