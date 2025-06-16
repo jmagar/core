@@ -16,6 +16,9 @@ const emailStrategy = new EmailLinkStrategy(
     sendEmail: sendMagicLinkEmail,
     secret,
     magicEndpoint: `${APP_ORIGIN}/magic`,
+    cookie: {
+      name: "core:magiclink",
+    },
   },
   async ({ email }: { email: string }) => {
     logger.info("Magic link user authenticated", { email });

@@ -1,10 +1,17 @@
 import {
+  createCookie,
   redirect,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
   type MetaFunction,
 } from "@remix-run/node";
-
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { Form, useNavigation } from "@remix-run/react";
 import { Inbox, Loader, Mail } from "lucide-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
@@ -16,8 +23,7 @@ import { FormButtons } from "~/components/ui/FormButtons";
 import { Header1 } from "~/components/ui/Headers";
 import { Input } from "~/components/ui/input";
 import { Paragraph } from "~/components/ui/Paragraph";
-import { TextLink } from "~/components/ui/TextLink";
-
+import { Cookie } from "@mjackson/headers";
 import { authenticator } from "~/services/auth.server";
 import { getUserId } from "~/services/session.server";
 import {
@@ -65,10 +71,14 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<any> {
     }
   }
 
+  const magicLinkSent = new Cookie(request.headers.get("cookie") ?? "").has(
+    "core:magiclink",
+  );
+
   return typedjson(
     {
       emailLoginEnabled: true,
-      magicLinkSent: session.has("core:magiclink"),
+      magicLinkSent,
       magicLinkError,
     },
     {
@@ -93,14 +103,19 @@ export async function action({ request }: ActionFunctionArgs) {
     .parse(payload);
 
   if (action === "send") {
-    return await authenticator.authenticate("email-link", request);
+    const headers = await authenticator
+      .authenticate("email-link", request)
+      .catch((headers) => headers);
+    throw redirect("/login/magic", { headers });
   } else {
-    const session = await getUserSession(request);
-    session.unset("core:magiclink");
+    const myCookie = createCookie("core:magiclink");
 
-    return redirect("/magic", {
+    return redirect("/login/magic", {
       headers: {
-        "Set-Cookie": await commitSession(session),
+        "Set-Cookie": await myCookie.serialize("", {
+          maxAge: 0,
+          path: "/",
+        }),
       },
     });
   }
@@ -130,80 +145,81 @@ export default function LoginMagicLinkPage() {
       <Form method="post">
         <div className="flex flex-col items-center justify-center">
           {data.magicLinkSent ? (
-            <>
-              <Header1 className="pb-6 text-center text-xl leading-7 font-normal md:text-xl lg:text-2xl">
-                We've sent you a magic link!
-              </Header1>
-              <Fieldset className="flex w-full flex-col items-center gap-y-2">
-                <Inbox className="text-primary mb-4 h-12 w-12" />
-                <Paragraph className="mb-6 text-center">
+            <Card className="min-w-[400px] rounded-md p-3">
+              <CardHeader className="flex flex-col items-start">
+                <CardTitle className="mb-0 text-lg">
+                  {" "}
+                  We've sent you a magic link!
+                </CardTitle>
+                <CardDescription>
                   We sent you an email which contains a magic link that will log
                   you in to your account.
-                </Paragraph>
+                </CardDescription>
+              </CardHeader>
+
+              <Fieldset className="flex w-full flex-col items-center gap-y-2 px-2">
                 <FormButtons
                   cancelButton={
                     <Button
                       type="submit"
                       name="action"
                       value="reset"
-                      variant="link"
+                      variant="secondary"
                       data-action="re-enter email"
                     >
                       Re-enter email
                     </Button>
                   }
-                  confirmButton={
-                    <Button
-                      variant="ghost"
-                      data-action="log in using another option"
-                    >
-                      Log in using another option
-                    </Button>
-                  }
+                  confirmButton={<></>}
                 />
               </Fieldset>
-            </>
+            </Card>
           ) : (
-            <>
-              <Header1 className="pb-4 font-semibold sm:text-2xl md:text-3xl lg:text-4xl">
-                Welcome
-              </Header1>
-              <Paragraph variant="base" className="mb-6 text-center">
-                Create an account or login using email
-              </Paragraph>
-              <Fieldset className="flex w-full flex-col items-center gap-y-2">
-                <Input
-                  type="email"
-                  name="email"
-                  spellCheck={false}
-                  placeholder="Email Address"
-                  required
-                  autoFocus
-                />
+            <Card className="min-w-[400px] rounded-md p-3">
+              <CardHeader className="flex flex-col items-start">
+                <CardTitle className="mb-0 text-lg">Welcome</CardTitle>
+                <CardDescription>
+                  Create an account or login using email
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <Fieldset className="flex w-full flex-col items-center gap-y-2">
+                  <Input
+                    type="email"
+                    name="email"
+                    className="h-9"
+                    spellCheck={false}
+                    placeholder="Email Address"
+                    required
+                    autoFocus
+                  />
 
-                <Button
-                  name="action"
-                  value="send"
-                  type="submit"
-                  variant="secondary"
-                  size="lg"
-                  disabled={isLoading}
-                  data-action="send a magic link"
-                >
-                  {isLoading ? (
-                    <Loader className="mr-2 size-5" color="white" />
-                  ) : (
-                    <Mail className="text-text-bright mr-2 size-5" />
-                  )}
-                  {isLoading ? (
-                    <span className="text-text-bright">Sending…</span>
-                  ) : (
-                    <span className="text-text-bright">Send a magic link</span>
-                  )}
-                </Button>
-                {data.magicLinkError && <>{data.magicLinkError}</>}
-              </Fieldset>
-            </>
+                  <Button
+                    name="action"
+                    value="send"
+                    type="submit"
+                    variant="secondary"
+                    size="lg"
+                    disabled={isLoading}
+                    data-action="send a magic link"
+                  >
+                    {isLoading ? (
+                      <Loader className="mr-2 size-5" color="white" />
+                    ) : (
+                      <Mail className="text-text-bright mr-2 size-5" />
+                    )}
+                    {isLoading ? (
+                      <span className="text-text-bright">Sending…</span>
+                    ) : (
+                      <span className="text-text-bright">
+                        Send a magic link
+                      </span>
+                    )}
+                  </Button>
+                  {data.magicLinkError && <>{data.magicLinkError}</>}
+                </Fieldset>
+              </CardContent>
+            </Card>
           )}
         </div>
       </Form>

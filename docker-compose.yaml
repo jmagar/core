@@ -1,58 +1,58 @@
 version: "3.8"
 
 services:
-  core:
-    container_name: core-app
-    image: redplanethq/core:${VERSION}
-    environment:
-      - NODE_ENV=${NODE_ENV}
-      - DATABASE_URL=${DATABASE_URL}
-      - DIRECT_URL=${DIRECT_URL}
-      - SESSION_SECRET=${SESSION_SECRET}
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-      - MAGIC_LINK_SECRET=${MAGIC_LINK_SECRET}
-      - LOGIN_ORIGIN=${LOGIN_ORIGIN}
-      - APP_ORIGIN=${APP_ORIGIN}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - REDIS_TLS_DISABLED=${REDIS_TLS_DISABLED}
-      - NEO4J_URI=${NEO4J_URI}
-      - NEO4J_USERNAME=${NEO4J_USERNAME}
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - AUTH_GOOGLE_CLIENT_ID=${AUTH_GOOGLE_CLIENT_ID}
-      - AUTH_GOOGLE_CLIENT_SECRET=${AUTH_GOOGLE_CLIENT_SECRET}
-      - ENABLE_EMAIL_LOGIN=${ENABLE_EMAIL_LOGIN}
-    ports:
-      - "3000:3000"
-    depends_on:
-      - postgres
-      - redis
-      - neo4j
-    networks:
-      - core
+  # core:
+  #   container_name: core-app
+  #   image: redplanethq/core:${VERSION}
+  #   environment:
+  #     - NODE_ENV=${NODE_ENV}
+  #     - DATABASE_URL=${DATABASE_URL}
+  #     - DIRECT_URL=${DIRECT_URL}
+  #     - SESSION_SECRET=${SESSION_SECRET}
+  #     - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+  #     - MAGIC_LINK_SECRET=${MAGIC_LINK_SECRET}
+  #     - LOGIN_ORIGIN=${LOGIN_ORIGIN}
+  #     - APP_ORIGIN=${APP_ORIGIN}
+  #     - REDIS_HOST=${REDIS_HOST}
+  #     - REDIS_PORT=${REDIS_PORT}
+  #     - REDIS_TLS_DISABLED=${REDIS_TLS_DISABLED}
+  #     - NEO4J_URI=${NEO4J_URI}
+  #     - NEO4J_USERNAME=${NEO4J_USERNAME}
+  #     - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+  #     - OPENAI_API_KEY=${OPENAI_API_KEY}
+  #     - AUTH_GOOGLE_CLIENT_ID=${AUTH_GOOGLE_CLIENT_ID}
+  #     - AUTH_GOOGLE_CLIENT_SECRET=${AUTH_GOOGLE_CLIENT_SECRET}
+  #     - ENABLE_EMAIL_LOGIN=${ENABLE_EMAIL_LOGIN}
+  #   ports:
+  #     - "3033:3000"
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #     - neo4j
+  #   networks:
+  #     - core
 
-  postgres:
-    container_name: core-postgres
-    image: postgres:15
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - core
+  # postgres:
+  #   container_name: core-postgres
+  #   image: postgres:15
+  #   environment:
+  #     - POSTGRES_USER=${POSTGRES_USER}
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+  #     - POSTGRES_DB=${POSTGRES_DB}
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - core
 
-  redis:
-    container_name: core-redis
-    image: redis:7
-    ports:
-      - "6379:6379"
-    networks:
-      - core
+  # redis:
+  #   container_name: core-redis
+  #   image: redis:7
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - core
 
   neo4j:
     container_name: core-neo4j

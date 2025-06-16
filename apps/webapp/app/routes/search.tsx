@@ -5,9 +5,11 @@ import { json } from "@remix-run/node";
 
 export const SearchBodyRequest = z.object({
   query: z.string(),
-  spaceId: z.string().optional(),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
+
+  // These are not supported yet, but need to support these
+  spaceId: z.string().optional(),
   limit: z.number().optional(),
   maxBfsDepth: z.number().optional(),
   includeInvalidated: z.boolean().optional(),

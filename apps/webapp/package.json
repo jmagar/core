@@ -18,6 +18,7 @@
     "@core/database": "workspace:*",
     "@core/types": "workspace:*",
     "@opentelemetry/api": "1.9.0",
+    "@mjackson/headers": "0.11.1",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.0.4",

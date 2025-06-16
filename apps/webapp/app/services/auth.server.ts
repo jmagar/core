@@ -13,7 +13,9 @@ const authenticator = new Authenticator<AuthUser>();
 
 const isGoogleAuthSupported =
   typeof env.AUTH_GOOGLE_CLIENT_ID === "string" &&
-  typeof env.AUTH_GOOGLE_CLIENT_SECRET === "string";
+  env.AUTH_GOOGLE_CLIENT_ID.length > 0 &&
+  typeof env.AUTH_GOOGLE_CLIENT_SECRET === "string" &&
+  env.AUTH_GOOGLE_CLIENT_SECRET.length > 0;
 
 if (env.AUTH_GOOGLE_CLIENT_ID && env.AUTH_GOOGLE_CLIENT_SECRET) {
   addGoogleStrategy(

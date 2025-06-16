@@ -76,9 +76,10 @@ export function getUserQueue(userId: string) {
 }
 
 export const IngestBodyRequest = z.object({
+  name: z.string(),
   episodeBody: z.string(),
   referenceTime: z.string(),
-  type: z.enum([EpisodeType.Conversation, EpisodeType.Text]), // Assuming these are the EpisodeType values
+  metadata: z.record(z.union([z.string(), z.number()])),
   source: z.string(),
   spaceId: z.string().optional(),
   sessionId: z.string().optional(),

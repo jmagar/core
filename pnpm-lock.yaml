@@ -48,6 +48,9 @@ importers:
       '@core/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@mjackson/headers':
+        specifier: 0.11.1
+        version: 0.11.1
       '@nichtsam/remix-auth-email-link':
         specifier: 3.0.0
         version: 3.0.0(remix-auth@4.2.0)
@@ -1519,6 +1522,9 @@ packages:
 
   '@mjackson/headers@0.10.0':
     resolution: {integrity: sha512-U1Eu1gF979k7ZoIBsJyD+T5l9MjtPONsZfoXfktsQHPJD0s7SokBGx+tLKDLsOY+gzVYAWS0yRFDNY8cgbQzWQ==}
+
+  '@mjackson/headers@0.11.1':
+    resolution: {integrity: sha512-uXXhd4rtDdDwkqAuGef1nuafkCa1NlTmEc1Jzc0NL4YiA1yON1NFXuqJ3hOuKvNKQwkiDwdD+JJlKVyz4dunFA==}
 
   '@mjackson/headers@0.9.0':
     resolution: {integrity: sha512-1WFCu2iRaqbez9hcYYI611vcH1V25R+fDfOge/CyKc8sdbzniGfy/FRhNd3DgvFF4ZEEX2ayBrvFHLtOpfvadw==}
@@ -9775,6 +9781,8 @@ snapshots:
       - supports-color
 
   '@mjackson/headers@0.10.0': {}
+
+  '@mjackson/headers@0.11.1': {}
 
   '@mjackson/headers@0.9.0': {}
 

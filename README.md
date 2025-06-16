@@ -11,6 +11,7 @@
 C.O.R.E lets you create a private, portable, open-source memory space for LLMs, all stored locally for full data control. You decide what to share or connect with other tools, managing exactly what gets recalled and where.
 
 C.O.R.E is built for two reasons:
+
 1. To give you complete ownership of your memory, stored locally and accessible across any app needing LLM context.
 2. To help SOL (your AI assistant) access your context, facts, and preferences for more relevant and personalized responses.
 
@@ -25,11 +26,11 @@ C.O.R.E supports **temporal reasoning**, **relational memory**, and **traceabili
 ## Getting Started
 
 ### Prerequisites
+
 1. Docker
 2. OpenAI API Key
 
-
-### Run C.O.R.E locally by 
+### Run C.O.R.E locally by
 
 1. **Copy Environment Variables**
 
@@ -97,7 +98,6 @@ You can also interact with C.O.R.E. programmatically via its APIs.
   {
     "episodeBody": "I love playing badminton",
     "referenceTime": "2024-06-01T12:00:00Z",
-    "type": "Conversation", // or "Text"
     "source": "user", //  Which tool or user is ingesting
     "spaceId": "your-space-id", // optional, for multiple spaces
     "sessionId": "your-session-id" // optional

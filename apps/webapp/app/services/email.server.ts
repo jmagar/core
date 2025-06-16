@@ -58,11 +58,6 @@ function buildTransportOptions(): MailTransportOptions {
 }
 
 export async function sendMagicLinkEmail(options: any): Promise<void> {
-  // Auto redirect when in development mode
-  if (env.NODE_ENV === "development") {
-    throw redirect(options.magicLink);
-  }
-
   logger.debug("Sending magic link email", {
     emailAddress: options.emailAddress,
   });
@@ -77,6 +72,7 @@ export async function sendMagicLinkEmail(options: any): Promise<void> {
     logger.error("Error sending magic link email", {
       error: JSON.stringify(error),
     });
+
     throw error;
   }
 }
