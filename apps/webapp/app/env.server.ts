@@ -45,7 +45,7 @@ const EnvironmentSchema = z.object({
   AUTH_GOOGLE_CLIENT_ID: z.string().optional(),
   AUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
 
-  ENABLE_EMAIL_LOGIN: z.coerce.boolean().default(false),
+  ENABLE_EMAIL_LOGIN: z.coerce.boolean().default(true),
 
   //Redis
   REDIS_HOST: z.string().default("localhost"),

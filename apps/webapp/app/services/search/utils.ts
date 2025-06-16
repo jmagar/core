@@ -16,14 +16,28 @@ export async function performBM25Search(
     // Sanitize the query for Lucene syntax
     const sanitizedQuery = sanitizeLuceneQuery(query);
 
+    // Build the WHERE clause based on timeframe options
+    let timeframeCondition = `
+      AND s.validAt <= $validAt 
+      AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)
+    `;
+
+    // If startTime is provided, add condition to filter by validAt >= startTime
+    if (options.startTime) {
+      timeframeCondition = `
+        AND s.validAt <= $validAt 
+        AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)
+        AND s.validAt >= $startTime
+      `;
+    }
+
     // Use Neo4j's built-in fulltext search capabilities
     const cypher = `
         CALL db.index.fulltext.queryNodes("statement_fact_index", $query) 
         YIELD node AS s, score
         WHERE 
-          s.validAt <= $validAt 
-          AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)
-          AND (s.userId = $userId)
+          (s.userId = $userId)
+          ${timeframeCondition}
         RETURN s, score
         ORDER BY score DESC
       `;
@@ -31,7 +45,8 @@ export async function performBM25Search(
     const params = {
       query: sanitizedQuery,
       userId,
-      validAt: options.validAt.toISOString(),
+      validAt: options.endTime.toISOString(),
+      ...(options.startTime && { startTime: options.startTime.toISOString() }),
     };
 
     const records = await runQuery(cypher, params);
@@ -46,9 +61,9 @@ export async function performBM25Search(
  * Sanitize a query string for Lucene syntax
  */
 export function sanitizeLuceneQuery(query: string): string {
-  // Escape special characters: + - && || ! ( ) { } [ ] ^ " ~ * ? : \
+  // Escape special characters: + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
   let sanitized = query.replace(
-    /[+\-&|!(){}[\]^"~*?:\\]/g,
+    /[+\-&|!(){}[\]^"~*?:\\\/]/g,
     (match) => "\\" + match,
   );
 
@@ -71,16 +86,27 @@ export async function performVectorSearch(
   options: Required<SearchOptions>,
 ): Promise<StatementNode[]> {
   try {
-    // 1. Generate embedding for the query
-    // const embedding = await this.getEmbedding(query);
+    // Build the WHERE clause based on timeframe options
+    let timeframeCondition = `
+      AND s.validAt <= $validAt 
+      AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)
+    `;
 
-    // 2. Search for similar statements using Neo4j vector search
+    // If startTime is provided, add condition to filter by validAt >= startTime
+    if (options.startTime) {
+      timeframeCondition = `
+        AND s.validAt <= $validAt 
+        AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)
+        AND s.validAt >= $startTime
+      `;
+    }
+
+    // 1. Search for similar statements using Neo4j vector search
     const cypher = `
       MATCH (s:Statement)
       WHERE 
-        s.validAt <= $validAt 
-        AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)
-        AND (s.userId = $userId)
+      (s.userId = $userId)
+      ${timeframeCondition}
       WITH s, vector.similarity.cosine(s.factEmbedding, $embedding) AS score
       WHERE score > 0.7
       RETURN s, score
@@ -90,7 +116,8 @@ export async function performVectorSearch(
     const params = {
       embedding: query,
       userId,
-      validAt: options.validAt.toISOString(),
+      validAt: options.endTime.toISOString(),
+      ...(options.startTime && { startTime: options.startTime.toISOString() }),
     };
 
     const records = await runQuery(cypher, params);
@@ -120,9 +147,10 @@ export async function performBfsSearch(
       const statements = await bfsTraversal(
         entity.uuid,
         options.maxBfsDepth,
-        options.validAt,
+        options.endTime,
         userId,
         options.includeInvalidated,
+        options.startTime,
       );
       allStatements.push(...statements);
     }
@@ -143,17 +171,31 @@ export async function bfsTraversal(
   validAt: Date,
   userId: string,
   includeInvalidated: boolean,
+  startTime: Date | null,
 ): Promise<StatementNode[]> {
   try {
+    // Build the WHERE clause based on timeframe options
+    let timeframeCondition = `
+      AND s.validAt <= $validAt
+      AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)
+    `;
+
+    // If startTime is provided, add condition to filter by validAt >= startTime
+    if (startTime) {
+      timeframeCondition = `
+        AND s.validAt <= $validAt
+        AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)
+        AND s.validAt >= $startTime
+      `;
+    }
     // Use Neo4j's built-in path finding capabilities for efficient BFS
     // This query implements BFS up to maxDepth and collects all statements along the way
     const cypher = `
       MATCH (e:Entity {uuid: $startEntityId})<-[:HAS_SUBJECT|HAS_OBJECT|HAS_PREDICATE]-(s:Statement)
       WHERE 
-        s.validAt <= $validAt
-        AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)
-        AND (s.userId = $userId)
+        (s.userId = $userId)
         AND ($includeInvalidated OR s.invalidAt IS NULL)
+        ${timeframeCondition}
       RETURN s as statement
     `;
 
@@ -163,6 +205,7 @@ export async function bfsTraversal(
       validAt: validAt.toISOString(),
       userId,
       includeInvalidated,
+      ...(startTime && { startTime: startTime.toISOString() }),
     };
 
     const records = await runQuery(cypher, params);

@@ -37,10 +37,13 @@ export class SearchService {
     options: SearchOptions = {},
   ): Promise<{ episodes: string[]; facts: string[] }> {
     // Default options
+
     const opts: Required<SearchOptions> = {
       limit: options.limit || 10,
       maxBfsDepth: options.maxBfsDepth || 4,
       validAt: options.validAt || new Date(),
+      startTime: options.startTime || null,
+      endTime: options.endTime || new Date(),
       includeInvalidated: options.includeInvalidated || false,
       entityTypes: options.entityTypes || [],
       predicateTypes: options.predicateTypes || [],
@@ -213,6 +216,8 @@ export interface SearchOptions {
   limit?: number;
   maxBfsDepth?: number;
   validAt?: Date;
+  startTime?: Date | null;
+  endTime?: Date;
   includeInvalidated?: boolean;
   entityTypes?: string[];
   predicateTypes?: string[];

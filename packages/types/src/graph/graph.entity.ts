@@ -12,7 +12,7 @@ export interface EpisodicNode {
   content: string;
   originalContent: string;
   contentEmbedding?: number[];
-  type: string;
+  metadata: Record<string, any>;
   source: string;
   createdAt: Date;
   validAt: Date;
@@ -70,7 +70,7 @@ export type AddEpisodeParams = {
   name: string;
   episodeBody: string;
   referenceTime: Date;
-  type: EpisodeType;
+  metadata: Record<string, any>;
   source: string;
   userId: string;
   spaceId?: string;

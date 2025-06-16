@@ -6,7 +6,14 @@ import { json } from "@remix-run/node";
 export const SearchBodyRequest = z.object({
   query: z.string(),
   spaceId: z.string().optional(),
-  sessionId: z.string().optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  limit: z.number().optional(),
+  maxBfsDepth: z.number().optional(),
+  includeInvalidated: z.boolean().optional(),
+  entityTypes: z.array(z.string()).optional(),
+  scoreThreshold: z.number().optional(),
+  minResults: z.number().optional(),
 });
 
 const searchService = new SearchService();
@@ -23,6 +30,16 @@ const { action, loader } = createActionApiRoute(
     const results = await searchService.search(
       body.query,
       authentication.userId,
+      {
+        startTime: body.startTime ? new Date(body.startTime) : undefined,
+        endTime: body.endTime ? new Date(body.endTime) : undefined,
+        limit: body.limit,
+        maxBfsDepth: body.maxBfsDepth,
+        includeInvalidated: body.includeInvalidated,
+        entityTypes: body.entityTypes,
+        scoreThreshold: body.scoreThreshold,
+        minResults: body.minResults,
+      },
     );
     return json(results);
   },

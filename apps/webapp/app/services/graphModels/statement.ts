@@ -21,7 +21,7 @@ export async function saveTriple(triple: Triple): Promise<string> {
           n.createdAt = $createdAt,
           n.validAt = $validAt,
           n.invalidAt = $invalidAt,
-          n.attributesJson = $attributesJson,
+          n.attributes = $attributes,
           n.userId = $userId,
           n.space = $space
         ON MATCH SET
@@ -29,7 +29,7 @@ export async function saveTriple(triple: Triple): Promise<string> {
           n.factEmbedding = $factEmbedding,
           n.validAt = $validAt,
           n.invalidAt = $invalidAt,
-          n.attributesJson = $attributesJson,
+          n.attributes = $attributes,
           n.space = $space
         RETURN n.uuid as uuid
       `;
@@ -43,7 +43,7 @@ export async function saveTriple(triple: Triple): Promise<string> {
     invalidAt: triple.statement.invalidAt
       ? triple.statement.invalidAt.toISOString()
       : null,
-    attributesJson: JSON.stringify(triple.statement.attributes || {}),
+    attributes: JSON.stringify(triple.statement.attributes || {}),
     userId: triple.provenance.userId,
     space: triple.statement.space || null,
   };
@@ -273,7 +273,7 @@ export async function getTripleForStatement({
     content: episodeProps.content,
     originalContent: episodeProps.originalContent,
     source: episodeProps.source,
-    type: episodeProps.type,
+    metadata: episodeProps.metadata,
     createdAt: new Date(episodeProps.createdAt),
     validAt: new Date(episodeProps.validAt),
     contentEmbedding: episodeProps.contentEmbedding,

@@ -256,3 +256,56 @@ ${JSON.stringify(context.extracted_nodes, null, 2)}
     },
   ];
 };
+
+export const extractAttributes = (
+  context: Record<string, any>,
+): CoreMessage[] => {
+  const sysPrompt = `
+You are an AI assistant that extracts and enhances entity attributes based on context.
+Your task is to analyze entities and provide appropriate attribute values for each entity based on its type definition.
+
+For each entity:
+1. Look at its type and identify the required and optional attributes from the entity type definitions
+2. Check if the entity already has values for these attributes
+3. For missing attributes, extract appropriate values from the context if possible
+4. For existing attributes, enhance or correct them if needed based on the context
+5. Give empty attributes object ({}) when there are no attributes to update
+6. Only include attributes that you're updating - don't repeat existing attributes that don't need changes
+7. I'll merge your new attributes with the current attributes, so only provide values that should be added or modified
+
+Provide your output in this structure:
+<output>
+{
+"entities": [
+{
+  "uuid": "entity-uuid",
+  "attributes": {
+    "attributeName1": "value1",
+    "attributeName2": "value2",
+    ...
+  }
+},
+...
+]
+}
+</output>`;
+
+  const userPrompt = `
+<ENTITY_TYPES>
+${JSON.stringify(context.entityTypes, null, 2)}
+</ENTITY_TYPES>
+
+<ENTITIES>
+${JSON.stringify(context.entities, null, 2)}
+</ENTITIES>
+
+<EPISODE_CONTENT>
+${context.episodeContent}
+</EPISODE_CONTENT>
+
+Based on the above information, please extract and enhance attributes for each entity according to its type definition. Return only the uuid and updated attributes for each entity.`;
+  return [
+    { role: "system", content: sysPrompt },
+    { role: "user", content: userPrompt },
+  ];
+};

@@ -11,7 +11,12 @@ import {
 } from "@core/types";
 import { logger } from "./logger.service";
 import crypto from "crypto";
-import { dedupeNodes, extractMessage, extractText } from "./prompts/nodes";
+import {
+  dedupeNodes,
+  extractAttributes,
+  extractMessage,
+  extractText,
+} from "./prompts/nodes";
 import {
   extractStatements,
   resolveStatementPrompt,
@@ -31,7 +36,6 @@ import { normalizePrompt } from "./prompts";
 
 // Default number of previous episodes to retrieve for context
 const DEFAULT_EPISODE_WINDOW = 5;
-const RELEVANT_SCHEMA_LIMIT = 10;
 
 export class KnowledgeGraphService {
   async getEmbedding(text: string) {
@@ -60,6 +64,7 @@ export class KnowledgeGraphService {
         limit: DEFAULT_EPISODE_WINDOW,
         userId: params.userId,
         source: params.source,
+        sessionId: params.sessionId,
       });
 
       const normalizedEpisodeBody = await this.normalizeEpisodeBody(
@@ -73,7 +78,7 @@ export class KnowledgeGraphService {
         content: normalizedEpisodeBody,
         originalContent: params.episodeBody,
         source: params.source,
-        type: params.type || EpisodeType.Text,
+        metadata: params.metadata || {},
         createdAt: now,
         validAt: new Date(params.referenceTime),
         labels: [],
@@ -106,8 +111,27 @@ export class KnowledgeGraphService {
       const { resolvedStatements, invalidatedStatements } =
         await this.resolveStatements(resolvedTriples, episode);
 
+      // Step 7: ADd attributes to entity nodes
+      const updatedTriples = await this.addAttributesToEntities(
+        resolvedStatements,
+        episode,
+      );
+
+      for (const triple of updatedTriples) {
+        const { subject, predicate, object, statement, provenance } = triple;
+        const safeTriple = {
+          subject: { ...subject, nameEmbedding: undefined },
+          predicate: { ...predicate, nameEmbedding: undefined },
+          object: { ...object, nameEmbedding: undefined },
+          statement: { ...statement, factEmbedding: undefined },
+          provenance,
+        };
+        console.log("Triple (no embedding):", JSON.stringify(safeTriple));
+      }
+      // console.log("Invalidated statements", invalidatedStatements);
+
       // Save triples sequentially to avoid parallel processing issues
-      for (const triple of resolvedStatements) {
+      for (const triple of updatedTriples) {
         await saveTriple(triple);
       }
 
@@ -154,10 +178,9 @@ export class KnowledgeGraphService {
     };
 
     // Get the extract_json prompt from the prompt library
-    const messages =
-      episode.type === EpisodeType.Conversation
-        ? extractMessage(context)
-        : extractText(context);
+    const messages = episode.sessionId
+      ? extractMessage(context)
+      : extractText(context);
 
     let responseText = "";
 
@@ -666,6 +689,100 @@ export class KnowledgeGraphService {
     }
 
     return { resolvedStatements, invalidatedStatements };
+  }
+
+  /**
+   * Add attributes to entity nodes based on the resolved statements
+   */
+  private async addAttributesToEntities(
+    triples: Triple[],
+    episode: EpisodicNode,
+  ): Promise<Triple[]> {
+    // Collect all unique entities from the triples
+    const entityMap = new Map<string, EntityNode>();
+
+    // Add all subjects, predicates, and objects to the map
+    triples.forEach((triple) => {
+      if (triple.subject) {
+        entityMap.set(triple.subject.uuid, triple.subject);
+      }
+      if (triple.predicate) {
+        entityMap.set(triple.predicate.uuid, triple.predicate);
+      }
+      if (triple.object) {
+        entityMap.set(triple.object.uuid, triple.object);
+      }
+    });
+
+    // Convert the map to an array of entities
+    const entities = Array.from(entityMap.values());
+
+    if (entities.length === 0) {
+      return triples; // No entities to process
+    }
+
+    // Get all app keys
+    const allAppEnumValues = Object.values(Apps);
+
+    // Get all node types with their attribute definitions
+    const entityTypes = getNodeTypes(allAppEnumValues);
+
+    // Prepare simplified context for the LLM
+    const context = {
+      episodeContent: episode.content,
+      entityTypes: entityTypes,
+      entities: entities.map((entity) => ({
+        uuid: entity.uuid,
+        name: entity.name,
+        type: entity.type,
+        currentAttributes: entity.attributes || {},
+      })),
+    };
+
+    console.log("entityTypes", JSON.stringify(entityTypes));
+    console.log("entities", JSON.stringify(context.entities));
+
+    // Create a prompt for the LLM to extract attributes
+    const messages = extractAttributes(context);
+
+    let responseText = "";
+
+    // Call the LLM to extract attributes
+    await makeModelCall(
+      false,
+      LLMModelEnum.GPT41,
+      messages as CoreMessage[],
+      (text) => {
+        responseText = text;
+      },
+    );
+
+    try {
+      const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
+      if (outputMatch && outputMatch[1]) {
+        responseText = outputMatch[1].trim();
+      }
+      // Parse the LLM response
+      const responseData = JSON.parse(responseText);
+      const updatedEntities = responseData.entities || [];
+
+      // Update entity attributes and save them
+      for (const updatedEntity of updatedEntities) {
+        const entity = entityMap.get(updatedEntity.uuid);
+        if (entity) {
+          // Merge the existing attributes with the new ones
+          entity.attributes = {
+            ...updatedEntity.attributes,
+          };
+        }
+      }
+
+      logger.info(`Updated attributes for ${updatedEntities.length} entities`);
+    } catch (error) {
+      logger.error("Error processing entity attributes", { error });
+    }
+
+    return triples;
   }
 
   /**

@@ -7,7 +7,7 @@ export async function saveEntity(entity: EntityNode): Promise<string> {
       ON CREATE SET
         n.name = $name,
         n.type = $type,
-        n.attributesJson = $attributesJson,
+        n.attributes = $attributes,
         n.nameEmbedding = $nameEmbedding,
         n.createdAt = $createdAt,
         n.userId = $userId,
@@ -15,7 +15,7 @@ export async function saveEntity(entity: EntityNode): Promise<string> {
       ON MATCH SET
         n.name = $name,
         n.type = $type,
-        n.attributesJson = $attributesJson,
+        n.attributes = $attributes,
         n.nameEmbedding = $nameEmbedding,
         n.space = $space
       RETURN n.uuid as uuid
@@ -25,7 +25,7 @@ export async function saveEntity(entity: EntityNode): Promise<string> {
     uuid: entity.uuid,
     name: entity.name,
     type: entity.type,
-    attributesJson: JSON.stringify(entity.attributes || {}),
+    attributes: JSON.stringify(entity.attributes || {}),
     nameEmbedding: entity.nameEmbedding,
     createdAt: entity.createdAt.toISOString(),
     userId: entity.userId,
@@ -50,7 +50,7 @@ export async function getEntity(uuid: string): Promise<EntityNode | null> {
     uuid: entity.uuid,
     name: entity.name,
     type: entity.type,
-    attributes: JSON.parse(entity.attributesJson || "{}"),
+    attributes: JSON.parse(entity.attributes || "{}"),
     nameEmbedding: entity.nameEmbedding,
     createdAt: new Date(entity.createdAt),
     userId: entity.userId,
@@ -81,7 +81,7 @@ export async function findSimilarEntities(params: {
       uuid: entity.uuid,
       name: entity.name,
       type: entity.type,
-      attributes: JSON.parse(entity.attributesJson || "{}"),
+      attributes: JSON.parse(entity.attributes || "{}"),
       nameEmbedding: entity.nameEmbedding,
       createdAt: new Date(entity.createdAt),
       userId: entity.userId,
