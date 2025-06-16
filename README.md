@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://core.heysol.ai">
-    <img src="https://github.com/user-attachments/assets/3ae051f7-e77b-42b3-91d2-af69888e4d3f" width="200px" alt="CORE logo" />
+    <img src="https://github.com/user-attachments/assets/9f60d6bc-60dc-4262-ba80-174aca787365" width="200px" alt="CORE logo" />
   </a>
 </div>
 

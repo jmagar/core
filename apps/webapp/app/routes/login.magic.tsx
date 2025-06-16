@@ -148,8 +148,7 @@ export default function LoginMagicLinkPage() {
             <Card className="min-w-[400px] rounded-md p-3">
               <CardHeader className="flex flex-col items-start">
                 <CardTitle className="mb-0 text-lg">
-                  {" "}
-                  We've sent you a magic link!
+                  Check your magic link
                 </CardTitle>
                 <CardDescription>
                   The magic link is printed in the container logs if you are
