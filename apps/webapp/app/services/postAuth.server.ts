@@ -10,5 +10,5 @@ export async function postAuthentication({
   loginMethod: User["authenticationMethod"];
   isNewUser: boolean;
 }) {
-  console.log(user);
+  // console.log(user);
 }
