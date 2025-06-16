@@ -152,8 +152,8 @@ export default function LoginMagicLinkPage() {
                   We've sent you a magic link!
                 </CardTitle>
                 <CardDescription>
-                  We sent you an email which contains a magic link that will log
-                  you in to your account.
+                  The magic link is printed in the container logs if you are
+                  using Docker, otherwise check your server logs.
                 </CardDescription>
               </CardHeader>
 
