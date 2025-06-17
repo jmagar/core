@@ -67,7 +67,6 @@ export interface Triple {
 }
 
 export type AddEpisodeParams = {
-  name: string;
   episodeBody: string;
   referenceTime: Date;
   metadata: Record<string, any>;
