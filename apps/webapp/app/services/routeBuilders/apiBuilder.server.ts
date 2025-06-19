@@ -623,9 +623,12 @@ async function wrapResponse(
   response: Response,
   useCors: boolean,
 ): Promise<Response> {
-  return useCors
-    ? await apiCors(request, response, {
-        exposedHeaders: ["x-sol-jwt", "x-sol-jwt-claims"],
-      })
-    : response;
+  // Prevent double CORS headers by checking if already present
+  if (useCors && !response.headers.has("access-control-allow-origin")) {
+    return await apiCors(request, response, {
+      exposedHeaders: ["x-sol-jwt", "x-sol-jwt-claims"],
+    });
+  }
+
+  return response;
 }
