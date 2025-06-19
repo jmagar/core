@@ -126,9 +126,7 @@ export class KnowledgeGraphService {
           statement: { ...statement, factEmbedding: undefined },
           provenance,
         };
-        console.log("Triple (no embedding):", JSON.stringify(safeTriple));
       }
-      // console.log("Invalidated statements", invalidatedStatements);
 
       // Save triples sequentially to avoid parallel processing issues
       for (const triple of updatedTriples) {
@@ -738,9 +736,6 @@ export class KnowledgeGraphService {
         currentAttributes: entity.attributes || {},
       })),
     };
-
-    console.log("entityTypes", JSON.stringify(entityTypes));
-    console.log("entities", JSON.stringify(context.entities));
 
     // Create a prompt for the LLM to extract attributes
     const messages = extractAttributes(context);

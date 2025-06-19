@@ -6,7 +6,7 @@ import {
 import { parse } from "@conform-to/zod";
 import { json } from "@remix-run/node";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Ingest } from "~/components/dashboard/ingest";
 import {
@@ -23,6 +23,7 @@ import { Search } from "~/components/dashboard";
 import { SearchBodyRequest } from "./search";
 import { SearchService } from "~/services/search.server";
 
+// --- Only return userId in loader, fetch nodeLinks on client ---
 export async function action({ request }: ActionFunctionArgs) {
   const userId = await requireUserId(request);
   const formData = await request.formData();
@@ -52,16 +53,45 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  // Only return userId, not the heavy nodeLinks
   const userId = await requireUserId(request);
-  const nodeLinks = await getNodeLinks(userId);
-
-  return nodeLinks;
+  return { userId };
 }
 
 export default function Dashboard() {
-  const nodeLinks = useTypedLoaderData<typeof loader>();
-
+  const { userId } = useTypedLoaderData<typeof loader>();
   const [size, setSize] = useState(15);
+
+  // State for nodeLinks and loading
+  const [nodeLinks, setNodeLinks] = useState<any[] | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchNodeLinks() {
+      setLoading(true);
+      try {
+        const res = await fetch(
+          "/node-links?userId=" + encodeURIComponent(userId),
+        );
+        if (!res.ok) throw new Error("Failed to fetch node links");
+        const data = await res.json();
+        if (!cancelled) {
+          setNodeLinks(data);
+          setLoading(false);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setNodeLinks([]);
+          setLoading(false);
+        }
+      }
+    }
+    fetchNodeLinks();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   return (
     <ResizablePanelGroup direction="horizontal">
@@ -75,9 +105,15 @@ export default function Dashboard() {
           <h3 className="text-lg font-medium">Graph</h3>
           <p className="text-muted-foreground"> Your memory graph </p>
 
-          <div className="bg-background-3 mt-2 grow rounded">
-            {typeof window !== "undefined" && (
-              <GraphVisualization triplets={nodeLinks} />
+          <div className="bg-background-3 mt-2 flex grow items-center justify-center rounded">
+            {loading ? (
+              <div className="flex h-full w-full flex-col items-center justify-center">
+                <div className="mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-400" />
+                <span className="text-muted-foreground">Loading graph...</span>
+              </div>
+            ) : (
+              typeof window !== "undefined" &&
+              nodeLinks && <GraphVisualization triplets={nodeLinks} />
             )}
           </div>
         </div>
@@ -85,7 +121,7 @@ export default function Dashboard() {
       <ResizableHandle className="bg-border w-[0.5px]" />
 
       <ResizablePanel
-        className="rounded-md"
+        className="overflow-auto"
         collapsible={false}
         maxSize={50}
         minSize={25}

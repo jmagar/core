@@ -53,6 +53,7 @@ export const Ingest = () => {
           placeholder="Tell what you want to add"
           onChange={(e) => setText(e.target.value)}
           disabled={isLoading}
+          className="max-h-[400px]"
         />
 
         <div className="mt-2 flex justify-end">

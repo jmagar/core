@@ -36,10 +36,6 @@ export function useMatchesData(
 ): UIMatch | undefined {
   const matchingRoutes = useMatches();
 
-  if (debug) {
-    console.log("matchingRoutes", matchingRoutes);
-  }
-
   const paths = Array.isArray(id) ? id : [id];
 
   // Get the first matching route

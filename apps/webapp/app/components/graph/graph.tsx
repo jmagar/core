@@ -366,7 +366,25 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
         }
       });
 
-      // Create simulation with custom forces
+      // Enhanced simulation for improved aesthetics and readability
+
+      // Parameters tuned for clear separation of clusters and minimal overlap,
+      // as seen in the provided image (distinct, well-separated groups).
+      const LINK_DISTANCE = 120; // Slightly shorter for tighter clusters
+      const LINK_STRENGTH = 0.6; // Stronger to keep clusters compact
+      const CHARGE_ISOLATED = -200; // Less repulsion for isolated nodes (keeps them closer)
+      const CHARGE_CONNECTED = -1000; // Strong repulsion for connected nodes (prevents crowding)
+      const COLLIDE_RADIUS = 32; // Smaller collision radius for less overlap
+      const COLLIDE_STRENGTH = 0.9; // Stronger collision to avoid overlap
+      const COLLIDE_ITER = 10; // More iterations for better separation
+      const CENTER_STRENGTH = 0.18; // Pull clusters more to center
+      const ISOLATED_RADIAL_DIST = 260; // Place isolated nodes further from center
+      const ISOLATED_RADIAL_STRENGTH = 0.28; // Stronger pull for isolated nodes
+      const NONISOLATED_RADIAL_STRENGTH = 0.06; // Slight pull for non-isolated
+      const VELOCITY_DECAY = 0.28; // Smoother, more stable layout
+      const ALPHA_DECAY = 0.035;
+      const ALPHA_MIN = 0.001;
+
       const simulation = d3
         .forceSimulation(nodes as d3.SimulationNodeDatum[])
         .force(
@@ -374,41 +392,46 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
           d3
             .forceLink(links)
             .id((d: any) => d.id)
-            .distance(200)
-            .strength(0.2),
+            .distance(LINK_DISTANCE)
+            .strength(LINK_STRENGTH),
         )
         .force(
           "charge",
           d3
             .forceManyBody()
-            .strength((d: any) => {
-              // Use a less negative strength for isolated nodes
-              // to pull them closer to the center
-              return isolatedNodeIds.has(d.id) ? -500 : -3000;
-            })
+            .strength((d: any) =>
+              isolatedNodeIds.has(d.id) ? CHARGE_ISOLATED : CHARGE_CONNECTED,
+            )
             .distanceMin(20)
-            .distanceMax(500)
-            .theta(0.8),
+            .distanceMax(600)
+            .theta(0.9),
         )
-        .force("center", d3.forceCenter(width / 2, height / 2).strength(0.05))
+        .force(
+          "center",
+          d3.forceCenter(width / 2, height / 2).strength(CENTER_STRENGTH),
+        )
         .force(
           "collide",
-          d3.forceCollide().radius(50).strength(0.3).iterations(5),
+          d3
+            .forceCollide()
+            .radius(COLLIDE_RADIUS)
+            .strength(COLLIDE_STRENGTH)
+            .iterations(COLLIDE_ITER),
         )
-        // Add a special gravity force for isolated nodes to pull them toward the center
+        // Special gravity for isolated nodes to keep them separated and visible
         .force(
           "isolatedGravity",
           d3
-            .forceRadial(
-              100, // distance from center
-              width / 2, // center x
-              height / 2, // center y
-            )
-            .strength((d: any) => (isolatedNodeIds.has(d.id) ? 0.15 : 0.01)),
+            .forceRadial(ISOLATED_RADIAL_DIST, width / 2, height / 2)
+            .strength((d: any) =>
+              isolatedNodeIds.has(d.id)
+                ? ISOLATED_RADIAL_STRENGTH
+                : NONISOLATED_RADIAL_STRENGTH,
+            ),
         )
-        .velocityDecay(0.4)
-        .alphaDecay(0.05)
-        .alphaMin(0.001);
+        .velocityDecay(VELOCITY_DECAY)
+        .alphaDecay(ALPHA_DECAY)
+        .alphaMin(ALPHA_MIN);
 
       simulationRef.current = simulation;
 
