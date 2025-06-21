@@ -21,14 +21,21 @@ import {
   extractStatements,
   resolveStatementPrompt,
 } from "./prompts/statements";
-import { getRecentEpisodes } from "./graphModels/episode";
-import { findSimilarEntities } from "./graphModels/entity";
+import {
+  getRecentEpisodes,
+  searchEpisodesByEmbedding,
+} from "./graphModels/episode";
+import {
+  findExactPredicateMatches,
+  findSimilarEntities,
+} from "./graphModels/entity";
 import {
   findContradictoryStatements,
   findSimilarStatements,
   getTripleForStatement,
   invalidateStatements,
   saveTriple,
+  searchStatementsByEmbedding,
 } from "./graphModels/statement";
 import { makeModelCall } from "~/lib/model.server";
 import { Apps, getNodeTypes, getNodeTypesString } from "~/utils/presets/nodes";
@@ -70,13 +77,20 @@ export class KnowledgeGraphService {
       const normalizedEpisodeBody = await this.normalizeEpisodeBody(
         params.episodeBody,
         params.source,
+        params.userId,
       );
+
+      if (normalizedEpisodeBody === "NOTHING_TO_REMEMBER") {
+        logger.log("Nothing to remember");
+        return;
+      }
 
       // Step 2: Episode Creation - Create or retrieve the episode
       const episode: EpisodicNode = {
         uuid: crypto.randomUUID(),
         content: normalizedEpisodeBody,
         originalContent: params.episodeBody,
+        contentEmbedding: await this.getEmbedding(normalizedEpisodeBody),
         source: params.source,
         metadata: params.metadata || {},
         createdAt: now,
@@ -117,16 +131,16 @@ export class KnowledgeGraphService {
         episode,
       );
 
-      for (const triple of updatedTriples) {
-        const { subject, predicate, object, statement, provenance } = triple;
-        const safeTriple = {
-          subject: { ...subject, nameEmbedding: undefined },
-          predicate: { ...predicate, nameEmbedding: undefined },
-          object: { ...object, nameEmbedding: undefined },
-          statement: { ...statement, factEmbedding: undefined },
-          provenance,
-        };
-      }
+      // for (const triple of updatedTriples) {
+      //   const { subject, predicate, object, statement, provenance } = triple;
+      //   const safeTriple = {
+      //     subject: { ...subject, nameEmbedding: undefined },
+      //     predicate: { ...predicate, nameEmbedding: undefined },
+      //     object: { ...object, nameEmbedding: undefined },
+      //     statement: { ...statement, factEmbedding: undefined },
+      //     provenance,
+      //   };
+      // }
 
       // Save triples sequentially to avoid parallel processing issues
       for (const triple of updatedTriples) {
@@ -265,6 +279,29 @@ export class KnowledgeGraphService {
     // Parse the statements from the LLM response
     const extractedTriples = JSON.parse(responseText || "{}").edges || [];
 
+    // Create maps to deduplicate entities by name within this extraction
+    const predicateMap = new Map<string, EntityNode>();
+
+    // First pass: collect all unique predicates from the current extraction
+    for (const triple of extractedTriples) {
+      const predicateName = triple.predicate.toLowerCase();
+      if (!predicateMap.has(predicateName)) {
+        // Create new predicate
+        const newPredicate = {
+          uuid: crypto.randomUUID(),
+          name: triple.predicate,
+          type: "Predicate",
+          attributes: {},
+          nameEmbedding: await this.getEmbedding(
+            `Predicate: ${triple.predicate}`,
+          ),
+          createdAt: new Date(),
+          userId: episode.userId,
+        };
+        predicateMap.set(predicateName, newPredicate);
+      }
+    }
+
     // Convert extracted triples to Triple objects with Statement nodes
     const triples = await Promise.all(
       // Fix: Type 'any'.
@@ -278,20 +315,10 @@ export class KnowledgeGraphService {
           (node) => node.name.toLowerCase() === triple.target.toLowerCase(),
         );
 
-        // Find or create a predicate node for the relationship type
-        const predicateNode = extractedEntities.find(
-          (node) => node.name.toLowerCase() === triple.predicate.toLowerCase(),
-        ) || {
-          uuid: crypto.randomUUID(),
-          name: triple.predicate,
-          type: "Predicate",
-          attributes: {},
-          nameEmbedding: await this.getEmbedding(triple.predicate),
-          createdAt: new Date(),
-          userId: episode.userId,
-        };
+        // Get the deduplicated predicate node
+        const predicateNode = predicateMap.get(triple.predicate.toLowerCase());
 
-        if (subjectNode && objectNode) {
+        if (subjectNode && objectNode && predicateNode) {
           // Create a statement node
           const statement: StatementNode = {
             uuid: crypto.randomUUID(),
@@ -380,9 +407,17 @@ export class KnowledgeGraphService {
     // Convert to arrays for processing
     const uniqueEntities = Array.from(uniqueEntitiesMap.values());
 
-    // Step 2: Find similar entities for each unique entity
+    // Separate predicates from other entities
+    const predicates = uniqueEntities.filter(
+      (entity) => entity.type === "Predicate",
+    );
+    const nonPredicates = uniqueEntities.filter(
+      (entity) => entity.type !== "Predicate",
+    );
+
+    // Step 2a: Find similar entities for non-predicate entities
     const similarEntitiesResults = await Promise.all(
-      uniqueEntities.map(async (entity) => {
+      nonPredicates.map(async (entity) => {
         const similarEntities = await findSimilarEntities({
           queryEmbedding: entity.nameEmbedding,
           limit: 5,
@@ -395,14 +430,40 @@ export class KnowledgeGraphService {
       }),
     );
 
+    // Step 2b: Find exact matches for predicates
+    const exactPredicateResults = await Promise.all(
+      predicates.map(async (predicate) => {
+        const exactMatches = await findExactPredicateMatches({
+          predicateName: predicate.name,
+          userId: episode.userId,
+        });
+
+        // Filter out the current predicate from matches
+        const filteredMatches = exactMatches.filter(
+          (match) => match.uuid !== predicate.uuid,
+        );
+
+        return {
+          entity: predicate,
+          similarEntities: filteredMatches, // Use the same structure as similarEntitiesResults
+        };
+      }),
+    );
+
+    // Combine the results
+    const allEntityResults = [
+      ...similarEntitiesResults,
+      ...exactPredicateResults,
+    ];
+
     // If no similar entities found for any entity, return original triples
-    if (similarEntitiesResults.length === 0) {
+    if (allEntityResults.length === 0) {
       return triples;
     }
 
     // Step 3: Prepare context for LLM deduplication
     const dedupeContext = {
-      extracted_nodes: similarEntitiesResults.map((result, index) => ({
+      extracted_nodes: allEntityResults.map((result, index) => ({
         id: index,
         name: result.entity.name,
         entity_type: result.entity.type,
@@ -451,8 +512,8 @@ export class KnowledgeGraphService {
 
         const duplicateIdx = resolution.duplicate_idx ?? -1;
 
-        // Get the corresponding result from similarEntitiesResults
-        const resultEntry = similarEntitiesResults.find(
+        // Get the corresponding result from allEntityResults
+        const resultEntry = allEntityResults.find(
           (result) => result.entity.uuid === originalEntity.uuid,
         );
 
@@ -783,17 +844,23 @@ export class KnowledgeGraphService {
   /**
    * Normalize an episode by extracting entities and creating nodes and statements
    */
-  private async normalizeEpisodeBody(episodeBody: string, source: string) {
+  private async normalizeEpisodeBody(
+    episodeBody: string,
+    source: string,
+    userId: string,
+  ) {
     let appEnumValues: Apps[] = [];
     if (Apps[source.toUpperCase() as keyof typeof Apps]) {
       appEnumValues = [Apps[source.toUpperCase() as keyof typeof Apps]];
     }
     const entityTypes = getNodeTypesString(appEnumValues);
+    const relatedMemories = await this.getRelatedMemories(episodeBody, userId);
 
     const context = {
       episodeContent: episodeBody,
       entityTypes: entityTypes,
       source,
+      relatedMemories,
     };
     const messages = normalizePrompt(context);
     let responseText = "";
@@ -804,10 +871,76 @@ export class KnowledgeGraphService {
     const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
     if (outputMatch && outputMatch[1]) {
       normalizedEpisodeBody = outputMatch[1].trim();
-    } else {
-      normalizedEpisodeBody = episodeBody;
     }
 
     return normalizedEpisodeBody;
+  }
+
+  /**
+   * Retrieves related episodes and facts based on semantic similarity to the current episode content.
+   *
+   * @param episodeContent The content of the current episode
+   * @param userId The user ID
+   * @param source The source of the episode
+   * @param referenceTime The reference time for the episode
+   * @returns A string containing formatted related episodes and facts
+   */
+  private async getRelatedMemories(
+    episodeContent: string,
+    userId: string,
+    options: {
+      episodeLimit?: number;
+      factLimit?: number;
+      minSimilarity?: number;
+    } = {},
+  ): Promise<string> {
+    try {
+      // Default configuration values
+      const episodeLimit = options.episodeLimit ?? 5;
+      const factLimit = options.factLimit ?? 10;
+      const minSimilarity = options.minSimilarity ?? 0.75;
+
+      // Get embedding for the current episode content
+      const contentEmbedding = await this.getEmbedding(episodeContent);
+
+      // Retrieve semantically similar episodes (excluding very recent ones that are already in context)
+      const relatedEpisodes = await searchEpisodesByEmbedding({
+        embedding: contentEmbedding,
+        userId,
+        limit: episodeLimit,
+        minSimilarity,
+      });
+
+      // Retrieve semantically similar facts/statements
+      const relatedFacts = await searchStatementsByEmbedding({
+        embedding: contentEmbedding,
+        userId,
+        limit: factLimit,
+        minSimilarity,
+      });
+
+      // Format the related memories for inclusion in the prompt
+      let formattedMemories = "";
+
+      if (relatedEpisodes.length > 0) {
+        formattedMemories += "## Related Episodes\n";
+        relatedEpisodes.forEach((episode, index) => {
+          formattedMemories += `### Episode ${index + 1} (${new Date(episode.validAt).toISOString()})\n`;
+          formattedMemories += `${episode.content}\n\n`;
+        });
+      }
+
+      if (relatedFacts.length > 0) {
+        formattedMemories += "## Related Facts\n";
+        relatedFacts.forEach((fact, index) => {
+          formattedMemories += `- ${fact.fact}\n`;
+        });
+      }
+
+      return formattedMemories.trim();
+    } catch (error) {
+      console.error("Error retrieving related memories:", error);
+      return "";
+    }
   }
 }

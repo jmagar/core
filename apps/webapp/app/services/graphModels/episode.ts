@@ -129,3 +129,52 @@ export async function getRecentEpisodes(params: {
     };
   });
 }
+
+export async function searchEpisodesByEmbedding(params: {
+  embedding: number[];
+  userId: string;
+  limit?: number;
+  minSimilarity?: number;
+}) {
+  const query = `
+  MATCH (episode:Episode)
+  WHERE episode.userId = $userId
+    AND episode.contentEmbedding IS NOT NULL
+  WITH episode, 
+       CASE 
+         WHEN size(episode.contentEmbedding) = size($embedding) 
+         THEN vector.similarity.cosine($embedding, episode.contentEmbedding) 
+         ELSE 0 
+       END AS score
+  WHERE score >= $minSimilarity
+  RETURN episode, score
+  ORDER BY score DESC`;
+
+  const result = await runQuery(query, {
+    embedding: params.embedding,
+    minSimilarity: params.minSimilarity,
+    userId: params.userId,
+  });
+
+  if (!result || result.length === 0) {
+    return [];
+  }
+
+  return result.map((record) => {
+    const episode = record.get("episode").properties;
+    const score = record.get("score");
+
+    return {
+      uuid: episode.uuid,
+      content: episode.content,
+      contentEmbedding: episode.contentEmbedding,
+      createdAt: new Date(episode.createdAt),
+      validAt: new Date(episode.validAt),
+      invalidAt: episode.invalidAt ? new Date(episode.invalidAt) : null,
+      attributes: episode.attributesJson
+        ? JSON.parse(episode.attributesJson)
+        : {},
+      userId: episode.userId,
+    };
+  });
+}

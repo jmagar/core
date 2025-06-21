@@ -321,3 +321,53 @@ export async function invalidateStatements({
     async (statementId) => await invalidateStatement({ statementId }),
   );
 }
+
+export async function searchStatementsByEmbedding(params: {
+  embedding: number[];
+  userId: string;
+  limit?: number;
+  minSimilarity?: number;
+}) {
+  const query = `
+  MATCH (statement:Statement)
+  WHERE statement.invalidAt IS NULL 
+    AND statement.factEmbedding IS NOT NULL
+  WITH statement, 
+       CASE 
+         WHEN size(statement.factEmbedding) = size($embedding) 
+         THEN vector.similarity.cosine($embedding, statement.factEmbedding) 
+         ELSE 0 
+       END AS score
+  WHERE score >= $minSimilarity
+  RETURN statement, score
+  ORDER BY score DESC
+`;
+
+  const result = await runQuery(query, {
+    embedding: params.embedding,
+    minSimilarity: params.minSimilarity,
+    limit: params.limit,
+  });
+
+  if (!result || result.length === 0) {
+    return [];
+  }
+
+  return result.map((record) => {
+    const statement = record.get("statement").properties;
+    const score = record.get("score");
+
+    return {
+      uuid: statement.uuid,
+      fact: statement.fact,
+      factEmbedding: statement.factEmbedding,
+      createdAt: new Date(statement.createdAt),
+      validAt: new Date(statement.validAt),
+      invalidAt: statement.invalidAt ? new Date(statement.invalidAt) : null,
+      attributes: statement.attributesJson
+        ? JSON.parse(statement.attributesJson)
+        : {},
+      userId: statement.userId,
+    };
+  });
+}
