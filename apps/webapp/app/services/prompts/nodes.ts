@@ -22,15 +22,15 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
 
 1. **Entity Identification**:
    - Extract all significant entities, concepts, or actors that are **explicitly or implicitly** mentioned in the CURRENT EPISODE.
-   - **Exclude** entities mentioned only in the PREVIOUS EPISODES (they are for context only).
    - For identity statements like "I am X" or "I'm X", extract BOTH the pronoun ("I") as a Alias entity AND the named entity (X).
    - For pronouns that refer to named entities, extract them as separate Alias entities.
 
-
 2. **Entity Classification**:
+   - CRITICAL: You MUST ONLY use entity types provided in the ENTITY_TYPES section.
    - Use the descriptions in ENTITY TYPES to classify each extracted entity.
    - Assign the appropriate type for each one.
-   - Classify pronouns (I, me, you, etc.) as Alias entities.
+   - Classify pronouns (I, me, you, etc.) as "ALIAS" entities.
+   - DO NOT invent new entity types that are not in the ENTITY_TYPES section.
 
 3. **Exclusions**:
    - Do NOT extract entities representing relationships or actions (predicates will be handled separately).

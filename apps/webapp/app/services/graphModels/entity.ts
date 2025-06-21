@@ -89,3 +89,33 @@ export async function findSimilarEntities(params: {
     };
   });
 }
+
+// Find exact predicate matches by name
+export async function findExactPredicateMatches(params: {
+  predicateName: string;
+  userId: string;
+}): Promise<EntityNode[]> {
+  const query = `
+    MATCH (entity:Entity)
+    WHERE entity.type = 'Predicate' 
+      AND toLower(entity.name) = toLower($predicateName)
+      AND entity.userId = $userId
+    RETURN entity
+  `;
+
+  const result = await runQuery(query, params);
+  return result.map((record) => {
+    const entity = record.get("entity").properties;
+
+    return {
+      uuid: entity.uuid,
+      name: entity.name,
+      type: entity.type,
+      attributes: JSON.parse(entity.attributes || "{}"),
+      nameEmbedding: entity.nameEmbedding,
+      createdAt: new Date(entity.createdAt),
+      userId: entity.userId,
+      space: entity.space,
+    };
+  });
+}
