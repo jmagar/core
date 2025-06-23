@@ -9,7 +9,6 @@ export const SearchKGSchema = z.object({
 
 export const IngestKGSchema = z.object({
   data: z.string().describe("The data to ingest in text format"),
-  source: z.string().describe("The source of the data"),
   referenceTime: z.string().describe("The reference time in ISO format"),
   sessionId: z.string().optional().describe("The session id of the conversation"),
 });

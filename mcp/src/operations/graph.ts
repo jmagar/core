@@ -9,10 +9,11 @@ export async function searchKnowledgeGraph(args: SearchKG) {
   });
   return response.data;
 }
+
 export async function ingestKnowledgeGraph(args: IngestKG) {
   const response = await axiosInstance.post(`/ingest`, {
     data: args.data,
-    source: args.source,
+    source: process.env.SOURCE,
     referenceTime: args.referenceTime,
     sessionId: args.sessionId ? args.sessionId : undefined,
   });
