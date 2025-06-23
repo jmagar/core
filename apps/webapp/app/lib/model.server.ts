@@ -7,48 +7,58 @@ import {
 } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { logger } from "~/services/logger.service";
+import { env } from "~/env.server";
+import { createOllama } from "ollama-ai-provider";
 
 export async function makeModelCall(
   stream: boolean,
-  model: LLMModelEnum,
   messages: CoreMessage[],
   onFinish: (text: string, model: string) => void,
   options?: any,
 ) {
   let modelInstance;
+  const model = env.MODEL;
   let finalModel: string = "unknown";
+  const ollamaUrl = process.env.OLLAMA_URL;
 
-  switch (model) {
-    case LLMModelEnum.GPT35TURBO:
-    case LLMModelEnum.GPT4TURBO:
-    case LLMModelEnum.GPT4O:
-    case LLMModelEnum.GPT41:
-    case LLMModelEnum.GPT41MINI:
-    case LLMModelEnum.GPT41NANO:
-      finalModel = LLMMappings[model];
-      modelInstance = openai(finalModel, { ...options });
-      break;
+  if (ollamaUrl) {
+    const ollama = createOllama({
+      baseURL: ollamaUrl,
+    });
+    modelInstance = ollama(model); // Default to llama2 if no model specified
+  } else {
+    switch (model) {
+      case LLMModelEnum.GPT35TURBO:
+      case LLMModelEnum.GPT4TURBO:
+      case LLMModelEnum.GPT4O:
+      case LLMModelEnum.GPT41:
+      case LLMModelEnum.GPT41MINI:
+      case LLMModelEnum.GPT41NANO:
+        finalModel = LLMMappings[model];
+        modelInstance = openai(finalModel, { ...options });
+        break;
 
-    case LLMModelEnum.CLAUDEOPUS:
-    case LLMModelEnum.CLAUDESONNET:
-    case LLMModelEnum.CLAUDEHAIKU:
-      finalModel = LLMMappings[model];
-      break;
+      case LLMModelEnum.CLAUDEOPUS:
+      case LLMModelEnum.CLAUDESONNET:
+      case LLMModelEnum.CLAUDEHAIKU:
+        finalModel = LLMMappings[model];
+        break;
 
-    case LLMModelEnum.GEMINI25FLASH:
-    case LLMModelEnum.GEMINI25PRO:
-    case LLMModelEnum.GEMINI20FLASH:
-    case LLMModelEnum.GEMINI20FLASHLITE:
-      finalModel = LLMMappings[model];
-      break;
+      case LLMModelEnum.GEMINI25FLASH:
+      case LLMModelEnum.GEMINI25PRO:
+      case LLMModelEnum.GEMINI20FLASH:
+      case LLMModelEnum.GEMINI20FLASHLITE:
+        finalModel = LLMMappings[model];
+        break;
 
-    default:
-      logger.warn(`Unsupported model type: ${model}`);
-      break;
+      default:
+        logger.warn(`Unsupported model type: ${model}`);
+        break;
+    }
   }
 
   if (stream) {
-    return await streamText({
+    return streamText({
       model: modelInstance as LanguageModelV1,
       messages,
       onFinish: async ({ text }) => {

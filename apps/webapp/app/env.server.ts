@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isValidDatabaseUrl } from "./utils/db";
 import { isValidRegex } from "./utils/regex";
+import { LLMModelEnum } from "@core/types";
 
 const EnvironmentSchema = z.object({
   NODE_ENV: z.union([
@@ -69,6 +70,10 @@ const EnvironmentSchema = z.object({
   SMTP_SECURE: z.coerce.boolean().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
+
+  // Model envs
+  MODEL: z.string().default(LLMModelEnum.GPT41),
+  OLLAMA_URL: z.string().optional(),
 });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;

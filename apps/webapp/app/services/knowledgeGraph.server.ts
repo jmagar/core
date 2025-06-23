@@ -196,14 +196,9 @@ export class KnowledgeGraphService {
 
     let responseText = "";
 
-    await makeModelCall(
-      false,
-      LLMModelEnum.GPT41,
-      messages as CoreMessage[],
-      (text) => {
-        responseText = text;
-      },
-    );
+    await makeModelCall(false, messages as CoreMessage[], (text) => {
+      responseText = text;
+    });
 
     // Convert to EntityNode objects
     let entities: EntityNode[] = [];
@@ -258,14 +253,9 @@ export class KnowledgeGraphService {
     const messages = extractStatements(context);
 
     let responseText = "";
-    await makeModelCall(
-      false,
-      LLMModelEnum.GPT41,
-      messages as CoreMessage[],
-      (text) => {
-        responseText = text;
-      },
-    );
+    await makeModelCall(false, messages as CoreMessage[], (text) => {
+      responseText = text;
+    });
 
     console.log(responseText);
     const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
@@ -483,14 +473,9 @@ export class KnowledgeGraphService {
     const messages = dedupeNodes(dedupeContext);
     let responseText = "";
 
-    await makeModelCall(
-      false,
-      LLMModelEnum.GPT41,
-      messages as CoreMessage[],
-      (text) => {
-        responseText = text;
-      },
-    );
+    await makeModelCall(false, messages as CoreMessage[], (text) => {
+      responseText = text;
+    });
 
     // Step 5: Process LLM response
     const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
@@ -673,7 +658,7 @@ export class KnowledgeGraphService {
       let responseText = "";
 
       // Call the LLM to analyze all statements at once
-      await makeModelCall(false, LLMModelEnum.GPT41, messages, (text) => {
+      await makeModelCall(false, messages, (text) => {
         responseText = text;
       });
 
@@ -804,14 +789,9 @@ export class KnowledgeGraphService {
     let responseText = "";
 
     // Call the LLM to extract attributes
-    await makeModelCall(
-      false,
-      LLMModelEnum.GPT41,
-      messages as CoreMessage[],
-      (text) => {
-        responseText = text;
-      },
-    );
+    await makeModelCall(false, messages as CoreMessage[], (text) => {
+      responseText = text;
+    });
 
     try {
       const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
@@ -864,7 +844,7 @@ export class KnowledgeGraphService {
     };
     const messages = normalizePrompt(context);
     let responseText = "";
-    await makeModelCall(false, LLMModelEnum.GPT41, messages, (text) => {
+    await makeModelCall(false, messages, (text) => {
       responseText = text;
     });
     let normalizedEpisodeBody = "";
