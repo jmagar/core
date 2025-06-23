@@ -74,19 +74,16 @@ export class KnowledgeGraphService {
         sessionId: params.sessionId,
       });
 
-      // const normalizedEpisodeBody = await this.normalizeEpisodeBody(
-      //   params.episodeBody,
-      //   params.source,
-      //   params.userId,
-      // );
+      const normalizedEpisodeBody = await this.normalizeEpisodeBody(
+        params.episodeBody,
+        params.source,
+        params.userId,
+      );
 
-      const normalizedEpisodeBody = `- Harshith Mullapudi requested the assistant to retrieve details from a specific task description, use the claude_code tool, create a new branch named "harshith/image-fix," and push changes to that branch.
-- The assistant initiated actions to get the task details and to use the claude_code tool as instructed by Harshith Mullapudi.`;
-
-      // if (normalizedEpisodeBody === "NOTHING_TO_REMEMBER") {
-      //   logger.log("Nothing to remember");
-      //   return;
-      // }
+      if (normalizedEpisodeBody === "NOTHING_TO_REMEMBER") {
+        logger.log("Nothing to remember");
+        return;
+      }
 
       // Step 2: Episode Creation - Create or retrieve the episode
       const episode: EpisodicNode = {
