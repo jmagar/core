@@ -63,12 +63,14 @@ export async function findSimilarEntities(params: {
   queryEmbedding: number[];
   limit: number;
   threshold: number;
+  userId: string;
 }): Promise<EntityNode[]> {
   const query = `
           MATCH (entity:Entity)
           WHERE entity.nameEmbedding IS NOT NULL
           WITH entity, vector.similarity.cosine($queryEmbedding, entity.nameEmbedding) AS score
           WHERE score >= $threshold
+          AND entity.userId = $userId
           RETURN entity, score
           ORDER BY score DESC
         `;

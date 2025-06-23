@@ -2,12 +2,14 @@ export enum Apps {
   LINEAR = "LINEAR",
   SLACK = "SLACK",
   SOL = "SOL",
+  GITHUB = "GITHUB",
 }
 
 export const AppNames = {
   [Apps.LINEAR]: "Linear",
   [Apps.SLACK]: "Slack",
   [Apps.SOL]: "Sol",
+  [Apps.GITHUB]: "GitHub",
 } as const;
 
 // Define attribute structure
@@ -97,7 +99,7 @@ export const GENERAL_NODE_TYPES = {
   },
   ALIAS: {
     name: "Alias",
-    description: "An alternative name or identifier for an entity",
+    description: "An alternative name or identifier for nouns and pronouns",
     attributes: [
       {
         name: "originalName",
@@ -108,6 +110,24 @@ export const GENERAL_NODE_TYPES = {
         name: "context",
         description: "The context in which this alias is used",
         type: "string",
+      },
+    ],
+  },
+  FILE: {
+    name: "File",
+    description: "A document, image or other file shared in an app",
+    attributes: [
+      {
+        name: "fileId",
+        description: "Unique identifier for the file",
+        type: "string",
+        required: true,
+      },
+      {
+        name: "source",
+        description: "The source of the file",
+        type: "string",
+        required: true,
       },
     ],
   },
@@ -127,32 +147,6 @@ export const APP_NODE_TYPES = {
           type: "string",
           required: true,
         },
-        {
-          name: "title",
-          description: "The title of the task",
-          type: "string",
-          required: true,
-        },
-        {
-          name: "description",
-          description: "The description of the task",
-          type: "string",
-        },
-        {
-          name: "status",
-          description: "The current status of the task",
-          type: "string",
-        },
-        {
-          name: "dueDate",
-          description: "The due date of the task",
-          type: "date",
-        },
-        {
-          name: "priority",
-          description: "The priority level of the task",
-          type: "string",
-        },
       ],
     },
     LIST: {
@@ -165,22 +159,6 @@ export const APP_NODE_TYPES = {
           description: "Unique identifier for the list",
           type: "string",
           required: true,
-        },
-        {
-          name: "title",
-          description: "The title of the list",
-          type: "string",
-          required: true,
-        },
-        {
-          name: "description",
-          description: "The description of the list",
-          type: "string",
-        },
-        {
-          name: "itemCount",
-          description: "The number of items in the list",
-          type: "number",
         },
       ],
     },
@@ -203,25 +181,6 @@ export const APP_NODE_TYPES = {
         },
       ],
     },
-    COMMAND: {
-      name: "Sol Command",
-      description:
-        "A user-issued command or trigger phrase, often starting with '/', that directs the system or an app to perform a specific action. Commands should always be extracted as distinct, important user actions.",
-      attributes: [
-        {
-          name: "commandId",
-          description: "Unique identifier for the command",
-          type: "string",
-          required: true,
-        },
-        {
-          name: "commandName",
-          description: "The name of the command",
-          type: "string",
-          required: true,
-        },
-      ],
-    },
     AUTOMATION: {
       name: "Sol Automation",
       description:
@@ -230,18 +189,6 @@ export const APP_NODE_TYPES = {
         {
           name: "automationId",
           description: "Unique identifier for the automation",
-          type: "string",
-          required: true,
-        },
-        {
-          name: "trigger",
-          description: "The event that triggers this automation",
-          type: "string",
-          required: true,
-        },
-        {
-          name: "action",
-          description: "The action performed by this automation",
           type: "string",
           required: true,
         },
@@ -259,27 +206,6 @@ export const APP_NODE_TYPES = {
           type: "string",
           required: true,
         },
-        {
-          name: "title",
-          description: "The title of the issue",
-          type: "string",
-          required: true,
-        },
-        {
-          name: "status",
-          description: "The current status of the issue",
-          type: "string",
-        },
-        {
-          name: "priority",
-          description: "The priority level of the issue",
-          type: "number",
-        },
-        {
-          name: "assignee",
-          description: "The person assigned to the issue",
-          type: "string",
-        },
       ],
     },
     PROJECT: {
@@ -292,27 +218,6 @@ export const APP_NODE_TYPES = {
           type: "string",
           required: true,
         },
-        {
-          name: "name",
-          description: "The name of the project",
-          type: "string",
-          required: true,
-        },
-        {
-          name: "status",
-          description: "The current status of the project",
-          type: "string",
-        },
-        {
-          name: "startDate",
-          description: "The start date of the project",
-          type: "date",
-        },
-        {
-          name: "targetDate",
-          description: "The target completion date of the project",
-          type: "date",
-        },
       ],
     },
     CYCLE: {
@@ -323,24 +228,6 @@ export const APP_NODE_TYPES = {
           name: "cycleId",
           description: "Unique identifier for the cycle",
           type: "string",
-          required: true,
-        },
-        {
-          name: "name",
-          description: "The name of the cycle",
-          type: "string",
-          required: true,
-        },
-        {
-          name: "startDate",
-          description: "The start date of the cycle",
-          type: "date",
-          required: true,
-        },
-        {
-          name: "endDate",
-          description: "The end date of the cycle",
-          type: "date",
           required: true,
         },
       ],
@@ -355,22 +242,6 @@ export const APP_NODE_TYPES = {
           type: "string",
           required: true,
         },
-        {
-          name: "name",
-          description: "The name of the team",
-          type: "string",
-          required: true,
-        },
-        {
-          name: "key",
-          description: "The team's key or shorthand",
-          type: "string",
-        },
-        {
-          name: "memberCount",
-          description: "Number of members in the team",
-          type: "number",
-        },
       ],
     },
     LABEL: {
@@ -382,17 +253,6 @@ export const APP_NODE_TYPES = {
           description: "Unique identifier for the label",
           type: "string",
           required: true,
-        },
-        {
-          name: "name",
-          description: "The name of the label",
-          type: "string",
-          required: true,
-        },
-        {
-          name: "color",
-          description: "The color of the label",
-          type: "string",
         },
       ],
     },
@@ -408,21 +268,11 @@ export const APP_NODE_TYPES = {
           type: "string",
           required: true,
         },
-        {
-          name: "name",
-          description: "The name of the channel",
-          type: "string",
-          required: true,
-        },
+
         {
           name: "isPrivate",
           description: "Whether the channel is private",
           type: "boolean",
-        },
-        {
-          name: "memberCount",
-          description: "The number of members in the channel",
-          type: "number",
         },
       ],
     },
@@ -442,11 +292,6 @@ export const APP_NODE_TYPES = {
           type: "string",
           required: true,
         },
-        {
-          name: "replyCount",
-          description: "Number of replies in the thread",
-          type: "number",
-        },
       ],
     },
     MESSAGE: {
@@ -458,23 +303,6 @@ export const APP_NODE_TYPES = {
           description: "Unique identifier for the message",
           type: "string",
           required: true,
-        },
-        {
-          name: "content",
-          description: "The content of the message",
-          type: "string",
-          required: true,
-        },
-        {
-          name: "timestamp",
-          description: "When the message was sent",
-          type: "date",
-          required: true,
-        },
-        {
-          name: "reactions",
-          description: "Reactions to the message",
-          type: "array",
         },
       ],
     },
@@ -488,39 +316,79 @@ export const APP_NODE_TYPES = {
           type: "string",
           required: true,
         },
-        {
-          name: "count",
-          description: "Number of users who reacted with this emoji",
-          type: "number",
-          required: true,
-        },
       ],
     },
-    FILE: {
-      name: "Slack File",
-      description: "A document, image or other file shared in Slack",
+  },
+  [Apps.GITHUB]: {
+    REPOSITORY: {
+      name: "GitHub Repository",
+      description: "A code repository hosted on GitHub",
       attributes: [
         {
-          name: "fileId",
-          description: "Unique identifier for the file",
+          name: "repoId",
+          description: "Unique identifier for the repository",
           type: "string",
           required: true,
         },
         {
           name: "name",
-          description: "The name of the file",
+          description: "The name of the repository",
           type: "string",
           required: true,
         },
         {
-          name: "type",
-          description: "The file type or format",
+          name: "owner",
+          description: "Owner (user or organization) of the repository",
           type: "string",
+          required: true,
         },
+      ],
+    },
+    ISSUE: {
+      name: "GitHub Issue",
+      description: "An issue created to track bugs, tasks, or feature requests",
+      attributes: [
         {
-          name: "size",
-          description: "The size of the file in bytes",
-          type: "number",
+          name: "issueId",
+          description: "Unique identifier for the issue",
+          type: "string",
+          required: true,
+        },
+      ],
+    },
+    PULL_REQUEST: {
+      name: "GitHub Pull Request",
+      description: "A pull request to propose changes to a repository",
+      attributes: [
+        {
+          name: "PR number",
+          description: "Unique number for the pull request",
+          type: "string",
+          required: true,
+        },
+      ],
+    },
+    COMMIT: {
+      name: "GitHub Commit",
+      description: "A commit representing a set of changes in a repository",
+      attributes: [
+        {
+          name: "commitSha",
+          description: "SHA hash of the commit",
+          type: "string",
+          required: true,
+        },
+      ],
+    },
+    BRANCH: {
+      name: "GitHub Branch",
+      description: "A branch in a GitHub repository",
+      attributes: [
+        {
+          name: "branchName",
+          description: "Name of the branch",
+          type: "string",
+          required: true,
         },
       ],
     },

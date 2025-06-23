@@ -74,16 +74,19 @@ export class KnowledgeGraphService {
         sessionId: params.sessionId,
       });
 
-      const normalizedEpisodeBody = await this.normalizeEpisodeBody(
-        params.episodeBody,
-        params.source,
-        params.userId,
-      );
+      // const normalizedEpisodeBody = await this.normalizeEpisodeBody(
+      //   params.episodeBody,
+      //   params.source,
+      //   params.userId,
+      // );
 
-      if (normalizedEpisodeBody === "NOTHING_TO_REMEMBER") {
-        logger.log("Nothing to remember");
-        return;
-      }
+      const normalizedEpisodeBody = `- Harshith Mullapudi requested the assistant to retrieve details from a specific task description, use the claude_code tool, create a new branch named "harshith/image-fix," and push changes to that branch.
+- The assistant initiated actions to get the task details and to use the claude_code tool as instructed by Harshith Mullapudi.`;
+
+      // if (normalizedEpisodeBody === "NOTHING_TO_REMEMBER") {
+      //   logger.log("Nothing to remember");
+      //   return;
+      // }
 
       // Step 2: Episode Creation - Create or retrieve the episode
       const episode: EpisodicNode = {
@@ -206,27 +209,25 @@ export class KnowledgeGraphService {
     );
 
     // Convert to EntityNode objects
-    const entities: EntityNode[] = [];
+    let entities: EntityNode[] = [];
 
     const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
     if (outputMatch && outputMatch[1]) {
       responseText = outputMatch[1].trim();
       const extractedEntities = JSON.parse(responseText || "{}").entities || [];
 
-      entities.push(
-        ...(await Promise.all(
-          extractedEntities.map(async (entity: any) => ({
-            uuid: crypto.randomUUID(),
-            name: entity.name,
-            type: entity.type,
-            attributes: entity.attributes || {},
-            nameEmbedding: await this.getEmbedding(
-              `${entity.type}: ${entity.name}`,
-            ),
-            createdAt: new Date(),
-            userId: episode.userId,
-          })),
-        )),
+      entities = await Promise.all(
+        extractedEntities.map(async (entity: any) => ({
+          uuid: crypto.randomUUID(),
+          name: entity.name,
+          type: entity.type,
+          attributes: entity.attributes || {},
+          nameEmbedding: await this.getEmbedding(
+            `${entity.type}: ${entity.name}`,
+          ),
+          createdAt: new Date(),
+          userId: episode.userId,
+        })),
       );
     }
 
@@ -269,6 +270,7 @@ export class KnowledgeGraphService {
       },
     );
 
+    console.log(responseText);
     const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
     if (outputMatch && outputMatch[1]) {
       responseText = outputMatch[1].trim();
@@ -422,6 +424,7 @@ export class KnowledgeGraphService {
           queryEmbedding: entity.nameEmbedding,
           limit: 5,
           threshold: 0.85,
+          userId: episode.userId,
         });
         return {
           entity,
@@ -507,14 +510,14 @@ export class KnowledgeGraphService {
       const entityResolutionMap = new Map<string, EntityNode>();
 
       nodeResolutions.forEach((resolution: any, index: number) => {
-        const originalEntity = uniqueEntities[resolution.id ?? index];
+        const originalEntity = allEntityResults[resolution.id ?? index];
         if (!originalEntity) return;
 
         const duplicateIdx = resolution.duplicate_idx ?? -1;
 
         // Get the corresponding result from allEntityResults
         const resultEntry = allEntityResults.find(
-          (result) => result.entity.uuid === originalEntity.uuid,
+          (result) => result.entity.uuid === originalEntity.entity.uuid,
         );
 
         if (!resultEntry) return;
@@ -523,7 +526,7 @@ export class KnowledgeGraphService {
         const resolvedEntity =
           duplicateIdx >= 0 && duplicateIdx < resultEntry.similarEntities.length
             ? resultEntry.similarEntities[duplicateIdx]
-            : originalEntity;
+            : originalEntity.entity;
 
         // Update name if provided
         if (resolution.name) {
@@ -531,7 +534,7 @@ export class KnowledgeGraphService {
         }
 
         // Map original UUID to resolved entity
-        entityResolutionMap.set(originalEntity.uuid, resolvedEntity);
+        entityResolutionMap.set(originalEntity.entity.uuid, resolvedEntity);
       });
 
       // Step 7: Reconstruct triples with resolved entities
