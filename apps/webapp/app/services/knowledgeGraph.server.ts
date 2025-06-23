@@ -196,37 +196,30 @@ export class KnowledgeGraphService {
 
     let responseText = "";
 
-    await makeModelCall(
-      false,
-      LLMModelEnum.GPT41,
-      messages as CoreMessage[],
-      (text) => {
-        responseText = text;
-      },
-    );
+    await makeModelCall(false, messages as CoreMessage[], (text) => {
+      responseText = text;
+    });
 
     // Convert to EntityNode objects
-    const entities: EntityNode[] = [];
+    let entities: EntityNode[] = [];
 
     const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
     if (outputMatch && outputMatch[1]) {
       responseText = outputMatch[1].trim();
       const extractedEntities = JSON.parse(responseText || "{}").entities || [];
 
-      entities.push(
-        ...(await Promise.all(
-          extractedEntities.map(async (entity: any) => ({
-            uuid: crypto.randomUUID(),
-            name: entity.name,
-            type: entity.type,
-            attributes: entity.attributes || {},
-            nameEmbedding: await this.getEmbedding(
-              `${entity.type}: ${entity.name}`,
-            ),
-            createdAt: new Date(),
-            userId: episode.userId,
-          })),
-        )),
+      entities = await Promise.all(
+        extractedEntities.map(async (entity: any) => ({
+          uuid: crypto.randomUUID(),
+          name: entity.name,
+          type: entity.type,
+          attributes: entity.attributes || {},
+          nameEmbedding: await this.getEmbedding(
+            `${entity.type}: ${entity.name}`,
+          ),
+          createdAt: new Date(),
+          userId: episode.userId,
+        })),
       );
     }
 
@@ -260,15 +253,11 @@ export class KnowledgeGraphService {
     const messages = extractStatements(context);
 
     let responseText = "";
-    await makeModelCall(
-      false,
-      LLMModelEnum.GPT41,
-      messages as CoreMessage[],
-      (text) => {
-        responseText = text;
-      },
-    );
+    await makeModelCall(false, messages as CoreMessage[], (text) => {
+      responseText = text;
+    });
 
+    console.log(responseText);
     const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
     if (outputMatch && outputMatch[1]) {
       responseText = outputMatch[1].trim();
@@ -422,6 +411,7 @@ export class KnowledgeGraphService {
           queryEmbedding: entity.nameEmbedding,
           limit: 5,
           threshold: 0.85,
+          userId: episode.userId,
         });
         return {
           entity,
@@ -483,14 +473,9 @@ export class KnowledgeGraphService {
     const messages = dedupeNodes(dedupeContext);
     let responseText = "";
 
-    await makeModelCall(
-      false,
-      LLMModelEnum.GPT41,
-      messages as CoreMessage[],
-      (text) => {
-        responseText = text;
-      },
-    );
+    await makeModelCall(false, messages as CoreMessage[], (text) => {
+      responseText = text;
+    });
 
     // Step 5: Process LLM response
     const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
@@ -507,14 +492,14 @@ export class KnowledgeGraphService {
       const entityResolutionMap = new Map<string, EntityNode>();
 
       nodeResolutions.forEach((resolution: any, index: number) => {
-        const originalEntity = uniqueEntities[resolution.id ?? index];
+        const originalEntity = allEntityResults[resolution.id ?? index];
         if (!originalEntity) return;
 
         const duplicateIdx = resolution.duplicate_idx ?? -1;
 
         // Get the corresponding result from allEntityResults
         const resultEntry = allEntityResults.find(
-          (result) => result.entity.uuid === originalEntity.uuid,
+          (result) => result.entity.uuid === originalEntity.entity.uuid,
         );
 
         if (!resultEntry) return;
@@ -523,7 +508,7 @@ export class KnowledgeGraphService {
         const resolvedEntity =
           duplicateIdx >= 0 && duplicateIdx < resultEntry.similarEntities.length
             ? resultEntry.similarEntities[duplicateIdx]
-            : originalEntity;
+            : originalEntity.entity;
 
         // Update name if provided
         if (resolution.name) {
@@ -531,7 +516,7 @@ export class KnowledgeGraphService {
         }
 
         // Map original UUID to resolved entity
-        entityResolutionMap.set(originalEntity.uuid, resolvedEntity);
+        entityResolutionMap.set(originalEntity.entity.uuid, resolvedEntity);
       });
 
       // Step 7: Reconstruct triples with resolved entities
@@ -673,7 +658,7 @@ export class KnowledgeGraphService {
       let responseText = "";
 
       // Call the LLM to analyze all statements at once
-      await makeModelCall(false, LLMModelEnum.GPT41, messages, (text) => {
+      await makeModelCall(false, messages, (text) => {
         responseText = text;
       });
 
@@ -804,14 +789,9 @@ export class KnowledgeGraphService {
     let responseText = "";
 
     // Call the LLM to extract attributes
-    await makeModelCall(
-      false,
-      LLMModelEnum.GPT41,
-      messages as CoreMessage[],
-      (text) => {
-        responseText = text;
-      },
-    );
+    await makeModelCall(false, messages as CoreMessage[], (text) => {
+      responseText = text;
+    });
 
     try {
       const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
@@ -864,7 +844,7 @@ export class KnowledgeGraphService {
     };
     const messages = normalizePrompt(context);
     let responseText = "";
-    await makeModelCall(false, LLMModelEnum.GPT41, messages, (text) => {
+    await makeModelCall(false, messages, (text) => {
       responseText = text;
     });
     let normalizedEpisodeBody = "";

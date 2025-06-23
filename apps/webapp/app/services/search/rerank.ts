@@ -100,7 +100,6 @@ export async function applyCrossEncoderReranking(
       let responseText = "";
       await makeModelCall(
         false,
-        LLMModelEnum.GPT41NANO,
         messages,
         (text) => {
           responseText = text;
