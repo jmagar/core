@@ -410,7 +410,7 @@ export class KnowledgeGraphService {
         const similarEntities = await findSimilarEntities({
           queryEmbedding: entity.nameEmbedding,
           limit: 5,
-          threshold: 0.85,
+          threshold: 0.7,
           userId: episode.userId,
         });
         return {
