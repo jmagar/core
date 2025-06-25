@@ -294,8 +294,10 @@ export async function getTripleForStatement({
 
 export async function invalidateStatement({
   statementId,
+  invalidAt,
 }: {
   statementId: string;
+  invalidAt: string;
 }) {
   const query = `
       MATCH (statement:Statement {uuid: $statementId})
@@ -303,7 +305,7 @@ export async function invalidateStatement({
       RETURN statement
     `;
 
-  const result = await runQuery(query, { statementId, invalidAt: new Date() });
+  const result = await runQuery(query, { statementId, invalidAt });
 
   if (!result || result.length === 0) {
     return null;
@@ -317,8 +319,10 @@ export async function invalidateStatements({
 }: {
   statementIds: string[];
 }) {
+  const invalidAt = new Date().toISOString();
   return statementIds.map(
-    async (statementId) => await invalidateStatement({ statementId }),
+    async (statementId) =>
+      await invalidateStatement({ statementId, invalidAt }),
   );
 }
 
