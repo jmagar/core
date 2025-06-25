@@ -31,8 +31,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: zodToJsonSchema(SearchKGSchema),
       },
       {
-        name: "ingest_memory",
-        description: "Ingest data into the memory graph pipeline",
+        name: "add_memory",
+        description: "Add data into the memory graph pipeline",
         inputSchema: zodToJsonSchema(IngestKGSchema),
       },
     ],
@@ -51,7 +51,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const result = await searchKnowledgeGraph(args);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       }
-      case "ingest_memory": {
+      case "add_memory": {
         const args = IngestKGSchema.parse(request.params.arguments);
         const result = await ingestKnowledgeGraph(args);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };

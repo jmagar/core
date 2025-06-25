@@ -8,9 +8,8 @@ export const SearchKGSchema = z.object({
 });
 
 export const IngestKGSchema = z.object({
-  data: z.string().describe("The data to ingest in text format"),
+  message: z.string().describe("The data to ingest in text format"),
   referenceTime: z.string().describe("The reference time in ISO format"),
-  sessionId: z.string().optional().describe("The session id of the conversation"),
 });
 
 export type SearchKG = z.infer<typeof SearchKGSchema>;
