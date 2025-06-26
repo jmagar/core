@@ -8,12 +8,16 @@
 
 **Contextual Observation & Recall Engine**
 
-C.O.R.E lets you create a private, portable, open-source memory space for LLMs, all stored locally for full data control. You decide what to share or connect with other tools, managing exactly what gets recalled and where.
+C.O.R.E is a shareable memory for LLMs which is private, portable and 100% owned by the user. You can either run it locally or use our hosted version and then connect with other tools like Cursor, Claude to share your context at multiple places.
 
 C.O.R.E is built for two reasons:
 
 1. To give you complete ownership of your memory, stored locally and accessible across any app needing LLM context.
 2. To help SOL (your AI assistant) access your context, facts, and preferences for more relevant and personalized responses.
+
+## Demo Video
+https://www.youtube.com/embed/CvR5kIGsqns
+
 
 ## How is C.O.R.E different from other Memory Providers?
 
