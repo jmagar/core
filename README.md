@@ -18,7 +18,7 @@ C.O.R.E is built for two reasons:
 2. To help SOL (your AI assistant) access your context, facts, and preferences for more relevant and personalized responses.
 
 ## Demo Video
-https://www.youtube.com/embed/CvR5kIGsqns
+[Check C.O.R.E Demo](https://youtu.be/iANZ32dnK60)
 
 
 ## How is C.O.R.E different from other Memory Providers?
