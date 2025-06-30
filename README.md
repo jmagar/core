@@ -1,8 +1,10 @@
 <div align="center">
   <a href="https://core.heysol.ai">
-    <img src="https://github.com/user-attachments/assets/9f60d6bc-60dc-4262-ba80-174aca787365" width="200px" alt="CORE logo" />
+    <img src="https://github.com/user-attachments/assets/89066cdd-204b-46c2-8ad4-4935f5ca9edd" width="200px" alt="CORE logo" />
   </a>
 </div>
+
+
 
 ## C.O.R.E.
 
