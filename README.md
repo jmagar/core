@@ -4,8 +4,6 @@
   </a>
 </div>
 
-
-
 ## C.O.R.E.
 
 **Contextual Observation & Recall Engine**
@@ -17,9 +15,11 @@ C.O.R.E is built for two reasons:
 1. To give you complete ownership of your memory, stored locally and accessible across any app needing LLM context.
 2. To help SOL (your AI assistant) access your context, facts, and preferences for more relevant and personalized responses.
 
-## Demo Video
-[Check C.O.R.E Demo](https://youtu.be/iANZ32dnK60)
+> **Note:** We are actively working on improving support for Llama models. At the moment, C.O.R.E does not provide optimal results with Llama-based models, but we are making progress to ensure better compatibility and output in the near future.
 
+## Demo Video
+
+[Check C.O.R.E Demo](https://youtu.be/iANZ32dnK60)
 
 ## How is C.O.R.E different from other Memory Providers?
 
@@ -36,7 +36,6 @@ Imagine you ask SOL: "What changed in our pricing since Q1?"
 With C.O.R.E, you see exactly what prices changed, who approved them, the context (meeting, email, document), and when each update happened—enabling true compliance, auditability, and insight across products, teams, and time.
 
 Or ask: “What does Mike know about Project Phoenix?” and get a timeline of meetings, decisions, and facts Mike was involved in, with full traceability to those specific events.
-
 
 ## C.O.R.E Cloud Setup
 
@@ -97,30 +96,31 @@ Or ask: “What does Mike know about Project Phoenix?” and get a timeline of m
 2. In Cursor, go to: Settings → Tools & Integrations → New MCP Server.
 3. Add the CORE MCP server using the configuration format below. Be sure to replace the API_TOKEN value with the token you generated in step 1.
 
-    MCP configuration to add in Cursor
-    
-    ``` json
-    {
-      "mcpServers": {
-        "memory": {
-          "command": "npx",
-          "args": ["-y", "@redplanethq/core-mcp"],
-          "env": {
-            "API_TOKEN": "YOUR_API_TOKEN_HERE",
-            "API_BASE_URL": "https://core.heysol.ai",
-            "SOURCE": "cursor"
-          }
-        }
-      }
-    }
-    ```
+   MCP configuration to add in Cursor
+
+   ```json
+   {
+     "mcpServers": {
+       "memory": {
+         "command": "npx",
+         "args": ["-y", "@redplanethq/core-mcp"],
+         "env": {
+           "API_TOKEN": "YOUR_API_TOKEN_HERE",
+           "API_BASE_URL": "https://core.heysol.ai",
+           "SOURCE": "cursor"
+         }
+       }
+     }
+   }
+   ```
+
 4. Go to Settings-> User rules -> New Rule -> and add the below rule to ensure all your chat interactions are being stored in CORE memory
 
 ```
 After every interaction, update the memory with the user's query and the assistant's
 response to core-memory mcp. sessionId should be the uuid of the conversation
 ```
-   
+
 ## Connecting to the API
 
 You can also interact with C.O.R.E. programmatically via its APIs.

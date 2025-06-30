@@ -14,6 +14,7 @@ export async function ingestKnowledgeGraph(args: IngestKG) {
   const response = await axiosInstance.post(`/ingest`, {
     episodeBody: args.message,
     source: process.env.SOURCE,
+    referenceTime: new Date().toISOString(),
     sessionId: undefined,
   });
   return response.data;
