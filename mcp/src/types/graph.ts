@@ -9,7 +9,6 @@ export const SearchKGSchema = z.object({
 
 export const IngestKGSchema = z.object({
   message: z.string().describe("The data to ingest in text format"),
-  referenceTime: z.string().describe("The reference time in ISO format"),
 });
 
 export type SearchKG = z.infer<typeof SearchKGSchema>;
