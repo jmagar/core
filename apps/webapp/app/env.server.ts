@@ -73,6 +73,7 @@ const EnvironmentSchema = z.object({
 
   // Model envs
   MODEL: z.string().default(LLMModelEnum.GPT41),
+  EMBEDDING_MODEL: z.string().default("bge-m3"),
   OLLAMA_URL: z.string().optional(),
 });
 

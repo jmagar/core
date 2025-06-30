@@ -40,14 +40,32 @@ import {
 import { makeModelCall } from "~/lib/model.server";
 import { Apps, getNodeTypes, getNodeTypesString } from "~/utils/presets/nodes";
 import { normalizePrompt } from "./prompts";
+import { env } from "~/env.server";
+import { createOllama } from "ollama-ai-provider";
 
 // Default number of previous episodes to retrieve for context
 const DEFAULT_EPISODE_WINDOW = 5;
 
 export class KnowledgeGraphService {
-  async getEmbedding(text: string) {
+  async getEmbedding(text: string, useOpenAI = false) {
+    if (useOpenAI) {
+      // Use OpenAI embedding model when explicitly requested
+      const { embedding } = await embed({
+        model: openai.embedding("text-embedding-3-small"),
+        value: text,
+      });
+      return embedding;
+    }
+
+    // Default to using Ollama
+    const ollamaUrl = process.env.OLLAMA_URL;
+    const model = env.EMBEDDING_MODEL;
+
+    const ollama = createOllama({
+      baseURL: ollamaUrl,
+    });
     const { embedding } = await embed({
-      model: openai.embedding("text-embedding-3-small"),
+      model: ollama.embedding(model),
       value: text,
     });
 
@@ -131,16 +149,16 @@ export class KnowledgeGraphService {
         episode,
       );
 
-      // for (const triple of updatedTriples) {
-      //   const { subject, predicate, object, statement, provenance } = triple;
-      //   const safeTriple = {
-      //     subject: { ...subject, nameEmbedding: undefined },
-      //     predicate: { ...predicate, nameEmbedding: undefined },
-      //     object: { ...object, nameEmbedding: undefined },
-      //     statement: { ...statement, factEmbedding: undefined },
-      //     provenance,
-      //   };
-      // }
+      for (const triple of updatedTriples) {
+        const { subject, predicate, object, statement, provenance } = triple;
+        const safeTriple = {
+          subject: { ...subject, nameEmbedding: undefined },
+          predicate: { ...predicate, nameEmbedding: undefined },
+          object: { ...object, nameEmbedding: undefined },
+          statement: { ...statement, factEmbedding: undefined },
+          provenance: { ...provenance, contentEmbedding: undefined },
+        };
+      }
 
       // Save triples sequentially to avoid parallel processing issues
       for (const triple of updatedTriples) {
@@ -257,7 +275,6 @@ export class KnowledgeGraphService {
       responseText = text;
     });
 
-    console.log(responseText);
     const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
     if (outputMatch && outputMatch[1]) {
       responseText = outputMatch[1].trim();

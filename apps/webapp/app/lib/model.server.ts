@@ -19,13 +19,14 @@ export async function makeModelCall(
   let modelInstance;
   const model = env.MODEL;
   let finalModel: string = "unknown";
-  const ollamaUrl = process.env.OLLAMA_URL;
+  // const ollamaUrl = process.env.OLLAMA_URL;
+  const ollamaUrl = undefined;
 
   if (ollamaUrl) {
     const ollama = createOllama({
       baseURL: ollamaUrl,
     });
-    modelInstance = ollama(model); // Default to llama2 if no model specified
+    modelInstance = ollama(model);
   } else {
     switch (model) {
       case LLMModelEnum.GPT35TURBO:
