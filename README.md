@@ -78,10 +78,9 @@ Or ask: “What does Mike know about Project Phoenix?” and get a timeline of m
    - Enter your email.
    - Copy the magic link from terminal logs and open it in your browser.
 
-5. **Create Your Private Space & Ingest Data**
+5. **Create Your Private Space & Add Data**
 
-   - In the dashboard, go to the ingest section.
-   - Type a message, e.g., `I love playing badminton`, and click "Add".
+   - In the dashboard, go to the top right section -> Type a message, e.g., `I love playing badminton`, and click "+Add".
    - Your memory is queued for processing; you can monitor its status in the server logs.
    - Once processing is complete, nodes will be added to your private knowledge graph and visible in the dashboard.
    - You can later choose to connect this memory to other tools or keep it private.
