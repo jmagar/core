@@ -101,19 +101,22 @@ export async function saveTriple(triple: Triple): Promise<string> {
 export async function findContradictoryStatements({
   subjectId,
   predicateId,
+  userId,
 }: {
   subjectId: string;
   predicateId: string;
+  userId: string;
 }): Promise<StatementNode[]> {
   const query = `
       MATCH (statement:Statement)
-      WHERE statement.invalidAt IS NULL
+      WHERE statement.userId = $userId
+        AND statement.invalidAt IS NULL
       MATCH (subject:Entity)<-[:HAS_SUBJECT]-(statement)-[:HAS_PREDICATE]->(predicate:Entity)
       WHERE subject.uuid = $subjectId AND predicate.uuid = $predicateId
       RETURN statement
     `;
 
-  const result = await runQuery(query, { subjectId, predicateId });
+  const result = await runQuery(query, { subjectId, predicateId, userId });
 
   if (!result || result.length === 0) {
     return [];
@@ -143,14 +146,17 @@ export async function findSimilarStatements({
   factEmbedding,
   threshold = 0.85,
   excludeIds = [],
+  userId,
 }: {
   factEmbedding: number[];
   threshold?: number;
   excludeIds?: string[];
+  userId: string;
 }): Promise<StatementNode[]> {
   const query = `
       MATCH (statement:Statement)
-      WHERE statement.invalidAt IS NULL 
+      WHERE statement.userId = $userId
+        AND statement.invalidAt IS NULL 
         AND statement.factEmbedding IS NOT NULL
         ${excludeIds.length > 0 ? "AND NOT statement.uuid IN $excludeIds" : ""}
       WITH statement, vector.similarity.cosine($factEmbedding, statement.factEmbedding) AS score
@@ -163,6 +169,7 @@ export async function findSimilarStatements({
     factEmbedding,
     threshold,
     excludeIds,
+    userId,
   });
 
   if (!result || result.length === 0) {
@@ -334,7 +341,8 @@ export async function searchStatementsByEmbedding(params: {
 }) {
   const query = `
   MATCH (statement:Statement)
-  WHERE statement.invalidAt IS NULL 
+  WHERE statement.userId = $userId
+    AND statement.invalidAt IS NULL 
     AND statement.factEmbedding IS NOT NULL
   WITH statement, 
        CASE 
@@ -351,6 +359,7 @@ export async function searchStatementsByEmbedding(params: {
     embedding: params.embedding,
     minSimilarity: params.minSimilarity,
     limit: params.limit,
+    userId: params.userId,
   });
 
   if (!result || result.length === 0) {

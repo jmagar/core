@@ -1,10 +1,10 @@
 import { json } from "@remix-run/node";
 import { z } from "zod";
 import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
-import { addToQueue, type IngestBodyRequest } from "~/lib/ingest.server";
+import { getUserQueue, type IngestBodyRequest } from "~/lib/ingest.server";
 import { prisma } from "~/db.server";
 import { logger } from "~/services/logger.service";
-import { IngestionStatus } from "@core/database";
+import { IngestionStatus, type Prisma } from "@core/database";
 
 const ReingestionBodyRequest = z.object({
   userId: z.string().optional(),
@@ -15,9 +15,8 @@ const ReingestionBodyRequest = z.object({
 type ReingestionRequest = z.infer<typeof ReingestionBodyRequest>;
 
 async function getCompletedIngestionsByUser(userId?: string, spaceId?: string) {
-  const whereClause: any = {
+  const whereClause: Prisma.IngestionQueueWhereInput = {
     status: IngestionStatus.COMPLETED,
-    deleted: null
   };
 
   if (userId) {
@@ -81,6 +80,7 @@ async function reingestionForUser(userId: string, spaceId?: string, dryRun = fal
 
   // Queue ingestions in temporal order (already sorted by createdAt ASC)
   const queuedJobs = [];
+  const ingestionQueue = getUserQueue(userId);
   for (const ingestion of ingestions) {
     try {
       // Parse the original data and add reingestion metadata
@@ -96,8 +96,20 @@ async function reingestionForUser(userId: string, spaceId?: string, dryRun = fal
         },
       };
 
-      const queueResult = await addToQueue(reingestionData, userId);
-      queuedJobs.push(queueResult);
+      const jobDetails = await ingestionQueue.add(
+        `ingest-user-${userId}`,
+        {
+          queueId: ingestion.id,
+          spaceId: ingestion.spaceId,
+          userId: userId,
+          body: ingestion.data,
+        },
+        {
+          jobId: `${userId}-${Date.now()}`,
+        },
+      );
+
+      queuedJobs.push({id: jobDetails.id});
     } catch (error) {
       logger.error(`Failed to queue ingestion ${ingestion.id} for user ${userId}:`, {error});
     }
@@ -124,6 +136,23 @@ const { action, loader } = createActionApiRoute(
     const { userId, spaceId, dryRun } = body;
 
     try {
+      // Check if the user is an admin
+      const user = await prisma.user.findUnique({ 
+        where: { id: authentication.userId }
+      });
+
+      if (!user || user.admin !== true) {
+        logger.warn("Unauthorized reingest attempt", {
+          requestUserId: authentication.userId,
+        });
+        return json(
+          { 
+            success: false, 
+            error: "Unauthorized: Only admin users can perform reingestion" 
+          },
+          { status: 403 }
+        );
+      }
       if (userId) {
         // Reingest for specific user
         const result = await reingestionForUser(userId, spaceId, dryRun);

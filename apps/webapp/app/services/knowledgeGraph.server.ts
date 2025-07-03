@@ -600,6 +600,7 @@ export class KnowledgeGraphService {
       const exactMatches = await findContradictoryStatements({
         subjectId: triple.subject.uuid,
         predicateId: triple.predicate.uuid,
+        userId: triple.provenance.userId,
       });
 
       if (exactMatches && exactMatches.length > 0) {
@@ -612,6 +613,7 @@ export class KnowledgeGraphService {
         factEmbedding: triple.statement.factEmbedding,
         threshold: 0.85,
         excludeIds: checkedStatementIds,
+        userId: triple.provenance.userId,
       });
 
       if (semanticMatches && semanticMatches.length > 0) {

@@ -138,7 +138,7 @@ export async function performBfsSearch(
 ): Promise<StatementNode[]> {
   try {
     // 1. Extract potential entities from query
-    const entities = await extractEntitiesFromQuery(embedding);
+    const entities = await extractEntitiesFromQuery(embedding, userId);
 
     // 2. For each entity, perform BFS traversal
     const allStatements: StatementNode[] = [];
@@ -223,13 +223,15 @@ export async function bfsTraversal(
  */
 export async function extractEntitiesFromQuery(
   embedding: Embedding,
+  userId: string,
 ): Promise<EntityNode[]> {
   try {
     // Use vector similarity to find relevant entities
     const cypher = `
         // Match entities using vector similarity on name embeddings
         MATCH (e:Entity)
-        WHERE e.nameEmbedding IS NOT NULL
+        WHERE e.nameEmbedding IS NOT NULL 
+          AND e.userId = $userId
         WITH e, vector.similarity.cosine(e.nameEmbedding, $embedding) AS score
         WHERE score > 0.7
         RETURN e
@@ -239,6 +241,7 @@ export async function extractEntitiesFromQuery(
 
     const params = {
       embedding,
+      userId,
     };
 
     const records = await runQuery(cypher, params);
