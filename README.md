@@ -2,7 +2,15 @@
   <a href="https://core.heysol.ai">
     <img src="https://github.com/user-attachments/assets/89066cdd-204b-46c2-8ad4-4935f5ca9edd" width="200px" alt="CORE logo" />
   </a>
+
+### C.O.R.E: Shareable memory for LLMs
+
+<p align="center">
+    <a href="https://docs.heysol.ai/core/overview"><b>Documentation</b></a> •
+    <a href="https://discord.gg/dVTC3BmgEq"><b>Discord</b></a>
+</p>
 </div>
+
 
 ## C.O.R.E.
 
