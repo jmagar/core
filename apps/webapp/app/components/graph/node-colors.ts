@@ -1,34 +1,34 @@
 import colors from "tailwindcss/colors";
 
-// Define a color palette for node coloring
+// Define a color palette for node coloring using hex values directly
 export const nodeColorPalette = {
   light: [
-    "var(--custom-color-1)", // Entity (default)
-    "var(--custom-color-2)",
-    "var(--custom-color-3)",
-    "var(--custom-color-4)",
-    "var(--custom-color-5)",
-    "var(--custom-color-6)",
-    "var(--custom-color-7)",
-    "var(--custom-color-8)",
-    "var(--custom-color-9)",
-    "var(--custom-color-10)",
-    "var(--custom-color-11)",
-    "var(--custom-color-12)",
+    "#b56455", // Entity (default)
+    "#7b8a34",
+    "#1c91a8",
+    "#886dbc",
+    "#ad6e30",
+    "#54935b",
+    "#4187c0",
+    "#a165a1",
+    "#997d1d",
+    "#2b9684",
+    "#2b9684",
+    "#b0617c",
   ],
   dark: [
-    "var(--custom-color-1)", // Entity (default)
-    "var(--custom-color-2)",
-    "var(--custom-color-3)",
-    "var(--custom-color-4)",
-    "var(--custom-color-5)",
-    "var(--custom-color-6)",
-    "var(--custom-color-7)",
-    "var(--custom-color-8)",
-    "var(--custom-color-9)",
-    "var(--custom-color-10)",
-    "var(--custom-color-11)",
-    "var(--custom-color-12)",
+    "#b56455", // Entity (default)
+    "#7b8a34",
+    "#1c91a8",
+    "#886dbc",
+    "#ad6e30",
+    "#54935b",
+    "#4187c0",
+    "#a165a1",
+    "#997d1d",
+    "#2b9684",
+    "#2b9684",
+    "#b0617c",
   ],
 };
 

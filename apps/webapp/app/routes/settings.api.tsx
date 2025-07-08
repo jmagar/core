@@ -86,7 +86,7 @@ export default function API() {
   const [name, setName] = useState("");
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    fetcher.submit({ name }, { method: "POST", action: "/home/api" });
+    fetcher.submit({ name }, { method: "POST", action: "/settings/api" });
     setOpen(false);
     setShowToken(true);
   };

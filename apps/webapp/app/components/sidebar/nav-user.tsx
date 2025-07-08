@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { AvatarText } from "../ui/avatar";
 import {
   DropdownMenu,
@@ -8,33 +8,48 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { SidebarMenu, SidebarMenuItem, useSidebar } from "../ui/sidebar";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "../ui/sidebar";
 import type { User } from "~/models/user.server";
 import { Button } from "../ui";
+import { cn } from "~/lib/utils";
+import { useLocation, useNavigate } from "@remix-run/react";
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <SidebarMenu>
+      <SidebarMenuItem className="mb-2 flex justify-center">
+        <Button
+          variant="ghost"
+          isActive={location.pathname.includes("settings")}
+          className={cn(
+            location.pathname.includes("settings") &&
+              "!bg-grayAlpha-100 hover:bg-grayAlpha-100!",
+          )}
+          onClick={() => navigate("/settings")}
+        >
+          <Settings size={18} />
+        </Button>
+      </SidebarMenuItem>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              size="lg"
               variant="link"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground ,b-2 mb-2 gap-2 px-2"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mb-2 gap-2 px-3"
             >
               <AvatarText
                 text={user.name ?? "User"}
                 className="h-6 w-6 rounded"
               />
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="text-muted-foreground truncate text-xs">
-                  {user.email}
-                </span>
-              </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent

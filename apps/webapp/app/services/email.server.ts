@@ -5,9 +5,7 @@ import {
   type MailTransportOptions,
 } from "emails";
 
-import { redirect } from "remix-typedjson";
 import { env } from "~/env.server";
-import type { AuthUser } from "./authUser";
 
 import { logger } from "./logger.service";
 import { singleton } from "~/utils/singleton";

@@ -1,7 +1,7 @@
 import { type LoaderFunctionArgs } from "@remix-run/node";
 
 import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
-import { LoginPageLayout } from "~/components/layout/LoginPageLayout";
+import { LoginPageLayout } from "~/components/layout/login-page-layout";
 import { Fieldset } from "~/components/ui/Fieldset";
 import { isGoogleAuthSupported } from "~/services/auth.server";
 import { setRedirectTo } from "~/services/redirectTo.server";

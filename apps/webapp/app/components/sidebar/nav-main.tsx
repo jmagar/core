@@ -1,3 +1,4 @@
+import { cn } from "~/lib/utils";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -28,10 +29,13 @@ export const NavMain = ({
               <SidebarMenuButton
                 tooltip={item.title}
                 isActive={location.pathname.includes(item.url)}
+                className={cn(
+                  location.pathname.includes(item.url) &&
+                    "!bg-grayAlpha-100 hover:bg-grayAlpha-100!",
+                )}
                 onClick={() => navigate(item.url)}
               >
                 {item.icon && <item.icon />}
-                <span>{item.title}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

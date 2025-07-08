@@ -268,6 +268,58 @@ export async function createPersonalAccessTokenFromAuthorizationCode(
   return token;
 }
 
+/** Get or create a PersonalAccessToken for the given name and userId.
+ * If one exists (not revoked), return it (without the unencrypted token).
+ * If not, create a new one and return it (with the unencrypted token).
+ * We only ever return the unencrypted token once, on creation.
+ */
+export async function getOrCreatePersonalAccessToken({
+  name,
+  userId,
+}: CreatePersonalAccessTokenOptions) {
+  // Try to find an existing, non-revoked token
+  const existing = await prisma.personalAccessToken.findFirst({
+    where: {
+      name,
+      userId,
+      revokedAt: null,
+    },
+  });
+
+  if (existing) {
+    // Do not return the unencrypted token if it already exists
+    return {
+      id: existing.id,
+      name: existing.name,
+      userId: existing.userId,
+      obfuscatedToken: existing.obfuscatedToken,
+      // token is not returned
+    };
+  }
+
+  // Create a new token
+  const token = createToken();
+  const encryptedToken = encryptToken(token);
+
+  const personalAccessToken = await prisma.personalAccessToken.create({
+    data: {
+      name,
+      userId,
+      encryptedToken,
+      obfuscatedToken: obfuscateToken(token),
+      hashedToken: hashToken(token),
+    },
+  });
+
+  return {
+    id: personalAccessToken.id,
+    name,
+    userId,
+    token,
+    obfuscatedToken: personalAccessToken.obfuscatedToken,
+  };
+}
+
 /** Created a new PersonalAccessToken, and return the token. We only ever return the unencrypted token once. */
 export async function createPersonalAccessToken({
   name,
@@ -306,7 +358,7 @@ function createToken() {
   return `${tokenPrefix}${tokenGenerator()}`;
 }
 
-/** Obfuscates all but the first and last 4 characters of the token, so it looks like tr_pat_bhbd•••••••••••••••••••fd4a */
+/** Obfuscates all but the first and last 4 characters of the token, so it looks like rc_pat_bhbd•••••••••••••••••••fd4a */
 function obfuscateToken(token: string) {
   const withoutPrefix = token.replace(tokenPrefix, "");
   const obfuscated = `${withoutPrefix.slice(0, 4)}${"•".repeat(18)}${withoutPrefix.slice(-4)}`;

@@ -32,6 +32,10 @@
     },
     "generate": {
       "dependsOn": [ "^generate" ]
+    },
+    "trigger:dev": {
+      "interactive": true,
+      "cache": false
     }
   },
   "globalDependencies": [ ".env" ],
@@ -60,6 +64,11 @@
     "MAGIC_LINK_SECRET",
     "ENABLE_EMAIL_LOGIN",
     "MODEL",
-    "OLLAMA_URL"
+    "OLLAMA_URL",
+    "TRIGGER_PROJECT_ID",
+    "TRIGGER_API_URL",
+    "TRIGGER_SECRET_KEY",
+    "EMBEDDING_MODEL",
+    "MODEL"
   ]
 }

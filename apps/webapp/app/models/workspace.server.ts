@@ -2,7 +2,6 @@ import { type Workspace } from "@core/database";
 import { prisma } from "~/db.server";
 
 interface CreateWorkspaceDto {
-  slug: string;
   name: string;
   integrations: string[];
   userId: string;
@@ -13,7 +12,7 @@ export async function createWorkspace(
 ): Promise<Workspace> {
   const workspace = await prisma.workspace.create({
     data: {
-      slug: input.slug,
+      slug: input.name,
       name: input.name,
       userId: input.userId,
     },

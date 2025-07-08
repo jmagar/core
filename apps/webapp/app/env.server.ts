@@ -71,6 +71,11 @@ const EnvironmentSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
 
+  //Trigger
+  TRIGGER_PROJECT_ID: z.string(),
+  TRIGGER_SECRET_KEY: z.string(),
+  TRIGGER_API_URL: z.string(),
+
   // Model envs
   MODEL: z.string().default(LLMModelEnum.GPT41),
   EMBEDDING_MODEL: z.string().default("bge-m3"),

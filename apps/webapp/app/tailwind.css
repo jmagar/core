@@ -12,7 +12,7 @@
   --foreground: oklch(0% 0 0);
   --popover: oklch(93.05% 0 0);
   --popover-foreground: oklch(0% 0 0);
-  --primary: oklch(54% 0.1789 271);
+  --primary: oklch(60% 0.13 30);
   --primary-foreground: oklch(100% 0 0);
   --secondary: 210 40% 96.1%;
   --secondary-foreground: oklch(0% 0 0);
@@ -49,7 +49,7 @@
   --foreground: oklch(92.8% 0 0);
   --popover: oklch(28.5% 0 0);
   --popover-foreground: oklch(92.8% 0 0);
-  --primary: oklch(54% 0.1789 271);
+  --primary: oklch(60% 0.13 30);
   --primary-foreground: oklch(92.8% 0 0);
   --secondary: 210 40% 96.1%;
   --secondary-foreground: oklch(92.8% 0 0);
@@ -322,8 +322,49 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    --header-height: 44px;
   }
   body {
-    @apply bg-background text-foreground text-base;
+    @apply bg-background-2 text-foreground text-base;
+  }
+
+
+  @supports (scrollbar-width: auto) {
+    .overflow-y-auto,
+    .overflow-x-auto,
+    .overflow-auto {
+      overflow-anchor: none;
+      scrollbar-color: var(--gray-500) transparent;
+      scrollbar-width: thin;
+    }
+  }
+
+  /* Legacy browsers with `::-webkit-scrollbar-*` support */
+  @supports selector(::-webkit-scrollbar) {
+    .overflow-y-auto::-webkit-scrollbar-thumb,
+    .overflow-x-auto::-webkit-scrollbar-thumb,
+    .overflow-auto::-webkit-scrollbar-thumb {
+      background: transparent;
+    }
+    .overflow-y-auto::-webkit-scrollbar-track,
+    .overflow-x-auto::-webkit-scrollbar-track,
+    .overflow-auto::-webkit-scrollbar-track {
+      background: var(--gray-600);
+    }
+
+    .overflow-y-auto::-webkit-scrollbar,
+    .overflow-x-auto::-webkit-scrollbar,
+    .overflow-auto::-webkit-scrollbar {
+      max-width: 5px;
+    }
+  }
+
+  nav[aria-label='breadcrumb'] li {
+    @apply text-base;
+  }
+
+  p.is-editor-empty {
+    font-size: 14px !important;
   }
 }
+

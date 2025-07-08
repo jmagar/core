@@ -8,43 +8,52 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from "../ui/sidebar";
-import { DashboardIcon } from "@radix-ui/react-icons";
-import { Code, Search } from "lucide-react";
+import { Activity, LayoutGrid, MessageSquare, Network } from "lucide-react";
 import { NavMain } from "./nav-main";
 import { useUser } from "~/hooks/useUser";
 import { NavUser } from "./nav-user";
-import { useWorkspace } from "~/hooks/useWorkspace";
+import Logo from "../logo/logo";
 
 const data = {
   navMain: [
     {
-      title: "Dashboard",
+      title: "Conversation",
+      url: "/home/conversation",
+      icon: MessageSquare,
+    },
+    {
+      title: "Memory",
       url: "/home/dashboard",
-      icon: DashboardIcon,
+      icon: Network,
     },
     {
-      title: "API",
-      url: "/home/api",
-      icon: Code,
+      title: "Activity",
+      url: "/home/activity",
+      icon: Activity,
     },
     {
-      title: "Logs",
-      url: "/home/logs",
-      icon: Search,
+      title: "Integrations",
+      url: "/home/integrations",
+      icon: LayoutGrid,
     },
   ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = useUser();
-  const workspace = useWorkspace();
 
   return (
-    <Sidebar collapsible="offcanvas" {...props} className="bg-background">
+    <Sidebar
+      collapsible="none"
+      {...props}
+      className="bg-background h-[100vh] w-[calc(var(--sidebar-width-icon)+1px)]! py-2"
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <span className="text-base font-semibold">{workspace.name}</span>
+            <div className="mt-1 flex w-full items-center justify-center">
+              <Logo width={20} height={20} />
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

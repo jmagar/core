@@ -3,7 +3,7 @@ import { useActionData } from "@remix-run/react";
 import { type ActionFunctionArgs, json } from "@remix-run/node";
 import { useForm } from "@conform-to/react";
 import { getFieldsetConstraint, parse } from "@conform-to/zod";
-import { LoginPageLayout } from "~/components/layout/LoginPageLayout";
+import { LoginPageLayout } from "~/components/layout/login-page-layout";
 import {
   Card,
   CardContent,
@@ -24,10 +24,6 @@ const schema = z.object({
     .string()
     .min(3, "Your workspace name must be at least 3 characters")
     .max(50),
-  workspaceSlug: z
-    .string()
-    .min(3, "Your workspace slug must be at least 3 characters")
-    .max(50),
 });
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -40,11 +36,10 @@ export async function action({ request }: ActionFunctionArgs) {
     return json(submission);
   }
 
-  const { workspaceSlug, workspaceName } = submission.value;
+  const { workspaceName } = submission.value;
 
   try {
     await createWorkspace({
-      slug: workspaceSlug,
       integrations: [],
       name: workspaceName,
       userId,
@@ -105,27 +100,6 @@ export default function ConfirmBasicDetails() {
                 {fields.workspaceName.error && (
                   <div className="text-sm text-red-500">
                     {fields.workspaceName.error}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="workspaceSlug"
-                  className="text-muted-foreground mb-1 block text-sm"
-                >
-                  Workspace Slug
-                </label>
-                <Input
-                  type="text"
-                  id="workspaceSlug"
-                  placeholder="Give unique workspace slug"
-                  name={fields.workspaceSlug.name}
-                  className="mt-1 block w-full text-base"
-                />
-                {fields.workspaceSlug.error && (
-                  <div className="text-sm text-red-500">
-                    {fields.workspaceSlug.error}
                   </div>
                 )}
               </div>

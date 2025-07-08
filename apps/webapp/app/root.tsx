@@ -31,7 +31,7 @@ import { usePostHog } from "./hooks/usePostHog";
 import {
   AppContainer,
   MainCenteredContainer,
-} from "./components/layout/AppLayout";
+} from "./components/layout/app-layout";
 import { RouteErrorDisplay } from "./components/ErrorDisplay";
 import { themeSessionResolver } from "./services/sessionStorage.server";
 import {
@@ -97,7 +97,7 @@ export function ErrorBoundary() {
           <Meta />
           <Links />
         </head>
-        <body className="bg-background h-full overflow-hidden">
+        <body className="bg-background-2 h-full overflow-hidden">
           <AppContainer>
             <MainCenteredContainer>
               <RouteErrorDisplay />
@@ -123,7 +123,7 @@ function App() {
           <Links />
           <PreventFlashOnWrongTheme ssrTheme={Boolean(theme)} />
         </head>
-        <body className="bg-background h-full overflow-hidden font-sans">
+        <body className="bg-background-2 h-full overflow-hidden font-sans">
           <Outlet />
           <ScrollRestoration />
 

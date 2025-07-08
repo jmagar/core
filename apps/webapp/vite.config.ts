@@ -28,7 +28,13 @@ export default defineConfig({
     allowedHosts: true,
   },
   ssr: {
-    noExternal: ["@core/database", "tailwindcss"],
+    target: "node",
+    noExternal: [
+      "@core/database",
+      "tailwindcss",
+      "@tiptap/react",
+      "react-tweet",
+    ],
     external: ["@prisma/client"],
   },
 });

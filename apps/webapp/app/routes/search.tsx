@@ -1,3 +1,6 @@
+// DEPRECATED: This route is deprecated. Please use /api/v1/search instead.
+// The API logic has been moved to /api/v1/search. This file is retained for reference only.
+
 import { z } from "zod";
 import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
 import { SearchService } from "~/services/search.server";

@@ -16,7 +16,7 @@ import { Form, useNavigation } from "@remix-run/react";
 import { Inbox, Loader, Mail } from "lucide-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { z } from "zod";
-import { LoginPageLayout } from "~/components/layout/LoginPageLayout";
+import { LoginPageLayout } from "~/components/layout/login-page-layout";
 import { Button } from "~/components/ui";
 import { Fieldset } from "~/components/ui/Fieldset";
 import { FormButtons } from "~/components/ui/FormButtons";

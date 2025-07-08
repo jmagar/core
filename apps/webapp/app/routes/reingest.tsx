@@ -1,213 +1,213 @@
-import { json } from "@remix-run/node";
-import { z } from "zod";
-import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
-import { getUserQueue, type IngestBodyRequest } from "~/lib/ingest.server";
-import { prisma } from "~/db.server";
-import { logger } from "~/services/logger.service";
-import { IngestionStatus, type Prisma } from "@core/database";
+// import { json } from "@remix-run/node";
+// import { z } from "zod";
+// import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
+// import { getUserQueue, type IngestBodyRequest } from "~/lib/ingest.server";
+// import { prisma } from "~/db.server";
+// import { logger } from "~/services/logger.service";
+// import { IngestionStatus, type Prisma } from "@core/database";
 
-const ReingestionBodyRequest = z.object({
-  userId: z.string().optional(),
-  spaceId: z.string().optional(),
-  dryRun: z.boolean().optional().default(false),
-});
+// const ReingestionBodyRequest = z.object({
+//   userId: z.string().optional(),
+//   spaceId: z.string().optional(),
+//   dryRun: z.boolean().optional().default(false),
+// });
 
-type ReingestionRequest = z.infer<typeof ReingestionBodyRequest>;
+// type ReingestionRequest = z.infer<typeof ReingestionBodyRequest>;
 
-async function getCompletedIngestionsByUser(userId?: string, spaceId?: string) {
-  const whereClause: Prisma.IngestionQueueWhereInput = {
-    status: IngestionStatus.COMPLETED,
-  };
+// async function getCompletedIngestionsByUser(userId?: string, spaceId?: string) {
+//   const whereClause: Prisma.IngestionQueueWhereInput = {
+//     status: IngestionStatus.COMPLETED,
+//   };
 
-  if (userId) {
-    whereClause.workspace = {
-      userId: userId,
-    };
-  }
+//   if (userId) {
+//     whereClause.workspace = {
+//       userId: userId,
+//     };
+//   }
 
-  if (spaceId) {
-    whereClause.spaceId = spaceId;
-  }
+//   if (spaceId) {
+//     whereClause.spaceId = spaceId;
+//   }
 
-  const ingestions = await prisma.ingestionQueue.findMany({
-    where: whereClause,
-    include: {
-      workspace: {
-        include: {
-          user: true,
-        },
-      },
-    },
-    orderBy: [
-      { createdAt: 'asc' }, // Maintain temporal order
-    ],
-  });
+//   const ingestions = await prisma.ingestionQueue.findMany({
+//     where: whereClause,
+//     include: {
+//       workspace: {
+//         include: {
+//           user: true,
+//         },
+//       },
+//     },
+//     orderBy: [
+//       { createdAt: 'asc' }, // Maintain temporal order
+//     ],
+//   });
 
-  return ingestions;
-}
+//   return ingestions;
+// }
 
-async function getAllUsers() {
-  const users = await prisma.user.findMany({
-    include: {
-      Workspace: true,
-    },
-  });
-  return users.filter(user => user.Workspace); // Only users with workspaces
-}
+// async function getAllUsers() {
+//   const users = await prisma.user.findMany({
+//     include: {
+//       Workspace: true,
+//     },
+//   });
+//   return users.filter(user => user.Workspace); // Only users with workspaces
+// }
 
-async function reingestionForUser(userId: string, spaceId?: string, dryRun = false) {
-  const ingestions = await getCompletedIngestionsByUser(userId, spaceId);
-  
-  logger.info(`Found ${ingestions.length} completed ingestions for user ${userId}${spaceId ? ` in space ${spaceId}` : ''}`);
+// async function reingestionForUser(userId: string, spaceId?: string, dryRun = false) {
+//   const ingestions = await getCompletedIngestionsByUser(userId, spaceId);
 
-  if (dryRun) {
-    return {
-      userId,
-      ingestionCount: ingestions.length,
-      ingestions: ingestions.map(ing => ({
-        id: ing.id,
-        createdAt: ing.createdAt,
-        spaceId: ing.spaceId,
-        data: {
-          episodeBody: (ing.data as any)?.episodeBody?.substring(0, 100) + 
-                      ((ing.data as any)?.episodeBody?.length > 100 ? '...' : ''),
-          source: (ing.data as any)?.source,
-          referenceTime: (ing.data as any)?.referenceTime,
-        },
-      })),
-    };
-  }
+//   logger.info(`Found ${ingestions.length} completed ingestions for user ${userId}${spaceId ? ` in space ${spaceId}` : ''}`);
 
-  // Queue ingestions in temporal order (already sorted by createdAt ASC)
-  const queuedJobs = [];
-  const ingestionQueue = getUserQueue(userId);
-  for (const ingestion of ingestions) {
-    try {
-      // Parse the original data and add reingestion metadata
-      const originalData = ingestion.data as z.infer<typeof IngestBodyRequest>;
-      
-      const reingestionData = {
-        ...originalData,
-        source: `reingest-${originalData.source}`,
-        metadata: {
-          ...originalData.metadata,
-          isReingestion: true,
-          originalIngestionId: ingestion.id,
-        },
-      };
+//   if (dryRun) {
+//     return {
+//       userId,
+//       ingestionCount: ingestions.length,
+//       ingestions: ingestions.map(ing => ({
+//         id: ing.id,
+//         createdAt: ing.createdAt,
+//         spaceId: ing.spaceId,
+//         data: {
+//           episodeBody: (ing.data as any)?.episodeBody?.substring(0, 100) +
+//                       ((ing.data as any)?.episodeBody?.length > 100 ? '...' : ''),
+//           source: (ing.data as any)?.source,
+//           referenceTime: (ing.data as any)?.referenceTime,
+//         },
+//       })),
+//     };
+//   }
 
-      const jobDetails = await ingestionQueue.add(
-        `ingest-user-${userId}`,
-        {
-          queueId: ingestion.id,
-          spaceId: ingestion.spaceId,
-          userId: userId,
-          body: ingestion.data,
-        },
-        {
-          jobId: `${userId}-${Date.now()}`,
-        },
-      );
+//   // Queue ingestions in temporal order (already sorted by createdAt ASC)
+//   const queuedJobs = [];
+//   const ingestionQueue = getUserQueue(userId);
+//   for (const ingestion of ingestions) {
+//     try {
+//       // Parse the original data and add reingestion metadata
+//       const originalData = ingestion.data as z.infer<typeof IngestBodyRequest>;
 
-      queuedJobs.push({id: jobDetails.id});
-    } catch (error) {
-      logger.error(`Failed to queue ingestion ${ingestion.id} for user ${userId}:`, {error});
-    }
-  }
+//       const reingestionData = {
+//         ...originalData,
+//         source: `reingest-${originalData.source}`,
+//         metadata: {
+//           ...originalData.metadata,
+//           isReingestion: true,
+//           originalIngestionId: ingestion.id,
+//         },
+//       };
 
-  return {
-    userId,
-    ingestionCount: ingestions.length,
-    queuedJobsCount: queuedJobs.length,
-    queuedJobs,
-  };
-}
+//       const jobDetails = await ingestionQueue.add(
+//         `ingest-user-${userId}`,
+//         {
+//           queueId: ingestion.id,
+//           spaceId: ingestion.spaceId,
+//           userId: userId,
+//           body: ingestion.data,
+//         },
+//         {
+//           jobId: `${userId}-${Date.now()}`,
+//         },
+//       );
 
-const { action, loader } = createActionApiRoute(
-  {
-    body: ReingestionBodyRequest,
-    allowJWT: true,
-    authorization: {
-      action: "reingest",
-    },
-    corsStrategy: "all",
-  },
-  async ({ body, authentication }) => {
-    const { userId, spaceId, dryRun } = body;
+//       queuedJobs.push({id: jobDetails.id});
+//     } catch (error) {
+//       logger.error(`Failed to queue ingestion ${ingestion.id} for user ${userId}:`, {error});
+//     }
+//   }
 
-    try {
-      // Check if the user is an admin
-      const user = await prisma.user.findUnique({ 
-        where: { id: authentication.userId }
-      });
+//   return {
+//     userId,
+//     ingestionCount: ingestions.length,
+//     queuedJobsCount: queuedJobs.length,
+//     queuedJobs,
+//   };
+// }
 
-      if (!user || user.admin !== true) {
-        logger.warn("Unauthorized reingest attempt", {
-          requestUserId: authentication.userId,
-        });
-        return json(
-          { 
-            success: false, 
-            error: "Unauthorized: Only admin users can perform reingestion" 
-          },
-          { status: 403 }
-        );
-      }
-      if (userId) {
-        // Reingest for specific user
-        const result = await reingestionForUser(userId, spaceId, dryRun);
-        return json({
-          success: true,
-          type: "single_user",
-          result,
-        });
-      } else {
-        // Reingest for all users
-        const users = await getAllUsers();
-        const results = [];
+// const { action, loader } = createActionApiRoute(
+//   {
+//     body: ReingestionBodyRequest,
+//     allowJWT: true,
+//     authorization: {
+//       action: "reingest",
+//     },
+//     corsStrategy: "all",
+//   },
+//   async ({ body, authentication }) => {
+//     const { userId, spaceId, dryRun } = body;
 
-        logger.info(`Starting reingestion for ${users.length} users`);
+//     try {
+//       // Check if the user is an admin
+//       const user = await prisma.user.findUnique({
+//         where: { id: authentication.userId }
+//       });
 
-        for (const user of users) {
-          try {
-            const result = await reingestionForUser(user.id, spaceId, dryRun);
-            results.push(result);
-            
-            if (!dryRun) {
-              // Add small delay between users to prevent overwhelming the system
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-          } catch (error) {
-            logger.error(`Failed to reingest for user ${user.id}:`, {error});
-            results.push({
-              userId: user.id,
-              error: error instanceof Error ? error.message : "Unknown error",
-            });
-          }
-        }
+//       if (!user || user.admin !== true) {
+//         logger.warn("Unauthorized reingest attempt", {
+//           requestUserId: authentication.userId,
+//         });
+//         return json(
+//           {
+//             success: false,
+//             error: "Unauthorized: Only admin users can perform reingestion"
+//           },
+//           { status: 403 }
+//         );
+//       }
+//       if (userId) {
+//         // Reingest for specific user
+//         const result = await reingestionForUser(userId, spaceId, dryRun);
+//         return json({
+//           success: true,
+//           type: "single_user",
+//           result,
+//         });
+//       } else {
+//         // Reingest for all users
+//         const users = await getAllUsers();
+//         const results = [];
 
-        return json({
-          success: true,
-          type: "all_users",
-          totalUsers: users.length,
-          results,
-          summary: {
-            totalIngestions: results.reduce((sum, r) => sum, 0),
-            totalQueuedJobs: results.reduce((sum, r) => sum, 0),
-          },
-        });
-      }
-    } catch (error) {
-      logger.error("Reingestion failed:", {error});
-      return json(
-        {
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-        },
-        { status: 500 }
-      );
-    }
-  }
-);
+//         logger.info(`Starting reingestion for ${users.length} users`);
 
-export { action, loader };
+//         for (const user of users) {
+//           try {
+//             const result = await reingestionForUser(user.id, spaceId, dryRun);
+//             results.push(result);
+
+//             if (!dryRun) {
+//               // Add small delay between users to prevent overwhelming the system
+//               await new Promise(resolve => setTimeout(resolve, 1000));
+//             }
+//           } catch (error) {
+//             logger.error(`Failed to reingest for user ${user.id}:`, {error});
+//             results.push({
+//               userId: user.id,
+//               error: error instanceof Error ? error.message : "Unknown error",
+//             });
+//           }
+//         }
+
+//         return json({
+//           success: true,
+//           type: "all_users",
+//           totalUsers: users.length,
+//           results,
+//           summary: {
+//             totalIngestions: results.reduce((sum, r) => sum, 0),
+//             totalQueuedJobs: results.reduce((sum, r) => sum, 0),
+//           },
+//         });
+//       }
+//     } catch (error) {
+//       logger.error("Reingestion failed:", {error});
+//       return json(
+//         {
+//           success: false,
+//           error: error instanceof Error ? error.message : "Unknown error",
+//         },
+//         { status: 500 }
+//       );
+//     }
+//   }
+// );
+
+// export { action, loader };

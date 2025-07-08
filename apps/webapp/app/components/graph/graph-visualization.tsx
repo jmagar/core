@@ -1,4 +1,4 @@
-import { useState, useMemo, forwardRef } from "react";
+import { useState, useMemo, forwardRef, useRef, useEffect } from "react";
 import { Graph, type GraphRef } from "./graph";
 import { GraphPopovers } from "./graph-popover";
 import type { RawTriplet, NodePopupContent, EdgePopupContent } from "./type";
@@ -7,7 +7,7 @@ import { createLabelColorMap } from "./node-colors";
 
 import { toGraphTriplets } from "./utils";
 
-interface GraphVisualizationProps {
+export interface GraphVisualizationProps {
   triplets: RawTriplet[];
   width?: number;
   height?: number;

@@ -62,7 +62,17 @@ export async function requireUser(request: Request) {
 
 export async function requireWorkpace(request: Request) {
   const userId = await requireUserId(request);
-  return getWorkspaceByUser(userId);
+  const workspace = await getWorkspaceByUser(userId);
+
+  if (!workspace) {
+    const url = new URL(request.url);
+    const searchParams = new URLSearchParams([
+      ["redirectTo", `${url.pathname}${url.search}`],
+    ]);
+    throw redirect(`/login?${searchParams}`);
+  }
+
+  return workspace;
 }
 
 export async function logout(request: Request) {

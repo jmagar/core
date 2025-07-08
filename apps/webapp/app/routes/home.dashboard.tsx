@@ -1,29 +1,19 @@
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "~/components/ui/resizable";
 import { parse } from "@conform-to/zod";
 import { json } from "@remix-run/node";
 
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Ingest } from "~/components/dashboard/ingest";
 import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
 } from "@remix-run/server-runtime";
 import { requireUserId } from "~/services/session.server";
 import { addToQueue, IngestBodyRequest } from "~/lib/ingest.server";
-import { getNodeLinks } from "~/lib/neo4j.server";
 import { useTypedLoaderData } from "remix-typedjson";
 
-import { GraphVisualization } from "~/components/graph/graph-visualization";
-import { Search } from "~/components/dashboard";
 import { SearchBodyRequest } from "./search";
 import { SearchService } from "~/services/search.server";
+import { GraphVisualizationClient } from "~/components/graph/graph-client";
 
-// --- Only return userId in loader, fetch nodeLinks on client ---
 export async function action({ request }: ActionFunctionArgs) {
   const userId = await requireUserId(request);
   const formData = await request.formData();
@@ -60,7 +50,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Dashboard() {
   const { userId } = useTypedLoaderData<typeof loader>();
-  const [size, setSize] = useState(15);
 
   // State for nodeLinks and loading
   const [nodeLinks, setNodeLinks] = useState<any[] | null>(null);
@@ -94,55 +83,18 @@ export default function Dashboard() {
   }, [userId]);
 
   return (
-    <ResizablePanelGroup direction="horizontal">
-      <ResizablePanel
-        collapsible={false}
-        className="h-[calc(100vh_-_20px)] overflow-hidden rounded-md"
-        order={1}
-        id="home"
-      >
-        <div className="home flex h-full flex-col overflow-y-auto p-3 text-base">
-          <h3 className="text-lg font-medium">Graph</h3>
-          <p className="text-muted-foreground"> Your memory graph </p>
-
-          <div className="bg-background-3 mt-2 flex grow items-center justify-center rounded">
-            {loading ? (
-              <div className="flex h-full w-full flex-col items-center justify-center">
-                <div className="mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-400" />
-                <span className="text-muted-foreground">Loading graph...</span>
-              </div>
-            ) : (
-              typeof window !== "undefined" &&
-              nodeLinks && <GraphVisualization triplets={nodeLinks} />
-            )}
+    <div className="home flex h-[calc(100vh_-_60px)] flex-col overflow-y-auto p-3 text-base">
+      <div className="flex grow items-center justify-center rounded">
+        {loading ? (
+          <div className="flex h-full w-full flex-col items-center justify-center">
+            <div className="mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-400" />
+            <span className="text-muted-foreground">Loading graph...</span>
           </div>
-        </div>
-      </ResizablePanel>
-      <ResizableHandle className="bg-border w-[0.5px]" />
-
-      <ResizablePanel
-        className="overflow-auto"
-        collapsible={false}
-        maxSize={50}
-        minSize={25}
-        defaultSize={size}
-        onResize={(size) => setSize(size)}
-        order={2}
-        id="rightScreen"
-      >
-        <Tabs defaultValue="ingest" className="p-3 text-base">
-          <TabsList>
-            <TabsTrigger value="ingest">Add</TabsTrigger>
-            <TabsTrigger value="retrieve">Retrieve</TabsTrigger>
-          </TabsList>
-          <TabsContent value="ingest">
-            <Ingest />
-          </TabsContent>
-          <TabsContent value="retrieve">
-            <Search />
-          </TabsContent>
-        </Tabs>
-      </ResizablePanel>
-    </ResizablePanelGroup>
+        ) : (
+          typeof window !== "undefined" &&
+          nodeLinks && <GraphVisualizationClient triplets={nodeLinks} />
+        )}
+      </div>
+    </div>
   );
 }

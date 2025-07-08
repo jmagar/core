@@ -93,7 +93,7 @@ export function GraphPopovers({
           <div className="pointer-events-none h-4 w-4" />
         </PopoverTrigger>
         <PopoverContent
-          className="w-80 overflow-hidden"
+          className="h-60 max-w-80 overflow-auto"
           side="bottom"
           align="end"
           sideOffset={5}

@@ -1,8 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { type CoreMessage, embed } from "ai";
 import {
-  EpisodeType,
-  LLMModelEnum,
   type AddEpisodeParams,
   type EntityNode,
   type EpisodicNode,
@@ -58,7 +56,7 @@ export class KnowledgeGraphService {
     }
 
     // Default to using Ollama
-    const ollamaUrl = process.env.OLLAMA_URL;
+    const ollamaUrl = env.OLLAMA_URL;
     const model = env.EMBEDDING_MODEL;
 
     const ollama = createOllama({
