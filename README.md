@@ -3,61 +3,52 @@
     <img src="https://github.com/user-attachments/assets/89066cdd-204b-46c2-8ad4-4935f5ca9edd" width="200px" alt="CORE logo" />
   </a>
 
-### C.O.R.E: Shareable memory for LLMs
+### C.O.R.E: Your digital brain for the AI era
 
 <p align="center">
     <a href="https://docs.heysol.ai/core/overview"><b>Documentation</b></a> •
-    <a href="https://discord.gg/dVTC3BmgEq"><b>Discord</b></a>
+    <a href="https://discord.gg/YGUZcvDjUa"><b>Discord</b></a>
 </p>
 </div>
 
-
-## C.O.R.E.
+## 🧠 C.O.R.E.
 
 **Contextual Observation & Recall Engine**
 
-C.O.R.E is a shareable memory for LLMs which is private, portable and 100% owned by the user. You can either run it locally or use our hosted version and then connect with other tools like Cursor, Claude to share your context at multiple places.
+C.O.R.E is a portable memory graph built from your llm interactions and personal data, making all your context and workflow history accessible to any AI tool, just like a digital brain. This eliminates the need for repeated context sharing . The aim is to provide:
 
-C.O.R.E is built for two reasons:
+- **Unified, Portable Memory**: Add and recall context seamlessly, and connect your memory across apps like Claude, Cursor, Windsurf and more.
+- **Relational, Not just Flat Facts**: CORE organizes your knowledge, storing both facts and relationships for a deeper richer memory like a real brain.
+- **User Owned**: You decide what to keep, update or delete and share your memory across the tool you want and be freed from vendor lock-in.
 
-1. To give you complete ownership of your memory, stored locally and accessible across any app needing LLM context.
-2. To help SOL (your AI assistant) access your context, facts, and preferences for more relevant and personalized responses.
-
-> **Note:** We are actively working on improving support for Llama models. At the moment, C.O.R.E does not provide optimal results with Llama-based models, but we are making progress to ensure better compatibility and output in the near future.
-
-## Demo Video
+## 🎥 Demo Video
 
 [Check C.O.R.E Demo](https://youtu.be/iANZ32dnK60)
 
-## How is C.O.R.E different from other Memory Providers?
+<img width="954" height="700" alt="Core dashboard" src="https://github.com/user-attachments/assets/d684b708-6907-47be-9499-a30b25434694" />
 
-Unlike most memory systems—which act like basic sticky notes, only showing what’s true right now. C.O.R.E is built as a dynamic, living temporal knowledge graph:
+## 🧩  Key Features
 
-- Every fact is a first-class “Statement” with full history, not just a static edge between entities.
-- Each statement includes what was said, who said it, when it happened, and why it matters.
-- You get full transparency: you can always trace the source, see what changed, and explore why the system “believes” something.
+- **Memory Graph**: Visualise how your facts and preferences link together
+- **Chat with Memory**: Ask questions about memory for instant insights and understanding
+- **Plug n Play**: Instantly use CORE memory in apps like Cursor, Claude
 
-### Use Case Example: Real Change Auditing
-
-Imagine you ask SOL: "What changed in our pricing since Q1?"
-
-With C.O.R.E, you see exactly what prices changed, who approved them, the context (meeting, email, document), and when each update happened—enabling true compliance, auditability, and insight across products, teams, and time.
-
-Or ask: “What does Mike know about Project Phoenix?” and get a timeline of meetings, decisions, and facts Mike was involved in, with full traceability to those specific events.
-
-## C.O.R.E Cloud Setup
+## ☁️ C.O.R.E Cloud Setup
 
 1. Sign up to [Core Cloud](https://core.heysol.ai) and start building your memory graph.
-2. Add your text that you want to save in memory. Once clicking on add button your memory graph will be generated.
+2. Add your text that you want to save in memory. Once clicking on `+ Add` button your memory graph will be generated.
 3. [Connect Core Memory MCP with Cursor](#connecting-core-mcp-with-cursor)
 
-## C.O.R.E Local Setup
+## 💻 C.O.R.E Local Setup
 
 #### Prerequisites
 
 1. Docker
 2. OpenAI API Key
 
+
+> **Note:** We are actively working on improving support for Llama models. At the moment, C.O.R.E does not provide optimal results with Llama-based models, but we are making progress to ensure better compatibility and output in the near future.
+> 
 #### Run C.O.R.E locally
 
 1. **Copy Environment Variables**
@@ -80,22 +71,35 @@ Or ask: “What does Mike know about Project Phoenix?” and get a timeline of m
 
    Once the containers are running, open your browser and go to [http://localhost:3000](http://localhost:3000).
 
-4. **Login with Magic Link**
+4. **Create Account with Magic Link**
 
-   - Choose the "Magic Link" login option.
-   - Enter your email.
-   - Copy the magic link from terminal logs and open it in your browser.
+   - To Create an account, click on `Continue with email` button
+
+     <img width="865" height="490" alt="Create account" src="https://github.com/user-attachments/assets/65de110b-2b1f-42a5-9b8a-954227d68d52" />
+
+   - Enter your email and click on `Send a Magic Link` button
+
+     <img width="824" height="429" alt="Enter email" src="https://github.com/user-attachments/assets/76128b61-2086-48df-8332-38c2efa14087" />
+
+   - `Copy the magic link from terminal logs` and open it in your browser
+
+     <img width="1010" height="597" alt="Magic link" src="https://github.com/user-attachments/assets/777cb4b1-bb93-4d54-b6ab-f7147e65aa5c" />
+
 
 5. **Create Your Private Space & Add Data**
 
-   - In the dashboard, go to the top right section -> Type a message, e.g., `I love playing badminton`, and click "+Add".
-   - Your memory is queued for processing; you can monitor its status in the server logs.
+   - In the dashboard, go to the top right section -> Type a message, e.g., `I love playing badminton`, and click `+Add`.
+   - Your memory is queued for processing; you can monitor its status in the `Logs` section.
+     
+     <img width="1496" height="691" alt="Core memory logs" src="https://github.com/user-attachments/assets/dc34a7af-fe52-4142-9ecb-49ddc4e0e854" />
+
    - Once processing is complete, nodes will be added to your private knowledge graph and visible in the dashboard.
    - You can later choose to connect this memory to other tools or keep it private.
 
 6. **Search Your Memory**
 
    - Use the dashboard's search feature to query your ingested data within your private space.
+
 
 ## Connecting CORE MCP with Cursor
 
@@ -128,88 +132,19 @@ After every interaction, update the memory with the user's query and the assista
 response to core-memory mcp. sessionId should be the uuid of the conversation
 ```
 
-## Connecting to the API
+## Documentation
 
-You can also interact with C.O.R.E. programmatically via its APIs.
+Explore our documentation to get the most out of CORE
+- [Basic Concepts](https://docs.heysol.ai/core/overview)
+- [API Reference](https://docs.heysol.ai/core/local-setup)
+- [Connect Core Memory MCP with Cursor](#connecting-core-mcp-with-cursor)
 
-1. **Generate an API Key**
 
-   - In the dashboard, navigate to the API section and generate a new API key.
-
-2. **API Endpoints**
-
-   - Use your API key to authenticate requests to the following endpoints:
-
-     - **Ingest API:** `POST /ingest`
-     - **Search API:** `POST /search`
-
-   - See below for example request bodies and details.
-
-### Ingest API
-
-- **Endpoint:** `/ingest`
-- **Method:** `POST`
-- **Authentication:** Bearer token (API key)
-- **Body Example:**
-
-  ```json
-  {
-    "episodeBody": "I love playing badminton",
-    "referenceTime": "2024-06-01T12:00:00Z",
-    "source": "user", //  Which tool or user is ingesting
-    "spaceId": "your-space-id", // optional, for multiple spaces
-    "sessionId": "your-session-id" // optional
-  }
-  ```
-
-- **Behavior:**
-  - Each ingestion is queued per user for processing in their private space.
-  - The system automatically creates and links graph nodes.
-  - You can monitor the status in the logs or dashboard.
-  - You can later connect this memory to other tools as you wish.
-
-### Search API
-
-- **Endpoint:** `/search`
-- **Method:** `POST`
-- **Authentication:** Bearer token (API key)
-- **Body Example:**
-
-  ```json
-  {
-    "query": "badminton",
-    "spaceId": "your-space-id", // optional
-    "sessionId": "your-session-id" // optional
-  }
-  ```
-
-- **Behavior:**
-  - Returns relevant text matches scoped to your private memory space.
-
-> For detailed API schemas, see [`apps/webapp/app/routes/ingest.tsx`](apps/webapp/app/routes/ingest.tsx) and [`apps/webapp/app/routes/search.tsx`](apps/webapp/app/routes/search.tsx).
-
----
-
-## Features (v1)
-
-### Feature Checklist
-
-#### ✅ Done
-
-- [x] Private memory space: You can ingest and search your own data.
-- [x] Ingest for workspace: You can ingest data into a workspace.
-- [x] Search for workspace: You can search within a workspace.
-
-#### 🛠️ In Progress / Planned
-
-- [ ] Multiple Spaces with unique URLs
-- [ ] User-controlled sharing and privacy
-- [ ] Ingestion filters rules
-- [ ] Granular API Key Permissions
-- [ ] Improved Session and Space Support
-- [ ] Audit Logging & API Key Management
-- [ ] Role-Based Access Control
-- [ ] Webhooks & Notifications
+## 🧑‍💻 Support
+Have questions or feedback? We're here to help:
+- Discord: [Join core-support channel](https://discord.gg/YGUZcvDjUa)
+- Documentation: [docs.heysol.ai/core](https://docs.heysol.ai/core/overview)
+- Email: manik@poozle.dev
 
 ## Usage Guidelines
 
@@ -226,3 +161,9 @@ You can also interact with C.O.R.E. programmatically via its APIs.
 - Credentials
 - System logs
 - Temporary data
+
+## 👥 Contributors
+
+<a href="https://github.com/RedPlanetHQ/core/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=RedPlanetHQ/core" />
+</a>
