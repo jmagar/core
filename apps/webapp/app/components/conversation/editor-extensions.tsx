@@ -1,12 +1,5 @@
 import { cx } from "class-variance-authority";
-import {
-  StarterKit,
-  TiptapLink,
-  HorizontalRule,
-  Placeholder,
-  HighlightExtension,
-  AIHighlight,
-} from "novel";
+import { StarterKit, TiptapLink, HorizontalRule, Placeholder } from "novel";
 
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Heading from "@tiptap/extension-heading";

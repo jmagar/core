@@ -7,6 +7,7 @@
     "build": "remix vite:build",
     "dev": "node ./server.mjs",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
+    "lint:fix": "eslint --fix --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "remix-serve ./build/server/index.js",
     "typecheck": "tsc",
     "trigger:dev": "pnpm dlx trigger.dev@v4-beta dev"

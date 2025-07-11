@@ -101,7 +101,7 @@ export const ConversationList = ({
           <div
             key={key}
             style={style}
-            className="-ml-1 flex items-center justify-start p-2 py-0 text-sm"
+            className="-mt-2 ml-1 flex items-center justify-start p-0 text-sm"
           >
             <Button
               variant="link"

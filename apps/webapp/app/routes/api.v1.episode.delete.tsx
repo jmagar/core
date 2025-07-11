@@ -26,11 +26,11 @@ const { action, loader } = createActionApiRoute(
 
       if (!result.episodeDeleted) {
         return json(
-          { 
+          {
             error: "Episode not found or unauthorized",
-            code: "not_found"
+            code: "not_found",
           },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -47,11 +47,11 @@ const { action, loader } = createActionApiRoute(
     } catch (error) {
       console.error("Error deleting episode:", error);
       return json(
-        { 
+        {
           error: "Failed to delete episode",
-          code: "internal_error"
+          code: "internal_error",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
   },

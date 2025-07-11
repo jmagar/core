@@ -13,7 +13,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "../ui/resizable";
-import { ConversationList } from "./conversation-list";
 
 export const ConversationNew = ({
   user,
@@ -71,7 +70,7 @@ export const ConversationNew = ({
                   <p className="text-muted-foreground mx-1 mb-4">
                     Demo UI: basic conversation to showcase memory integration.
                   </p>
-                  <div className="bg-background-3 border-border rounded-lg border-1 py-2">
+                  <div className="bg-background-3 rounded-lg border-1 border-gray-300 py-2">
                     <EditorRoot>
                       <EditorContent
                         ref={editorRef}
@@ -79,7 +78,7 @@ export const ConversationNew = ({
                         extensions={[
                           Placeholder.configure({
                             placeholder: () => {
-                              return "Ask CORE...";
+                              return "Ask CORE ...";
                             },
                             includeChildren: true,
                           }),

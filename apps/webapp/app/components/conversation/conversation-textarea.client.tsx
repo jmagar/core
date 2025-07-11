@@ -87,7 +87,7 @@ export function ConversationTextarea({
       onSubmit={(e) => submitForm(e)}
       className="pt-2"
     >
-      <div className="bg-background-3 rounded py-2">
+      <div className="bg-background-3 rounded-lg border-1 border-gray-300 py-2">
         <EditorRoot>
           <EditorContent
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,7 +146,7 @@ export function ConversationTextarea({
             }}
             immediatelyRender={false}
             className={cn(
-              "editor-container text-md max-h-[400px] min-h-[40px] w-full min-w-full overflow-auto px-3 sm:rounded-lg",
+              "editor-container text-md max-h-[400px] min-h-[40px] w-full min-w-full overflow-auto rounded-lg px-3",
             )}
           />
         </EditorRoot>

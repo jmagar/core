@@ -34,7 +34,7 @@ export function SiteHeader() {
   const showNewConversationButton = isConversationDetail(location.pathname);
 
   return (
-    <header className="border-border flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b border-gray-300 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center justify-between gap-1 px-4 pr-2 lg:gap-2">
         <div className="flex items-center gap-1">
           <SidebarTrigger className="-ml-1" />
