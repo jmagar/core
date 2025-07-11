@@ -13,6 +13,7 @@ import { NavMain } from "./nav-main";
 import { useUser } from "~/hooks/useUser";
 import { NavUser } from "./nav-user";
 import Logo from "../logo/logo";
+import { ConversationList } from "../conversation";
 
 const data = {
   navMain: [
@@ -44,24 +45,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar
-      collapsible="none"
+      variant="inset"
       {...props}
-      className="bg-background h-[100vh] w-[calc(var(--sidebar-width-icon)+1px)]! py-2"
+      className="bg-background h-[100vh] py-2"
     >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="mt-1 flex w-full items-center justify-center">
+            <div className="mt-1 flex w-full items-center justify-start gap-2">
               <Logo width={20} height={20} />
+              C.O.R.E.
             </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
+        <div className="mt-4 flex h-full flex-col">
+          <h2 className="text-muted-foreground px-4 text-sm"> History </h2>
+          <ConversationList />
+        </div>
       </SidebarContent>
 
-      <SidebarFooter className="p-0">
+      <SidebarFooter className="px-2">
         <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>

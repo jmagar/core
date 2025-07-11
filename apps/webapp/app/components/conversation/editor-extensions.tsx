@@ -134,8 +134,6 @@ export const extensionsForConversation = [
   tiptapLink,
   horizontalRule,
   heading,
-  AIHighlight,
-  HighlightExtension,
   Table.configure({
     resizable: true,
   }),

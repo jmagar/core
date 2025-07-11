@@ -7,6 +7,7 @@ import {
   SidebarMenuItem,
 } from "../ui/sidebar";
 import { useLocation, useNavigate } from "@remix-run/react";
+import { Button } from "../ui";
 
 export const NavMain = ({
   items,
@@ -23,20 +24,22 @@ export const NavMain = ({
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
-        <SidebarMenu>
+        <SidebarMenu className="gap-0.5">
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                tooltip={item.title}
+              <Button
                 isActive={location.pathname.includes(item.url)}
                 className={cn(
+                  "bg-grayAlpha-100 w-fit gap-1 !rounded-md",
                   location.pathname.includes(item.url) &&
-                    "!bg-grayAlpha-100 hover:bg-grayAlpha-100!",
+                    "!bg-accent !text-accent-foreground",
                 )}
                 onClick={() => navigate(item.url)}
+                variant="ghost"
               >
-                {item.icon && <item.icon />}
-              </SidebarMenuButton>
+                {item.icon && <item.icon size={16} />}
+                {item.title}
+              </Button>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>

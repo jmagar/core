@@ -26,26 +26,10 @@ export function NavUser({ user }: { user: User }) {
 
   return (
     <SidebarMenu>
-      <SidebarMenuItem className="mb-2 flex justify-center">
-        <Button
-          variant="ghost"
-          isActive={location.pathname.includes("settings")}
-          className={cn(
-            location.pathname.includes("settings") &&
-              "!bg-grayAlpha-100 hover:bg-grayAlpha-100!",
-          )}
-          onClick={() => navigate("/settings")}
-        >
-          <Settings size={18} />
-        </Button>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
+      <SidebarMenuItem className="flex justify-between">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="link"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mb-2 gap-2 px-3"
-            >
+            <Button variant="link" className="mb-2 ml-2 gap-2 px-0">
               <AvatarText
                 text={user.name ?? "User"}
                 className="h-6 w-6 rounded"
@@ -55,7 +39,7 @@ export function NavUser({ user }: { user: User }) {
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "top"}
-            align="end"
+            align="start"
             sideOffset={4}
           >
             <DropdownMenuLabel className="p-0 font-normal">
@@ -71,7 +55,14 @@ export function NavUser({ user }: { user: User }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="flex gap-2"
-              onClick={() => (window.location.href = "/logout")}
+              onClick={() => navigate("/settings")}
+            >
+              <Settings size={16} />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="flex gap-2"
+              onClick={() => navigate("/logout")}
             >
               <LogOut size={16} />
               Log out

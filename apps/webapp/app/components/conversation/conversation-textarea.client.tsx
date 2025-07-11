@@ -8,7 +8,7 @@ import { EditorContent, Placeholder, EditorRoot } from "novel";
 import { useCallback, useState } from "react";
 import { cn } from "~/lib/utils";
 import { Button } from "../ui";
-import { Loader } from "lucide-react";
+import { Loader, LoaderCircle } from "lucide-react";
 import { Form, useSubmit } from "@remix-run/react";
 
 interface ConversationTextareaProps {
@@ -159,7 +159,7 @@ export function ConversationTextarea({
           >
             {isLoading ? (
               <>
-                <Loader size={18} className="mr-1 animate-spin" />
+                <LoaderCircle size={18} className="mr-1 animate-spin" />
                 Stop
               </>
             ) : (

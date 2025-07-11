@@ -310,7 +310,7 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
             ...settings,
             barnesHutOptimize: true,
             strongGravityMode: false,
-            gravity: 0.05,
+            gravity: 0.1,
             scalingRatio: 10,
             slowDown: 5,
           },

@@ -46,17 +46,7 @@ export const ConversationNew = ({
   );
 
   return (
-    <ResizablePanelGroup direction="horizontal" className="bg-background-2">
-      <ResizablePanel
-        maxSize={50}
-        defaultSize={16}
-        minSize={16}
-        collapsible
-        collapsedSize={16}
-        className="border-border h-[calc(100vh_-_60px)] min-w-[200px] border-r-1"
-      >
-        <ConversationList />
-      </ResizablePanel>
+    <ResizablePanelGroup direction="horizontal" className="rounded-md">
       <ResizableHandle className="w-1" />
 
       <ResizablePanel
@@ -70,7 +60,7 @@ export const ConversationNew = ({
           onSubmit={(e) => submitForm(e)}
           className="pt-2"
         >
-          <div className={cn("flex h-[calc(100vh_-_60px)] flex-col")}>
+          <div className={cn("flex h-[calc(100vh_-_56px)] flex-col")}>
             <div className="flex h-full w-full flex-col items-start justify-start overflow-y-auto p-4">
               <div className="flex w-full flex-col items-center">
                 <div className="w-full max-w-[90ch]">

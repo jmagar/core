@@ -129,29 +129,16 @@ export default function SingleConversation() {
   }
 
   return (
-    <ResizablePanelGroup direction="horizontal" className="bg-background-2">
-      <ResizablePanel
-        maxSize={50}
-        defaultSize={16}
-        minSize={16}
-        collapsible
-        collapsedSize={16}
-        className="border-border h-[calc(100vh_-_60px)] min-w-[200px] border-r-1"
-      >
-        <ConversationList
-          currentConversationId={conversationId}
-          showNewConversationCTA
-        />
-      </ResizablePanel>
+    <ResizablePanelGroup direction="horizontal" className="!rounded-md">
       <ResizableHandle className="w-1" />
 
       <ResizablePanel
         collapsible
         collapsedSize={0}
-        className="flex h-[calc(100vh_-_24px)] w-full flex-col"
+        className="flex w-full flex-col"
       >
         <div className="relative flex h-[calc(100vh_-_70px)] w-full flex-col items-center justify-center overflow-auto">
-          <div className="flex h-[calc(100vh_-_60px)] w-full flex-col justify-end overflow-hidden">
+          <div className="flex h-[calc(100vh_-_56px)] w-full flex-col justify-end overflow-hidden">
             <ScrollAreaWithAutoScroll>
               {getConversations()}
               {conversationResponse && (

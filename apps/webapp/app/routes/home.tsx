@@ -33,19 +33,17 @@ export default function Home() {
         {
           "--sidebar-width": "calc(var(--spacing) * 54)",
           "--header-height": "calc(var(--spacing) * 12)",
-          background: "var(--background-2)",
+          background: "var(--background)",
         } as React.CSSProperties
       }
     >
       <AppSidebar variant="inset" />
-      <SidebarInset className="bg-background h-[100vh] py-2 pr-2">
-        <div className="bg-background-2 h-full rounded-md">
-          <SiteHeader />
-          <div className="flex h-[calc(100vh_-_60px)] flex-col">
-            <div className="@container/main flex h-full flex-col gap-2">
-              <div className="flex h-full flex-col">
-                <Outlet />
-              </div>
+      <SidebarInset className="bg-background-2 h-full rounded pr-0">
+        <SiteHeader />
+        <div className="flex h-[calc(100vh_-_56px)] flex-col rounded">
+          <div className="@container/main flex h-full flex-col gap-2">
+            <div className="flex h-full flex-col">
+              <Outlet />
             </div>
           </div>
         </div>

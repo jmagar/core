@@ -13,6 +13,7 @@ import { useTypedLoaderData } from "remix-typedjson";
 import { SearchBodyRequest } from "./search";
 import { SearchService } from "~/services/search.server";
 import { GraphVisualizationClient } from "~/components/graph/graph-client";
+import { LoaderCircle } from "lucide-react";
 
 export async function action({ request }: ActionFunctionArgs) {
   const userId = await requireUserId(request);
@@ -83,11 +84,11 @@ export default function Dashboard() {
   }, [userId]);
 
   return (
-    <div className="home flex h-[calc(100vh_-_60px)] flex-col overflow-y-auto p-3 text-base">
+    <div className="home flex h-[calc(100vh_-_56px)] flex-col overflow-y-auto p-3 text-base">
       <div className="flex grow items-center justify-center rounded">
         {loading ? (
           <div className="flex h-full w-full flex-col items-center justify-center">
-            <div className="mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-400" />
+            <LoaderCircle size={18} className="mr-1 animate-spin" />
             <span className="text-muted-foreground">Loading graph...</span>
           </div>
         ) : (
