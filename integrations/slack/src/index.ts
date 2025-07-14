@@ -1,5 +1,3 @@
-// import { IntegrationPayloadEventType } from '@redplanethq/sol-sdk';
-
 import { integrationCreate } from './account-create';
 import { createActivityEvent } from './create-activity';
 import {

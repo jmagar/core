@@ -22,3 +22,14 @@ export async function getIntegrationDefinitionWithId(
     where: { id: integrationDefinitionId },
   });
 }
+
+/**
+ * Get a single integration definition by its slug.
+ */
+export async function getIntegrationDefinitionWithSlug(
+  slug: string,
+) {
+  return prisma.integrationDefinitionV2.findFirst({
+    where: { slug },
+  });
+}

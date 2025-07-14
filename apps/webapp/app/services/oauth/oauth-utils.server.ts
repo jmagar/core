@@ -16,28 +16,19 @@ export interface SessionRecord {
   workspaceId: string;
   accountIdentifier?: string;
   integrationKeys?: string;
-  personal: boolean;
   userId?: string;
 }
 
 export class OAuthBodyInterface {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  config?: any;
-
   @IsString()
   redirectURL: string;
-
-  @IsBoolean()
-  personal: boolean = false;
 
   @IsString()
   integrationDefinitionId: string;
 }
 
 export const OAuthBodySchema = z.object({
-  config: z.any().optional(),
   redirectURL: z.string(),
-  personal: z.boolean().default(false),
   integrationDefinitionId: z.string(),
 });
 

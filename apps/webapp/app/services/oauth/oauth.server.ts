@@ -14,12 +14,18 @@ import { logger } from "../logger.service";
 import { runIntegrationTrigger } from "../integration.server";
 import type { IntegrationDefinitionV2 } from "@core/database";
 import { env } from "~/env.server";
+import { createMCPAuthClient } from "@core/mcp-proxy";
 
 // Use process.env for config in Remix
 const CALLBACK_URL = process.env.OAUTH_CALLBACK_URL ?? "";
+const MCP_CALLBACK_URL = `${CALLBACK_URL}/mcp`;
 
 // Session store (in-memory, for single server)
 const session: Record<string, SessionRecord> = {};
+const mcpSession: Record<
+  string,
+  { integrationDefinitionId: string; redirectURL: string }
+> = {};
 
 export type CallbackParams = Record<string, string>;
 
@@ -166,9 +172,9 @@ export async function getRedirectURL(
   workspaceId?: string,
   specificScopes?: string,
 ) {
-  const { integrationDefinitionId, personal } = oAuthBody;
+  const { integrationDefinitionId } = oAuthBody;
 
-  const redirectURL = `${env.APP_ORIGIN}/integrations`;
+  const redirectURL = oAuthBody.redirectURL ?? `${env.APP_ORIGIN}/integrations`;
 
   logger.info(
     `We got OAuth request for ${workspaceId}: ${integrationDefinitionId}`,
@@ -212,7 +218,6 @@ export async function getRedirectURL(
       workspaceId: workspaceId as string,
       config: externalConfig,
       userId,
-      personal,
     };
 
     const scopes = [
@@ -241,4 +246,67 @@ export async function getRedirectURL(
     logger.warn(e);
     throw new Error(e.message);
   }
+}
+
+export async function getRedirectURLForMCP(
+  oAuthBody: OAuthBodyInterface,
+  userId: string,
+  workspaceId?: string,
+) {
+  const { integrationDefinitionId } = oAuthBody;
+
+  logger.info(
+    `We got OAuth request for ${workspaceId}: ${userId}: ${integrationDefinitionId}`,
+  );
+
+  const redirectURL = oAuthBody.redirectURL ?? `${env.APP_ORIGIN}/integrations`;
+
+  const integrationDefinition = await getIntegrationDefinitionWithId(
+    integrationDefinitionId,
+  );
+
+  if (!integrationDefinition) {
+    throw new Error("No integration definition found");
+  }
+
+  const spec = integrationDefinition.spec as any;
+
+  if (!spec.mcpAuth) {
+    throw new Error("MCP auth configuration not found for this integration");
+  }
+
+  const { serverUrl, transportStrategy } = spec.mcpAuth;
+
+  const authClient = createMCPAuthClient({
+    serverUrl,
+    transportStrategy: transportStrategy || "sse-first",
+    redirectUrl: MCP_CALLBACK_URL,
+  });
+
+  const { authUrl, state } = await authClient.getAuthorizationURL({
+    scope: "read write",
+  });
+
+  mcpSession[state] = {
+    integrationDefinitionId: integrationDefinition.id,
+    redirectURL,
+  };
+
+  return {
+    status: 200,
+    redirectURL: authUrl,
+  };
+}
+
+export async function getIntegrationDefinitionForState(state: string) {
+  if (!state) {
+    throw new Error("No state found");
+  }
+
+  const sessionRecord = mcpSession[state];
+
+  // Delete the session once it's used
+  delete mcpSession[state];
+
+  return sessionRecord;
 }

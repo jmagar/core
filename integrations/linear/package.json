@@ -1,16 +1,16 @@
 {
-  "name": "@core/slack",
+  "name": "@core/linear",
   "version": "0.1.2",
-  "description": "slack extension for Sol",
+  "description": "linear extension for CORE",
   "main": "./bin/index.js",
   "module": "./bin/index.mjs",
   "type": "module",
   "files": [
-    "slack",
+    "linear",
     "bin"
   ],
   "bin": {
-    "slack": "./bin/index.js"
+    "linear": "./bin/index.js"
   },
   "scripts": {
     "build": "rimraf bin && npx tsup",

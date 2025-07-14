@@ -101,7 +101,7 @@ export const ConversationList = ({
           <div
             key={key}
             style={style}
-            className="-mt-2 ml-1 flex items-center justify-start p-0 text-sm"
+            className="-mt-1 ml-1 hidden items-center justify-start p-0 text-sm group-hover:flex"
           >
             <Button
               variant="link"
@@ -179,14 +179,14 @@ export const ConversationList = ({
 
   return (
     <div className="flex h-full flex-col pt-1 pl-1">
-      <div className="grow overflow-hidden">
+      <div className="group grow overflow-hidden">
         <AutoSizer>
           {({ height, width }) => (
             <List
               height={height}
               width={width}
               rowCount={rowCount}
-              rowHeight={36} // Slightly taller for better click area
+              rowHeight={32} // Slightly taller for better click area
               rowRenderer={rowRenderer}
               overscanRowCount={5}
             />
