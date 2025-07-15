@@ -37,6 +37,7 @@ export class Spec {
   key: string;
   description: string;
   icon: string;
+  category?: string;
   mcp?: {
     command: string;
     args: string[];
