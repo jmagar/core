@@ -263,7 +263,8 @@ function SidebarTrigger({
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
       variant="ghost"
-      className={cn("size-8", className)}
+      size="xs"
+      className={cn("size-6 rounded-md", className)}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();

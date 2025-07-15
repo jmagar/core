@@ -7,7 +7,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/home/dashboard": "Memory graph",
   "/home/conversation": "Conversation",
   "/home/integrations": "Integrations",
-  "/home/activity": "Activity",
+  "/home/logs": "Logs",
 };
 
 function getHeaderTitle(pathname: string): string {
@@ -26,12 +26,17 @@ function isConversationDetail(pathname: string): boolean {
   return /^\/home\/conversation\/[^/]+$/.test(pathname);
 }
 
+function isIntegrationsPage(pathname: string): boolean {
+  return pathname === "/home/integrations";
+}
+
 export function SiteHeader() {
   const location = useLocation();
   const navigate = useNavigate();
   const title = getHeaderTitle(location.pathname);
 
   const showNewConversationButton = isConversationDetail(location.pathname);
+  const showRequestIntegrationButton = isIntegrationsPage(location.pathname);
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b border-gray-300 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -49,6 +54,16 @@ export function SiteHeader() {
             >
               <Plus size={14} />
               New conversation
+            </Button>
+          )}
+          {showRequestIntegrationButton && (
+            <Button
+              onClick={() => window.open("https://github.com/redplanethq/core/issues/new", "_blank")}
+              variant="secondary"
+              className="gap-2"
+            >
+              <Plus size={14} />
+              Request New Integration
             </Button>
           )}
         </div>

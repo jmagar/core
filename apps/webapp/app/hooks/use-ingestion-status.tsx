@@ -36,7 +36,7 @@ export function useIngestionStatus() {
       clearInterval(interval);
       setIsPolling(false);
     };
-  }, [fetcher]);
+  }, []); // Remove fetcher from dependencies to prevent infinite loop
 
   return {
     data: fetcher.data,

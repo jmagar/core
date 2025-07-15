@@ -28,8 +28,8 @@ const data = {
       icon: Network,
     },
     {
-      title: "Activity",
-      url: "/home/activity",
+      title: "Logs",
+      url: "/home/logs/all",
       icon: Activity,
     },
     {

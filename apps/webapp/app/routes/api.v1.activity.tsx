@@ -40,7 +40,6 @@ const { action, loader } = createActionApiRoute(
         throw new Error("User not found");
       }
 
-
       // Create the activity record
       const activity = await prisma.activity.create({
         data: {
@@ -64,7 +63,11 @@ const { action, loader } = createActionApiRoute(
         },
       };
 
-      const queueResponse = await addToQueue(ingestData, authentication.userId);
+      const queueResponse = await addToQueue(
+        ingestData,
+        authentication.userId,
+        activity.id,
+      );
 
       logger.log("Activity created and queued for ingestion", {
         activityId: activity.id,

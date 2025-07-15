@@ -16,6 +16,7 @@ export const IngestBodyRequest = z.object({
 export const addToQueue = async (
   body: z.infer<typeof IngestBodyRequest>,
   userId: string,
+  activityId?: string,
 ) => {
   const user = await prisma.user.findFirst({
     where: {
@@ -39,6 +40,7 @@ export const addToQueue = async (
       status: IngestionStatus.PENDING,
       priority: 1,
       workspaceId: user.Workspace.id,
+      activityId,
     },
   });
 
