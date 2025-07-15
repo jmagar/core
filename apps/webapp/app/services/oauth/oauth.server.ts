@@ -17,7 +17,7 @@ import { env } from "~/env.server";
 import { createMCPAuthClient } from "@core/mcp-proxy";
 
 // Use process.env for config in Remix
-const CALLBACK_URL = process.env.OAUTH_CALLBACK_URL ?? "";
+const CALLBACK_URL = `${env.APP_ORIGIN}/api/v1/oauth/callback`;
 const MCP_CALLBACK_URL = `${CALLBACK_URL}/mcp`;
 
 // Session store (in-memory, for single server)
@@ -299,14 +299,18 @@ export async function getRedirectURLForMCP(
 }
 
 export async function getIntegrationDefinitionForState(state: string) {
-  if (!state) {
+  try {
+    if (!state) {
+      throw new Error("No state found");
+    }
+
+    const sessionRecord = mcpSession[state];
+
+    // Delete the session once it's used
+    delete mcpSession[state];
+
+    return sessionRecord;
+  } catch (e) {
     throw new Error("No state found");
   }
-
-  const sessionRecord = mcpSession[state];
-
-  // Delete the session once it's used
-  delete mcpSession[state];
-
-  return sessionRecord;
 }

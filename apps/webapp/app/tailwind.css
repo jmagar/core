@@ -364,7 +364,7 @@
   }
 
   p.is-editor-empty:before {
-    @apply text-muted-foreground;
+    @apply text-muted-foreground/70;
 
     font-size: 14px !important;
     content: attr(data-placeholder);
@@ -374,8 +374,6 @@
 
   }
 }
-
-
 
 .title-bar-sigma {
   user-select: none;

@@ -30,6 +30,7 @@ export class OAuthBodyInterface {
 export const OAuthBodySchema = z.object({
   redirectURL: z.string(),
   integrationDefinitionId: z.string(),
+  mcp: z.boolean().optional().default(false),
 });
 
 export type CallbackParams = Record<string, string>;

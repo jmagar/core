@@ -7,7 +7,8 @@ import { logger } from "~/services/logger.service";
 import { env } from "~/env.server";
 import { getIntegrationDefinitionForState } from "~/services/oauth/oauth.server";
 
-const MCP_CALLBACK_URL = `${process.env.OAUTH_CALLBACK_URL ?? ""}/mcp`;
+const CALLBACK_URL = `${env.APP_ORIGIN}/api/v1/oauth/callback`;
+const MCP_CALLBACK_URL = `${CALLBACK_URL}/mcp`;
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -80,7 +81,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return new Response(null, {
       status: 302,
       headers: {
-        Location: `${redirectURL}/integrations?success=true&integrationName=${encodeURIComponent(
+        Location: `${redirectURL}?success=true&integrationName=${encodeURIComponent(
           integrationDefinition.name,
         )}`,
       },
@@ -91,7 +92,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return new Response(null, {
       status: 302,
       headers: {
-        Location: `${redirectURL}/integrations?success=false&error=${encodeURIComponent(
+        Location: `${redirectURL}?success=false&error=${encodeURIComponent(
           error.message || "OAuth callback failed",
         )}`,
       },

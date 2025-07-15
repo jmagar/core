@@ -1,79 +1,8 @@
 // lib/ingest.queue.ts
-import { Queue, Worker } from "bullmq";
-import IORedis from "ioredis";
-import { env } from "~/env.server";
-import { KnowledgeGraphService } from "../services/knowledgeGraph.server";
-import { z } from "zod";
-import { EpisodeType } from "@core/types";
-import { prisma } from "~/db.server";
 import { IngestionStatus } from "@core/database";
-import { logger } from "~/services/logger.service";
-
-const connection = new IORedis({
-  port: env.REDIS_PORT,
-  host: env.REDIS_HOST,
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-});
-
-const userQueues = new Map<string, Queue>();
-const userWorkers = new Map<string, Worker>();
-
-async function processUserJob(userId: string, job: any) {
-  try {
-    logger.log(`Processing job for user ${userId}`);
-
-    await prisma.ingestionQueue.update({
-      where: { id: job.data.queueId },
-      data: {
-        status: IngestionStatus.PROCESSING,
-      },
-    });
-
-    const knowledgeGraphService = new KnowledgeGraphService();
-
-    const episodeDetails = await knowledgeGraphService.addEpisode({
-      ...job.data.body,
-      userId,
-    });
-
-    await prisma.ingestionQueue.update({
-      where: { id: job.data.queueId },
-      data: {
-        output: episodeDetails,
-        status: IngestionStatus.COMPLETED,
-      },
-    });
-
-    // your processing logic
-  } catch (err: any) {
-    await prisma.ingestionQueue.update({
-      where: { id: job.data.queueId },
-      data: {
-        error: err.message,
-        status: IngestionStatus.FAILED,
-      },
-    });
-
-    console.error(`Error processing job for user ${userId}:`, err);
-  }
-}
-
-export function getUserQueue(userId: string) {
-  if (!userQueues.has(userId)) {
-    const queueName = `ingest-user-${userId}`;
-    const queue = new Queue(queueName, { connection });
-    userQueues.set(userId, queue);
-
-    const worker = new Worker(queueName, (job) => processUserJob(userId, job), {
-      connection,
-      concurrency: 1,
-    });
-    userWorkers.set(userId, worker);
-  }
-
-  return userQueues.get(userId)!;
-}
+import { z } from "zod";
+import { prisma } from "~/db.server";
+import { ingestTask } from "~/trigger/ingest/ingest";
 
 export const IngestBodyRequest = z.object({
   episodeBody: z.string(),
@@ -113,22 +42,14 @@ export const addToQueue = async (
     },
   });
 
-  const ingestionQueue = getUserQueue(userId);
-
-  const jobDetails = await ingestionQueue.add(
-    `ingest-user-${userId}`, // 👈 unique name per user
+  const handler = await ingestTask.trigger(
+    { body, userId, workspaceId: user.Workspace.id, queueId: queuePersist.id },
     {
-      queueId: queuePersist.id,
-      spaceId: body.spaceId,
-      userId: userId,
-      body,
-    },
-    {
-      jobId: `${userId}-${Date.now()}`, // unique per job but grouped under user
+      queue: "ingestion-queue",
+      concurrencyKey: userId,
+      tags: [user.id, queuePersist.id],
     },
   );
 
-  return {
-    id: jobDetails.id,
-  };
+  return { id: handler.id, token: handler.publicAccessToken };
 };

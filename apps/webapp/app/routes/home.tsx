@@ -8,6 +8,7 @@ import { clearRedirectTo, commitSession } from "~/services/redirectTo.server";
 import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 import { SiteHeader } from "~/components/ui/header";
+import { FloatingIngestionStatus } from "~/components/ingestion/floating-ingestion-status";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
@@ -47,6 +48,7 @@ export default function Home() {
             </div>
           </div>
         </div>
+        <FloatingIngestionStatus />
       </SidebarInset>
     </SidebarProvider>
   );

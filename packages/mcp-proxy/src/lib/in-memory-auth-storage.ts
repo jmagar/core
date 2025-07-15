@@ -1,7 +1,4 @@
-import {
-  OAuthTokens,
-  OAuthClientInformationFull,
-} from "@modelcontextprotocol/sdk/shared/auth.js";
+import { OAuthTokens, OAuthClientInformationFull } from "@modelcontextprotocol/sdk/shared/auth.js";
 import {
   readFileSync,
   writeFileSync,
@@ -78,83 +75,47 @@ export class InMemoryAuthStorage {
     clientInformation: OAuthClientInformationFull
   ): Promise<void> {
     this.clientInfo.set(serverUrlHash, clientInformation);
-    this.saveTempFile(serverUrlHash, "clientInfo", clientInformation);
   }
 
   async getClientInformation(
     serverUrlHash: string
   ): Promise<OAuthClientInformationFull | undefined> {
     let clientInfo = this.clientInfo.get(serverUrlHash);
-    if (!clientInfo) {
-      // Try to load from temp file
-      clientInfo = this.loadTempFile<OAuthClientInformationFull>(
-        serverUrlHash,
-        "clientInfo"
-      ) as any;
-      if (clientInfo) {
-        this.clientInfo.set(serverUrlHash, clientInfo);
-      }
-    }
+
     return clientInfo || undefined;
   }
 
   // OAuth Tokens
   async saveTokens(serverUrlHash: string, tokens: OAuthTokens): Promise<void> {
     this.tokens.set(serverUrlHash, tokens);
-    this.saveTempFile(serverUrlHash, "tokens", tokens);
   }
 
   async getTokens(serverUrlHash: string): Promise<OAuthTokens | null> {
     let tokens = this.tokens.get(serverUrlHash);
-    if (!tokens) {
-      // Try to load from temp file
-      tokens = this.loadTempFile<OAuthTokens>(serverUrlHash, "tokens") as any;
-      if (tokens) {
-        this.tokens.set(serverUrlHash, tokens);
-      }
-    }
+
     return tokens || null;
   }
 
   // Code Verifiers (PKCE)
-  async saveCodeVerifier(
-    serverUrlHash: string,
-    codeVerifier: string
-  ): Promise<void> {
+  async saveCodeVerifier(serverUrlHash: string, codeVerifier: string): Promise<void> {
     this.codeVerifiers.set(serverUrlHash, codeVerifier);
     this.saveTempFile(serverUrlHash, "codeVerifier", codeVerifier);
   }
 
   async getCodeVerifier(serverUrlHash: string): Promise<string | null> {
     let codeVerifier = this.codeVerifiers.get(serverUrlHash);
-    if (!codeVerifier) {
-      // Try to load from temp file
-      codeVerifier = this.loadTempFile<string>(
-        serverUrlHash,
-        "codeVerifier"
-      ) as string;
-      if (codeVerifier) {
-        this.codeVerifiers.set(serverUrlHash, codeVerifier);
-      }
-    }
+
     return codeVerifier || null;
   }
 
   // OAuth States
   async saveState(state: string, data: any): Promise<void> {
     this.states.set(state, data);
-    this.saveTempFile(state, "state", data);
   }
 
   async getState(state: string): Promise<any | null> {
     let stateData = this.states.get(state);
-    if (!stateData) {
-      // Try to load from temp file
-      stateData = this.loadTempFile<any>(state, "state");
-      if (stateData) {
-        this.states.set(state, stateData);
-      }
-    }
+
     return stateData || null;
   }
 
@@ -248,11 +209,7 @@ export interface LockfileData {
 class InMemoryLockManager {
   private locks = new Map<string, LockfileData>();
 
-  async createLockfile(
-    serverUrlHash: string,
-    pid: number,
-    port: number
-  ): Promise<void> {
+  async createLockfile(serverUrlHash: string, pid: number, port: number): Promise<void> {
     this.locks.set(serverUrlHash, {
       pid,
       port,

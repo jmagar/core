@@ -5,13 +5,12 @@ import {
   MCPRemoteClientConfig,
   AuthenticationResult,
   ProxyConnectionConfig,
-  CredentialSaveCallback,
   CredentialLoadCallback,
   MCPProxyFunction,
   StoredCredentials,
   TransportStrategy,
 } from "../types/remote-client.js";
-import { MCPAuthProxyError, OAuthError } from "../utils/errors.js";
+import { MCPAuthProxyError } from "../utils/errors.js";
 import { NodeOAuthClientProvider } from "../lib/node-oauth-client-provider.js";
 import { globalAuthStorage } from "../lib/in-memory-auth-storage.js";
 import { getServerUrlHash } from "../lib/utils.js";
@@ -28,11 +27,8 @@ import {
  * @param onCredentialSave Callback to save credentials to your database
  * @returns Authentication client with OAuth capabilities
  */
-export function createMCPAuthClient(
-  config: MCPRemoteClientConfig,
-  onCredentialSave?: CredentialSaveCallback
-): MCPAuthenticationClient {
-  return new MCPAuthenticationClient(config, onCredentialSave);
+export function createMCPAuthClient(config: MCPRemoteClientConfig): MCPAuthenticationClient {
+  return new MCPAuthenticationClient(config);
 }
 
 /**
@@ -267,12 +263,10 @@ export class MCPAuthenticationClient {
   private authProvider: NodeOAuthClientProvider | null = null;
   private client: Client | null = null;
 
-  constructor(
-    private config: MCPRemoteClientConfig,
-    private onCredentialSave?: CredentialSaveCallback
-  ) {
+  constructor(private config: MCPRemoteClientConfig) {
     this.serverUrlHash = getServerUrlHash(config.serverUrl);
 
+    console.log(config);
     // Validate configuration
     this.validateConfig();
   }
@@ -341,12 +335,12 @@ export class MCPAuthenticationClient {
       const authProvider = this.getAuthProvider();
 
       // State validation (if state is provided - for backward compatibility)
-      if (options.state) {
-        const providerState = authProvider.state?.() || "";
-        if (options.state !== providerState) {
-          throw new OAuthError("Invalid state parameter - possible CSRF attack");
-        }
-      }
+      // if (options.state) {
+      //   const providerState = authProvider.state?.() || "";
+      //   if (options.state !== providerState) {
+      //     throw new OAuthError("Invalid state parameter - possible CSRF attack");
+      //   }
+      // }
 
       // Use the NodeOAuthClientProvider's completeAuth method
       await authProvider.completeAuth({

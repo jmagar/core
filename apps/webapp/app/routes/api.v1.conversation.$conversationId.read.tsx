@@ -2,11 +2,7 @@ import { json } from "@remix-run/node";
 import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
 
 import { getWorkspaceByUser } from "~/models/workspace.server";
-import {
-  createConversation,
-  CreateConversationSchema,
-  readConversation,
-} from "~/services/conversation.server";
+import { readConversation } from "~/services/conversation.server";
 import { z } from "zod";
 
 export const ConversationIdSchema = z.object({

@@ -34,7 +34,6 @@ export function Icon(props: IconProps) {
     );
   }
 
-  console.error("Invalid icon", props);
   return null;
 }
 
