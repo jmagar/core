@@ -11,10 +11,7 @@ export function FormButtons({
 }) {
   return (
     <div
-      className={cn(
-        "border-grid-bright flex w-full items-center justify-between border-t pt-4",
-        className,
-      )}
+      className={cn("flex w-full items-center justify-between pt-4", className)}
     >
       {cancelButton ? cancelButton : <div />} {confirmButton}
     </div>

@@ -6,6 +6,7 @@ import {
   Code,
   User,
   Workflow,
+  Webhook,
 } from "lucide-react";
 
 import React from "react";
@@ -50,9 +51,9 @@ export default function Settings() {
 
   const data = {
     nav: [
-      { name: "Workspace", icon: Building },
-      { name: "Preferences", icon: User },
+      // { name: "Workspace", icon: Building },
       { name: "API", icon: Code },
+      { name: "Webhooks", icon: Webhook },
     ],
   };
   const navigate = useNavigate();

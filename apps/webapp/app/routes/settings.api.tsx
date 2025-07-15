@@ -25,6 +25,7 @@ import {
 import { requireUserId } from "~/services/session.server";
 import { useTypedLoaderData } from "remix-typedjson";
 import { APITable } from "~/components/api";
+import { SettingSection } from "~/components/setting-section";
 
 export const APIKeyBodyRequest = z.object({
   name: z.string(),
@@ -96,19 +97,11 @@ export default function API() {
   };
 
   return (
-    <div className="home flex h-full flex-col overflow-y-auto p-3">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1 text-base">
-          <h2 className="text-lg font-semibold">API Keys</h2>
-          <p className="text-muted-foreground">
-            Create and manage API keys to access your data programmatically. API
-            keys allow secure access to your workspace's data and functionality
-            through our REST API.
-          </p>
-        </div>
-
-        <div>
-          <Dialog open={open} onOpenChange={setOpen}>
+    <div className="mx-auto flex w-3xl flex-col gap-4 px-4 py-6">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <SettingSection
+          title="API Keys"
+          actions={
             <DialogTrigger asChild>
               <Button
                 className="inline-flex items-center justify-center gap-1"
@@ -118,67 +111,73 @@ export default function API() {
                 Create
               </Button>
             </DialogTrigger>
-            <DialogContent className="p-3">
-              <DialogHeader>
-                <DialogTitle>Create API Key</DialogTitle>
-              </DialogHeader>
-              <fetcher.Form
-                method="post"
-                onSubmit={onSubmit}
-                className="space-y-4"
+          }
+          description="Create and manage API keys to access your data programmatically."
+        >
+          <div className="home flex h-full flex-col overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <DialogContent className="p-3">
+                <DialogHeader>
+                  <DialogTitle>Create API Key</DialogTitle>
+                </DialogHeader>
+                <fetcher.Form
+                  method="post"
+                  onSubmit={onSubmit}
+                  className="space-y-4"
+                >
+                  <div>
+                    <Input
+                      id="name"
+                      onChange={(e) => setName(e.target.value)}
+                      name="name"
+                      placeholder="Enter API key name"
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      variant="secondary"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Creating..." : "Create API Key"}
+                    </Button>
+                  </div>
+                </fetcher.Form>
+              </DialogContent>
+            </div>
+
+            <APITable personalAccessTokens={personalAccessTokens} />
+          </div>
+        </SettingSection>
+      </Dialog>
+
+      <Dialog open={showToken} onOpenChange={setShowToken}>
+        <DialogContent className="p-3">
+          <DialogHeader>
+            <DialogTitle>Your New API Key</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-muted-foreground text-sm">
+              Make sure to copy your API key now. You won't be able to see it
+              again!
+            </p>
+            <div className="flex items-center gap-2 rounded-md border p-3">
+              <code className="flex-1 text-sm break-all">
+                {fetcher.data?.token}
+              </code>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(fetcher.data?.token)}
               >
-                <div>
-                  <Input
-                    id="name"
-                    onChange={(e) => setName(e.target.value)}
-                    name="name"
-                    placeholder="Enter API key name"
-                    className="mt-1"
-                    required
-                  />
-                </div>
-                <div className="flex justify-end">
-                  <Button
-                    type="submit"
-                    variant="secondary"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Creating..." : "Create API Key"}
-                  </Button>
-                </div>
-              </fetcher.Form>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={showToken} onOpenChange={setShowToken}>
-            <DialogContent className="p-3">
-              <DialogHeader>
-                <DialogTitle>Your New API Key</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-2">
-                <p className="text-muted-foreground text-sm">
-                  Make sure to copy your API key now. You won't be able to see
-                  it again!
-                </p>
-                <div className="flex items-center gap-2 rounded-md border p-3">
-                  <code className="flex-1 text-sm break-all">
-                    {fetcher.data?.token}
-                  </code>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(fetcher.data?.token)}
-                  >
-                    <Copy size={16} />
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      <APITable personalAccessTokens={personalAccessTokens} />
+                <Copy size={16} />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

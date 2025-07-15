@@ -2,13 +2,8 @@ import { useState } from "react";
 import { useLogs } from "~/hooks/use-logs";
 import { LogsFilters } from "~/components/logs/logs-filters";
 import { VirtualLogsList } from "~/components/logs/virtual-logs-list";
-import {
-  AppContainer,
-  PageContainer,
-  PageBody,
-} from "~/components/layout/app-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
+import { AppContainer, PageContainer } from "~/components/layout/app-layout";
+import { Card, CardContent } from "~/components/ui/card";
 import { Database } from "lucide-react";
 
 export default function LogsAll() {
@@ -42,17 +37,6 @@ export default function LogsAll() {
 
   return (
     <div className="space-y-6 p-4 px-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div>
-            <p className="text-muted-foreground">
-              View all ingestion queue items and their processing status
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Filters */}
       <LogsFilters
         availableSources={availableSources}
@@ -64,18 +48,9 @@ export default function LogsAll() {
 
       {/* Logs List */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Ingestion Queue</h2>
-          {hasMore && (
-            <span className="text-muted-foreground text-sm">
-              Scroll to load more...
-            </span>
-          )}
-        </div>
-
         {logs.length === 0 ? (
           <Card>
-            <CardContent className="flex items-center justify-center py-16">
+            <CardContent className="bg-background-2 flex items-center justify-center py-16">
               <div className="text-center">
                 <Database className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
                 <h3 className="mb-2 text-lg font-semibold">No logs found</h3>

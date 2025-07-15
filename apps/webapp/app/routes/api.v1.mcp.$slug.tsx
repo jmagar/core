@@ -67,6 +67,8 @@ const { action, loader } = createActionApiRoute(
           timeout: 30000,
           debug: true,
           transportStrategy: transportStrategy || "sse-first",
+          // Fix this
+          redirectUrl: "",
         },
         // Callback to load credentials from the database
         async () => {

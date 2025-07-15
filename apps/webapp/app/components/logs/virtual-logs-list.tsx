@@ -1,10 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import { List, InfiniteLoader, WindowScroller } from "react-virtualized";
-import { LogItem } from "~/hooks/use-logs";
+import {
+  List,
+  InfiniteLoader,
+  WindowScroller,
+  AutoSizer,
+  CellMeasurer,
+  CellMeasurerCache,
+  type Index,
+  type ListRowProps,
+} from "react-virtualized";
+import { type LogItem } from "~/hooks/use-logs";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent } from "~/components/ui/card";
 import { AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
 import { cn } from "~/lib/utils";
+import { ScrollManagedList } from "../virtualized-list";
 
 interface VirtualLogsListProps {
   logs: LogItem[];
@@ -14,23 +24,27 @@ interface VirtualLogsListProps {
   height?: number;
 }
 
-const ITEM_HEIGHT = 120;
-
-interface LogItemRendererProps {
-  index: number;
-  key: string;
-  style: React.CSSProperties;
-}
-
-function LogItemRenderer(props: LogItemRendererProps, logs: LogItem[]) {
-  const { index, key, style } = props;
+function LogItemRenderer(
+  props: ListRowProps,
+  logs: LogItem[],
+  cache: CellMeasurerCache,
+) {
+  const { index, key, style, parent } = props;
   const log = logs[index];
 
   if (!log) {
     return (
-      <div key={key} style={style} className="p-4">
-        <div className="h-24 animate-pulse rounded bg-gray-200" />
-      </div>
+      <CellMeasurer
+        key={key}
+        cache={cache}
+        columnIndex={0}
+        parent={parent}
+        rowIndex={index}
+      >
+        <div key={key} style={style} className="p-4">
+          <div className="h-24 animate-pulse rounded bg-gray-200" />
+        </div>
+      </CellMeasurer>
     );
   }
 
@@ -69,63 +83,69 @@ function LogItemRenderer(props: LogItemRendererProps, logs: LogItem[]) {
   };
 
   return (
-    <div key={key} style={style} className="p-2">
-      <Card className="h-full">
-        <CardContent className="p-4">
-          <div className="mb-2 flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
-                {log.source}
-              </Badge>
-              <div className="flex items-center gap-1">
-                {getStatusIcon(log.status)}
-                <Badge className={cn("text-xs", getStatusColor(log.status))}>
-                  {log.status.toLowerCase()}
+    <CellMeasurer
+      key={key}
+      cache={cache}
+      columnIndex={0}
+      parent={parent}
+      rowIndex={index}
+    >
+      <div key={key} style={style} className="pb-2">
+        <Card className="h-full">
+          <CardContent className="p-4">
+            <div className="mb-2 flex items-start justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">
+                  {log.source}
                 </Badge>
+                <div className="flex items-center gap-1">
+                  {getStatusIcon(log.status)}
+                  <Badge className={cn("text-xs", getStatusColor(log.status))}>
+                    {log.status.toLowerCase()}
+                  </Badge>
+                </div>
+              </div>
+              <div className="text-muted-foreground text-xs">
+                {new Date(log.time).toLocaleString()}
               </div>
             </div>
-            <div className="text-muted-foreground text-xs">
-              {new Date(log.time).toLocaleString()}
-            </div>
-          </div>
 
-          <div className="mb-2">
-            <p className="line-clamp-2 text-sm text-gray-700">
-              {log.ingestText}
-            </p>
-          </div>
-
-          <div className="text-muted-foreground flex items-center justify-between text-xs">
-            <div className="flex items-center gap-4">
-              {log.sourceURL && (
-                <a
-                  href={log.sourceURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 underline hover:text-blue-800"
-                >
-                  Source URL
-                </a>
-              )}
-              {log.processedAt && (
-                <span>
-                  Processed: {new Date(log.processedAt).toLocaleString()}
-                </span>
-              )}
+            <div className="mb-2">
+              <p className="text-sm text-gray-700">{log.ingestText}</p>
             </div>
 
-            {log.error && (
-              <div className="flex items-center gap-1 text-red-600">
-                <AlertCircle className="h-3 w-3" />
-                <span className="max-w-[200px] truncate" title={log.error}>
-                  {log.error}
-                </span>
+            <div className="text-muted-foreground flex items-center justify-between text-xs">
+              <div className="flex items-center gap-4">
+                {log.sourceURL && (
+                  <a
+                    href={log.sourceURL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline hover:text-blue-800"
+                  >
+                    Source URL
+                  </a>
+                )}
+                {log.processedAt && (
+                  <span>
+                    Processed: {new Date(log.processedAt).toLocaleString()}
+                  </span>
+                )}
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+
+              {log.error && (
+                <div className="flex items-center gap-1 text-red-600">
+                  <AlertCircle className="h-3 w-3" />
+                  <span className="max-w-[200px] truncate" title={log.error}>
+                    {log.error}
+                  </span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </CellMeasurer>
   );
 }
 
@@ -136,18 +156,19 @@ export function VirtualLogsList({
   isLoading,
   height = 600,
 }: VirtualLogsListProps) {
-  const [containerHeight, setContainerHeight] = useState(height);
+  // Create a CellMeasurerCache instance using useRef to prevent recreation
+  const cacheRef = useRef<CellMeasurerCache | null>(null);
+  if (!cacheRef.current) {
+    cacheRef.current = new CellMeasurerCache({
+      defaultHeight: 120, // Default row height
+      fixedWidth: true, // Rows have fixed width but dynamic height
+    });
+  }
+  const cache = cacheRef.current;
 
   useEffect(() => {
-    const updateHeight = () => {
-      const availableHeight = window.innerHeight - 300; // Account for header, filters, etc.
-      setContainerHeight(Math.min(availableHeight, height));
-    };
-
-    updateHeight();
-    window.addEventListener("resize", updateHeight);
-    return () => window.removeEventListener("resize", updateHeight);
-  }, [height]);
+    cache.clearAll();
+  }, [logs, cache]);
 
   const isRowLoaded = ({ index }: { index: number }) => {
     return !!logs[index];
@@ -161,32 +182,43 @@ export function VirtualLogsList({
     return false;
   };
 
-  const rowRenderer = (props: LogItemRendererProps) => {
-    return LogItemRenderer(props, logs);
+  const rowRenderer = (props: ListRowProps) => {
+    return LogItemRenderer(props, logs, cache);
+  };
+
+  const rowHeight = ({ index }: Index) => {
+    return cache.getHeight(index, 0);
   };
 
   const itemCount = hasMore ? logs.length + 1 : logs.length;
 
   return (
-    <div className="overflow-hidden rounded-lg border">
-      <InfiniteLoader
-        isRowLoaded={isRowLoaded}
-        loadMoreRows={loadMoreRows}
-        rowCount={itemCount}
-        threshold={5}
-      >
-        {({ onRowsRendered, registerChild }) => (
-          <List
-            ref={registerChild}
-            height={containerHeight}
+    <div className="h-[calc(100vh_-_132px)] overflow-hidden rounded-lg">
+      <AutoSizer className="h-full">
+        {({ width, height: autoHeight }) => (
+          <InfiniteLoader
+            isRowLoaded={isRowLoaded}
+            loadMoreRows={loadMoreRows}
             rowCount={itemCount}
-            rowHeight={ITEM_HEIGHT}
-            onRowsRendered={onRowsRendered}
-            rowRenderer={rowRenderer}
-            className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
-          />
+            threshold={5}
+          >
+            {({ onRowsRendered, registerChild }) => (
+              <ScrollManagedList
+                ref={registerChild}
+                className="h-auto overflow-auto"
+                height={autoHeight}
+                width={width}
+                rowCount={itemCount}
+                rowHeight={rowHeight}
+                onRowsRendered={onRowsRendered}
+                rowRenderer={rowRenderer}
+                deferredMeasurementCache={cache}
+                overscanRowCount={10}
+              />
+            )}
+          </InfiniteLoader>
         )}
-      </InfiniteLoader>
+      </AutoSizer>
 
       {isLoading && (
         <div className="text-muted-foreground p-4 text-center text-sm">

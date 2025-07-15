@@ -266,7 +266,6 @@ export class MCPAuthenticationClient {
   constructor(private config: MCPRemoteClientConfig) {
     this.serverUrlHash = getServerUrlHash(config.serverUrl);
 
-    console.log(config);
     // Validate configuration
     this.validateConfig();
   }

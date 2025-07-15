@@ -31,6 +31,7 @@ model Activity {
   WebhookDeliveryLog WebhookDeliveryLog[]
 
   ConversationHistory ConversationHistory[]
+  IngestionQueue      IngestionQueue[]
 }
 
 model AuthorizationCode {
@@ -135,6 +136,9 @@ model IngestionQueue {
 
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  activity   Activity? @relation(fields: [activityId], references: [id])
+  activityId String?
 
   // Error handling
   error      String?

@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "~/components/ui/dialog";
 import React from "react";
+import { Trash } from "lucide-react";
 
 export interface PersonalAccessToken {
   name: string;
@@ -51,7 +52,7 @@ export const useTokensColumns = (): Array<ColumnDef<PersonalAccessToken>> => {
       },
       cell: ({ row }) => {
         return (
-          <div className="flex items-center gap-1 text-sm">
+          <div className="flex items-center gap-1 text-xs">
             {row.original.obfuscatedToken}
           </div>
         );
@@ -64,7 +65,7 @@ export const useTokensColumns = (): Array<ColumnDef<PersonalAccessToken>> => {
       },
       cell: ({ row }) => {
         return (
-          <div className="flex min-w-[200px] items-center gap-1">
+          <div className="flex min-w-[200px] items-center gap-1 text-sm">
             {row.original.lastAccessedAt
               ? format(row.original.lastAccessedAt, "MMM d, yyyy")
               : "Never"}
@@ -81,7 +82,9 @@ export const useTokensColumns = (): Array<ColumnDef<PersonalAccessToken>> => {
         return (
           <Dialog onOpenChange={setOpen} open={open}>
             <DialogTrigger asChild>
-              <Button variant="ghost">Delete</Button>
+              <Button variant="ghost">
+                <Trash size={14} />
+              </Button>
             </DialogTrigger>
             <DialogContent className="p-3">
               <DialogHeader>

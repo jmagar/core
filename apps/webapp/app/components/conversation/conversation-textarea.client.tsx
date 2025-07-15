@@ -150,7 +150,7 @@ export function ConversationTextarea({
             )}
           />
         </EditorRoot>
-        <div className="flex justify-end px-3">
+        <div className="mb-1 flex justify-end px-3">
           <Button
             variant="default"
             className="gap-1 shadow-none transition-all duration-500 ease-in-out"

@@ -1,11 +1,11 @@
-import { LoaderFunctionArgs, json } from "@remix-run/node";
+import { type LoaderFunctionArgs, json } from "@remix-run/node";
 import { prisma } from "~/db.server";
 import { requireUserId } from "~/services/session.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await requireUserId(request);
   const url = new URL(request.url);
-  
+
   const page = parseInt(url.searchParams.get("page") || "1");
   const limit = parseInt(url.searchParams.get("limit") || "20");
   const source = url.searchParams.get("source");
@@ -103,19 +103,22 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Format the response
   const formattedLogs = logs.map((log) => ({
     id: log.id,
-    source: log.activity?.integrationAccount?.integrationDefinition?.name || 
-            (log.data as any)?.source || 
-            'Unknown',
-    ingestText: log.activity?.text || 
-                (log.data as any)?.episodeBody || 
-                (log.data as any)?.text || 
-                'No content',
+    source:
+      log.activity?.integrationAccount?.integrationDefinition?.name ||
+      (log.data as any)?.source ||
+      "Unknown",
+    ingestText:
+      log.activity?.text ||
+      (log.data as any)?.episodeBody ||
+      (log.data as any)?.text ||
+      "No content",
     time: log.createdAt,
     processedAt: log.processedAt,
     status: log.status,
     error: log.error,
     sourceURL: log.activity?.sourceURL,
-    integrationSlug: log.activity?.integrationAccount?.integrationDefinition?.slug,
+    integrationSlug:
+      log.activity?.integrationAccount?.integrationDefinition?.slug,
     activityId: log.activityId,
   }));
 

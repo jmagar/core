@@ -17,26 +17,61 @@ export interface IngestionStatusResponse {
 export function useIngestionStatus() {
   const fetcher = useFetcher<IngestionStatusResponse>();
   const [isPolling, setIsPolling] = useState(false);
+  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
+  const hasActiveRecords = (data: IngestionStatusResponse | undefined) => {
+    if (!data || !data.queue) return false;
+    return data.queue.some(item => item.status === "PROCESSING" || item.status === "PENDING");
+  };
+
+  const startPolling = () => {
+    if (intervalId) return; // Already polling
+    
     const pollIngestionStatus = () => {
       if (fetcher.state === "idle") {
         fetcher.load("/api/v1/ingestion-queue/status");
       }
     };
 
-    // Initial load
-    pollIngestionStatus();
-
-    // Set up polling interval
     const interval = setInterval(pollIngestionStatus, 3000); // Poll every 3 seconds
+    setIntervalId(interval);
     setIsPolling(true);
+  };
 
-    return () => {
-      clearInterval(interval);
+  const stopPolling = () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+      setIntervalId(null);
       setIsPolling(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initial load to check if we need to start polling
+    if (fetcher.state === "idle" && !fetcher.data) {
+      fetcher.load("/api/v1/ingestion-queue/status");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (fetcher.data) {
+      const activeRecords = hasActiveRecords(fetcher.data);
+      
+      if (activeRecords && !isPolling) {
+        // Start polling if we have active records and aren't already polling
+        startPolling();
+      } else if (!activeRecords && isPolling) {
+        // Stop polling if no active records and we're currently polling
+        stopPolling();
+      }
+    }
+  }, [fetcher.data, isPolling]);
+
+  useEffect(() => {
+    return () => {
+      stopPolling();
     };
-  }, []); // Remove fetcher from dependencies to prevent infinite loop
+  }, []);
 
   return {
     data: fetcher.data,

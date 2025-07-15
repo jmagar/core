@@ -26,8 +26,8 @@ export const APITable = ({
   });
 
   return (
-    <div className="mt-6">
-      <Table>
+    <div className="mt-2">
+      <Table className="bg-background-3 rounded-md">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>

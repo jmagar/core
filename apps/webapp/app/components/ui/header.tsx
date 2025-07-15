@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "@remix-run/react";
 import { Button } from "./button";
 import { Plus } from "lucide-react";
 import { SidebarTrigger } from "./sidebar";
+import React from "react";
 
 const PAGE_TITLES: Record<string, string> = {
   "/home/dashboard": "Memory graph",
@@ -30,6 +31,25 @@ function isIntegrationsPage(pathname: string): boolean {
   return pathname === "/home/integrations";
 }
 
+function isAllLogs(pathname: string): boolean {
+  return pathname === "/home/logs/all";
+}
+
+function isActivityLogs(pathname: string): boolean {
+  return pathname === "/home/logs/activity";
+}
+
+function isLogsPage(pathname: string): boolean {
+  // Matches /home/logs, /home/logs/all, /home/logs/activity, or any /home/logs/*
+  return pathname.includes("/home/logs");
+}
+
+function getLogsTab(pathname: string): "all" | "activity" {
+  if (pathname.startsWith("/home/logs/activity")) return "activity";
+  // Default to "all" for /home/logs or /home/logs/all or anything else
+  return "all";
+}
+
 export function SiteHeader() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -37,13 +57,50 @@ export function SiteHeader() {
 
   const showNewConversationButton = isConversationDetail(location.pathname);
   const showRequestIntegrationButton = isIntegrationsPage(location.pathname);
+  const showLogsTabs = isLogsPage(location.pathname);
+
+  const logsTab = getLogsTab(location.pathname);
+
+  const handleTabClick = (tab: "all" | "activity") => {
+    if (tab === "all") {
+      navigate("/home/logs/all");
+    } else if (tab === "activity") {
+      navigate("/home/logs/activity");
+    }
+  };
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b border-gray-300 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center justify-between gap-1 px-4 pr-2 lg:gap-2">
         <div className="flex items-center gap-1">
           <SidebarTrigger className="-ml-1" />
+
           <h1 className="text-base">{title}</h1>
+
+          {showLogsTabs && (
+            <div className="ml-2 flex items-center gap-0.5">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="rounded"
+                isActive={isAllLogs(location.pathname)}
+                onClick={() => handleTabClick("all")}
+                aria-current={logsTab === "all" ? "page" : undefined}
+              >
+                All
+              </Button>
+              <Button
+                size="sm"
+                className="rounded"
+                onClick={() => handleTabClick("activity")}
+                isActive={isActivityLogs(location.pathname)}
+                variant="secondary"
+                aria-current={logsTab === "activity" ? "page" : undefined}
+              >
+                Activity
+              </Button>
+            </div>
+          )}
         </div>
         <div>
           {showNewConversationButton && (
@@ -58,7 +115,12 @@ export function SiteHeader() {
           )}
           {showRequestIntegrationButton && (
             <Button
-              onClick={() => window.open("https://github.com/redplanethq/core/issues/new", "_blank")}
+              onClick={() =>
+                window.open(
+                  "https://github.com/redplanethq/core/issues/new",
+                  "_blank",
+                )
+              }
               variant="secondary"
               className="gap-2"
             >

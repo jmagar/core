@@ -29,7 +29,7 @@ const data = {
     },
     {
       title: "Logs",
-      url: "/home/logs/all",
+      url: "/home/logs",
       icon: Activity,
     },
     {

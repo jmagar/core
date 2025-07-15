@@ -5,6 +5,7 @@ import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server
 import { addToQueue } from "~/lib/ingest.server";
 import { prisma } from "~/db.server";
 import { logger } from "~/services/logger.service";
+import { triggerWebhookDelivery } from "~/trigger/webhooks/webhook-delivery";
 
 const ActivityCreateSchema = z.object({
   text: z.string().min(1, "Text is required"),
@@ -73,6 +74,20 @@ const { action, loader } = createActionApiRoute(
         activityId: activity.id,
         queueId: queueResponse.id,
       });
+
+      // Trigger webhook delivery for the new activity
+      if (user.Workspace?.id) {
+        try {
+          await triggerWebhookDelivery(activity.id, user.Workspace.id);
+          logger.log("Webhook delivery triggered for activity", { activityId: activity.id });
+        } catch (webhookError) {
+          logger.error("Failed to trigger webhook delivery", { 
+            activityId: activity.id, 
+            error: webhookError 
+          });
+          // Don't fail the entire request if webhook delivery fails
+        }
+      }
 
       return json({
         success: true,

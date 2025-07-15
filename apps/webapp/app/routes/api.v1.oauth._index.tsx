@@ -1,5 +1,5 @@
 import { json } from "@remix-run/node";
-import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
+import { createHybridActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
 import { OAuthBodySchema } from "~/services/oauth/oauth-utils.server";
 
 import {
@@ -9,7 +9,7 @@ import {
 import { getWorkspaceByUser } from "~/models/workspace.server";
 
 // This route handles the OAuth redirect URL generation, similar to the NestJS controller
-const { action, loader } = createActionApiRoute(
+const { action, loader } = createHybridActionApiRoute(
   {
     body: OAuthBodySchema,
     allowJWT: true,
