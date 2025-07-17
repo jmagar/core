@@ -256,6 +256,19 @@ export const APP_NODE_TYPES = {
         },
       ],
     },
+    STATUS: {
+      name: "Linear Status",
+      description:
+        "A status or state of a Linear issue (e.g., Todo, In Progress, Done, Completed)",
+      attributes: [
+        {
+          name: "statusName",
+          description: "The name of the status",
+          type: "string",
+          required: true,
+        },
+      ],
+    },
   },
   [Apps.SLACK]: {
     CHANNEL: {

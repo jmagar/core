@@ -309,3 +309,32 @@ export async function getRelatedEpisodesEntities(params: {
     })
     .filter((entity): entity is EntityNode => entity !== null);
 }
+
+export async function getEpisodeStatements(params: {
+  episodeUuid: string;
+  userId: string;
+}) {
+  const query = `
+  MATCH (episode:Episode {uuid: $episodeUuid, userId: $userId})-[:HAS_PROVENANCE]->(stmt:Statement)
+  RETURN stmt
+  `;
+
+  const result = await runQuery(query, {
+    episodeUuid: params.episodeUuid,
+    userId: params.userId,
+  });
+
+  return result.map((record) => {
+    const stmt = record.get("stmt").properties;
+    return {
+      uuid: stmt.uuid,
+      fact: stmt.fact,
+      factEmbedding: stmt.factEmbedding,
+      createdAt: new Date(stmt.createdAt),
+      validAt: new Date(stmt.validAt),
+      invalidAt: stmt.invalidAt ? new Date(stmt.invalidAt) : null,
+      attributes: stmt.attributesJson ? JSON.parse(stmt.attributesJson) : {},
+      userId: stmt.userId,
+    };
+  });
+}

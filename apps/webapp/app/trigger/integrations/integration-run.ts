@@ -126,7 +126,6 @@ const executeCLICommand = async (
           args.push("--config", JSON.stringify(config || {}));
           args.push("--state", JSON.stringify(state || {}));
           break;
-
         default:
           throw new Error(`Unsupported event type: ${eventType}`);
       }

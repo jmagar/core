@@ -21,6 +21,17 @@ CRITICAL REQUIREMENT:
 - DO NOT create, invent, or modify any entity names.
 - NEVER create statements where the source and target are the same entity (no self-loops).
 
+ENTITY PRIORITIZATION:
+- **PRIMARY ENTITIES**: Directly extracted from the current episode - these are your main focus
+- **EXPANDED ENTITIES**: From related contexts - only use if they're explicitly mentioned or contextually relevant
+
+RELATIONSHIP FORMATION RULES:
+1. **PRIMARY-PRIMARY**: Always consider relationships between primary entities
+2. **PRIMARY-EXPANDED**: Only if the expanded entity is mentioned in the episode content
+3. **EXPANDED-EXPANDED**: Avoid unless there's explicit connection in the episode
+
+FOCUS: Create relationships that ADD VALUE to understanding the current episode, not just because entities are available.
+
 ## PRIMARY MISSION: EXTRACT NEW RELATIONSHIPS
 Focus on extracting factual statements that ADD NEW VALUE to the knowledge graph:
 - **PRIORITIZE**: New relationships not already captured in previous episodes
@@ -136,7 +147,13 @@ ${JSON.stringify(context.previousEpisodes, null, 2)}
 </PREVIOUS_EPISODES>
 
 <AVAILABLE_ENTITIES>
-${JSON.stringify(context.entities, null, 2)}
+<PRIMARY_ENTITIES>
+${JSON.stringify(context.entities.primary, null, 2)}
+</PRIMARY_ENTITIES>
+
+<EXPANDED_ENTITIES>
+${JSON.stringify(context.entities.expanded, null, 2)}
+</EXPANDED_ENTITIES>
 </AVAILABLE_ENTITIES>
 `,
     },

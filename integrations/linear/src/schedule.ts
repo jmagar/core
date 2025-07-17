@@ -28,7 +28,7 @@ function createActivityMessage(params: LinearActivityCreateParams) {
 /**
  * Fetches user information from Linear
  */
-async function fetchUserInfo(accessToken: string) {
+async function fetchUserInfo(apiKey: string) {
   try {
     const query = `
       query {
@@ -46,7 +46,7 @@ async function fetchUserInfo(accessToken: string) {
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: accessToken,
+          Authorization: apiKey,
         },
       },
     );
@@ -60,7 +60,7 @@ async function fetchUserInfo(accessToken: string) {
 /**
  * Fetches recent issues relevant to the user (created, assigned, or subscribed)
  */
-async function fetchRecentIssues(accessToken: string, lastSyncTime: string) {
+async function fetchRecentIssues(apiKey: string, lastSyncTime: string) {
   try {
     const query = `
       query RecentIssues($lastSyncTime: DateTimeOrDuration) {
@@ -138,7 +138,7 @@ async function fetchRecentIssues(accessToken: string, lastSyncTime: string) {
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: accessToken,
+          Authorization: apiKey,
         },
       },
     );
@@ -152,7 +152,7 @@ async function fetchRecentIssues(accessToken: string, lastSyncTime: string) {
 /**
  * Fetches recent comments on issues relevant to the user
  */
-async function fetchRecentComments(accessToken: string, lastSyncTime: string) {
+async function fetchRecentComments(apiKey: string, lastSyncTime: string) {
   try {
     const query = `
       query RecentComments($lastSyncTime: DateTimeOrDuration) {
@@ -216,7 +216,7 @@ async function fetchRecentComments(accessToken: string, lastSyncTime: string) {
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: accessToken,
+          Authorization: apiKey,
         },
       },
     );
@@ -444,7 +444,7 @@ export async function handleSchedule(config: any, state: any) {
     const integrationConfiguration = config;
 
     // Check if we have a valid access token
-    if (!integrationConfiguration?.accessToken) {
+    if (!integrationConfiguration?.apiKey) {
       return [];
     }
 
@@ -458,7 +458,7 @@ export async function handleSchedule(config: any, state: any) {
     // Fetch user info to identify activities relevant to them
     let user;
     try {
-      user = await fetchUserInfo(integrationConfiguration.accessToken);
+      user = await fetchUserInfo(integrationConfiguration.apiKey);
     } catch (error) {
       return [];
     }
@@ -472,7 +472,7 @@ export async function handleSchedule(config: any, state: any) {
 
     // Process all issue activities (created, assigned, updated, etc.)
     try {
-      const issues = await fetchRecentIssues(integrationConfiguration.accessToken, lastIssuesSync);
+      const issues = await fetchRecentIssues(integrationConfiguration.apiKey, lastIssuesSync);
       if (issues && issues.nodes) {
         const issueActivities = await processIssueActivities(issues.nodes, user.id);
         messages.push(...issueActivities);
@@ -483,10 +483,7 @@ export async function handleSchedule(config: any, state: any) {
 
     // Process all comment activities
     try {
-      const comments = await fetchRecentComments(
-        integrationConfiguration.accessToken,
-        lastCommentsSync,
-      );
+      const comments = await fetchRecentComments(integrationConfiguration.apiKey, lastCommentsSync);
       if (comments && comments.nodes) {
         const commentActivities = await processCommentActivities(comments.nodes, user.id, user);
         messages.push(...commentActivities);

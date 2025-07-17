@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import { Activity, PrismaClient } from "@prisma/client";
 import { type Message } from "@core/types";
+import { addToQueue } from "~/lib/ingest.server";
 
 const prisma = new PrismaClient();
 
@@ -111,20 +112,42 @@ export const createActivities = async ({
     where: {
       id: integrationAccountId,
     },
+    include: {
+      integrationDefinition: true,
+    },
   });
 
   if (!integrationAccount) {
     return [];
   }
 
-  return await prisma.activity.createMany({
-    data: messages.map((message) => {
+  return await Promise.all(
+    messages.map(async (message) => {
+      const activity = await prisma.activity.create({
+        data: {
+          text: message.data.text,
+          sourceURL: message.data.sourceURL,
+          integrationAccountId,
+          workspaceId: integrationAccount?.workspaceId,
+        },
+      });
+
+      const ingestData = {
+        episodeBody: message.data.text,
+        referenceTime: new Date().toISOString(),
+        source: integrationAccount?.integrationDefinition.slug,
+      };
+
+      const queueResponse = await addToQueue(
+        ingestData,
+        integrationAccount?.integratedById,
+        activity.id,
+      );
+
       return {
-        text: message.data.text,
-        sourceURL: message.data.sourceURL,
-        integrationAccountId,
-        workspaceId: integrationAccount?.workspaceId,
+        activityId: activity.id,
+        queueId: queueResponse.id,
       };
     }),
-  });
+  );
 };

@@ -56,12 +56,6 @@ const { action, loader } = createActionApiRoute(
         episodeBody: body.text,
         referenceTime: new Date().toISOString(),
         source: body.source,
-        metadata: {
-          activityId: activity.id,
-          integrationAccountId: body.integrationAccountId || "",
-          taskId: body.taskId || "",
-          type: "activity",
-        },
       };
 
       const queueResponse = await addToQueue(

@@ -20,6 +20,7 @@ import {
   resolveStatementPrompt,
 } from "./prompts/statements";
 import {
+  getEpisodeStatements,
   getRecentEpisodes,
   getRelatedEpisodesEntities,
   searchEpisodesByEmbedding,
@@ -122,13 +123,15 @@ export class KnowledgeGraphService {
       );
 
       // Step 3.2: Handle preset type logic - expand entities for statement extraction
-      const entitiesForStatementExtraction =
-        await this.expandEntitiesForStatements(extractedNodes, episode);
+      const categorizedEntities = await this.expandEntitiesForStatements(
+        extractedNodes,
+        episode,
+      );
 
-      // Step 4: Statement Extraction - Extract statements (triples) instead of direct edges
+      // Step 4: Statement Extrraction - Extract statements (triples) instead of direct edges
       const extractedStatements = await this.extractStatements(
         episode,
-        entitiesForStatementExtraction,
+        categorizedEntities,
         previousEpisodes,
       );
 
@@ -141,7 +144,11 @@ export class KnowledgeGraphService {
 
       // Step 6: Statement Resolution - Resolve statements and detect contradictions
       const { resolvedStatements, invalidatedStatements } =
-        await this.resolveStatements(resolvedTriples, episode);
+        await this.resolveStatements(
+          resolvedTriples,
+          episode,
+          previousEpisodes,
+        );
 
       // Step 7: ADd attributes to entity nodes
       const updatedTriples = await this.addAttributesToEntities(
@@ -261,7 +268,10 @@ export class KnowledgeGraphService {
    */
   private async extractStatements(
     episode: EpisodicNode,
-    extractedEntities: EntityNode[],
+    categorizedEntities: {
+      primary: EntityNode[];
+      expanded: EntityNode[];
+    },
     previousEpisodes: EpisodicNode[],
   ): Promise<Triple[]> {
     // Use the prompt library to get the appropriate prompts
@@ -271,10 +281,16 @@ export class KnowledgeGraphService {
         content: ep.content,
         createdAt: ep.createdAt.toISOString(),
       })),
-      entities: extractedEntities.map((node) => ({
-        name: node.name,
-        type: node.type,
-      })),
+      entities: {
+        primary: categorizedEntities.primary.map((node) => ({
+          name: node.name,
+          type: node.type,
+        })),
+        expanded: categorizedEntities.expanded.map((node) => ({
+          name: node.name,
+          type: node.type,
+        })),
+      },
       referenceTime: episode.validAt.toISOString(),
     };
 
@@ -319,17 +335,23 @@ export class KnowledgeGraphService {
       }
     }
 
+    // Combine primary and expanded entities for entity matching
+    const allEntities = [
+      ...categorizedEntities.primary,
+      ...categorizedEntities.expanded,
+    ];
+
     // Convert extracted triples to Triple objects with Statement nodes
     const triples = await Promise.all(
       extractedTriples.map(async (triple: ExtractedTripleData) => {
         // Find the subject and object nodes by matching both name and type
-        const subjectNode = extractedEntities.find(
+        const subjectNode = allEntities.find(
           (node) =>
             node.name.toLowerCase() === triple.source.toLowerCase() &&
             node.type.toLowerCase() === triple.sourceType.toLowerCase(),
         );
 
-        const objectNode = extractedEntities.find(
+        const objectNode = allEntities.find(
           (node) =>
             node.name.toLowerCase() === triple.target.toLowerCase() &&
             node.type.toLowerCase() === triple.targetType.toLowerCase(),
@@ -373,9 +395,12 @@ export class KnowledgeGraphService {
   private async expandEntitiesForStatements(
     extractedNodes: EntityNode[],
     episode: EpisodicNode,
-  ): Promise<EntityNode[]> {
+  ): Promise<{
+    primary: EntityNode[];
+    expanded: EntityNode[];
+  }> {
     const allAppEnumValues = Object.values(Apps);
-    const expandedEntities = [...extractedNodes];
+    const expandedEntities: EntityNode[] = [];
 
     // For each extracted entity, check if we need to add existing preset entities
     for (const entity of extractedNodes) {
@@ -385,7 +410,7 @@ export class KnowledgeGraphService {
       const similarEntities = await findSimilarEntities({
         queryEmbedding: entity.nameEmbedding,
         limit: 5,
-        threshold: 0.7,
+        threshold: 0.8,
         userId: episode.userId,
       });
 
@@ -405,7 +430,27 @@ export class KnowledgeGraphService {
       }
     }
 
-    return expandedEntities;
+    // Deduplicate by name AND type combination
+    const deduplicateEntities = (entities: EntityNode[]) => {
+      const seen = new Map<string, EntityNode>();
+      return entities.filter((entity) => {
+        const key = `${entity.name.toLowerCase()}_${entity.type.toLowerCase()}`;
+        if (seen.has(key)) {
+          return false;
+        }
+        seen.set(key, entity);
+        return true;
+      });
+    };
+
+    return {
+      primary: deduplicateEntities(extractedNodes),
+      expanded: deduplicateEntities(
+        expandedEntities.filter(
+          (e) => !extractedNodes.some((primary) => primary.uuid === e.uuid),
+        ),
+      ),
+    };
   }
 
   /**
@@ -436,9 +481,6 @@ export class KnowledgeGraphService {
 
           if (newIsPreset && !existingIsPreset) {
             // New is preset, existing is custom - evolve existing entity to preset type
-            console.log(
-              `Evolving entity: ${existingEntity.name} from ${existingEntity.type} to ${newEntity.type}`,
-            );
             existingEntityIds.push(existingEntity.uuid);
           }
         });
@@ -665,6 +707,7 @@ export class KnowledgeGraphService {
   private async resolveStatements(
     triples: Triple[],
     episode: EpisodicNode,
+    previousEpisodes: EpisodicNode[],
   ): Promise<{
     resolvedStatements: Triple[];
     invalidatedStatements: string[];
@@ -704,7 +747,7 @@ export class KnowledgeGraphService {
       // Phase 2: Find semantically similar statements
       const semanticMatches = await findSimilarStatements({
         factEmbedding: triple.statement.factEmbedding,
-        threshold: 0.85,
+        threshold: 0.7,
         excludeIds: checkedStatementIds,
         userId: triple.provenance.userId,
       });
@@ -713,10 +756,35 @@ export class KnowledgeGraphService {
         potentialMatches.push(...semanticMatches);
       }
 
+      // Phase 3: Check related memories for contradictory statements
+      const previousEpisodesStatements: StatementNode[] = [];
+
+      await Promise.all(
+        previousEpisodes.map(async (episode) => {
+          const statements = await getEpisodeStatements({
+            episodeUuid: episode.uuid,
+            userId: episode.userId,
+          });
+          previousEpisodesStatements.push(...statements);
+        }),
+      );
+
+      if (previousEpisodesStatements && previousEpisodesStatements.length > 0) {
+        // Filter out facts we've already checked
+        const newRelatedFacts = previousEpisodesStatements
+          .flat()
+          .filter((fact) => !checkedStatementIds.includes(fact.uuid));
+
+        if (newRelatedFacts.length > 0) {
+          potentialMatches.push(...newRelatedFacts);
+        }
+      }
+
       if (potentialMatches.length > 0) {
         logger.info(
           `Found ${potentialMatches.length} potential matches for: ${triple.statement.fact}`,
         );
+
         allPotentialMatches.set(triple.statement.uuid, potentialMatches);
 
         // Get full triple information for each potential match
@@ -947,9 +1015,12 @@ export class KnowledgeGraphService {
     }
     const entityTypes = getNodeTypesString(appEnumValues);
     const relatedMemories = await this.getRelatedMemories(episodeBody, userId);
-    
+
     // Fetch ingestion rules for this source
-    const ingestionRules = await this.getIngestionRulesForSource(source, userId);
+    const ingestionRules = await this.getIngestionRulesForSource(
+      source,
+      userId,
+    );
 
     const context = {
       episodeContent: episodeBody,
