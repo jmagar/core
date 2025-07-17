@@ -12,6 +12,8 @@ export interface LogItem {
   sourceURL?: string;
   integrationSlug?: string;
   activityId?: string;
+  episodeUUID?: string;
+  data?: any;
 }
 
 export interface LogsResponse {

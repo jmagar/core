@@ -60,6 +60,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         processedAt: true,
         status: true,
         error: true,
+        output: true,
         data: true,
         activity: {
           select: {
@@ -120,10 +121,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
         "No content",
       time: log.createdAt,
       processedAt: log.processedAt,
+      episodeUUID: (log.output as any)?.episodeUuid,
       status: log.status,
       error: log.error,
       sourceURL: log.activity?.sourceURL,
       integrationSlug: integrationDef?.slug,
+      data: log.data,
     };
   });
 

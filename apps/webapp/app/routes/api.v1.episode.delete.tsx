@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { json } from "@remix-run/node";
-import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
+import { createHybridActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
 import { deleteEpisodeWithRelatedNodes } from "~/services/graphModels/episode";
 
 export const DeleteEpisodeBodyRequest = z.object({
   episodeUuid: z.string().uuid("Episode UUID must be a valid UUID"),
 });
 
-const { action, loader } = createActionApiRoute(
+const { action, loader } = createHybridActionApiRoute(
   {
     body: DeleteEpisodeBodyRequest,
     allowJWT: true,

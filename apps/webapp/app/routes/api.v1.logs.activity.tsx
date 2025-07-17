@@ -116,10 +116,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     processedAt: log.processedAt,
     status: log.status,
     error: log.error,
+    episodeUUID: (log.output as any)?.episodeUuid,
     sourceURL: log.activity?.sourceURL,
     integrationSlug:
       log.activity?.integrationAccount?.integrationDefinition?.slug,
     activityId: log.activityId,
+    data: log.data,
   }));
 
   return json({
