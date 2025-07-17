@@ -100,6 +100,7 @@ function LogItemRenderer(
               text={log.ingestText}
               error={log.error}
               logData={log.data}
+              id={log.id}
               episodeUUID={log.episodeUUID}
             />
           </CardContent>

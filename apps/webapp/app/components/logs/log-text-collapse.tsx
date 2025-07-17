@@ -20,6 +20,7 @@ interface LogTextCollapseProps {
   text?: string;
   error?: string;
   logData: any;
+  id: string;
   episodeUUID?: string;
 }
 
@@ -27,6 +28,7 @@ export function LogTextCollapse({
   episodeUUID,
   text,
   error,
+  id,
   logData,
 }: LogTextCollapseProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,17 +36,16 @@ export function LogTextCollapse({
   const deleteFetcher = useFetcher();
 
   const handleDelete = () => {
-    console.log(logData);
     if (!episodeUUID) {
       console.error("No episodeUuid found in log data");
       return;
     }
 
     deleteFetcher.submit(
-      { episodeUuid: episodeUUID },
+      { id },
       {
         method: "DELETE",
-        action: "/api/v1/episode/delete",
+        action: "/api/v1/ingestion_queue/delete",
         encType: "application/json",
       },
     );

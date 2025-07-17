@@ -2,9 +2,13 @@ import { z } from "zod";
 import { json } from "@remix-run/node";
 import { createHybridActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
 import { deleteEpisodeWithRelatedNodes } from "~/services/graphModels/episode";
+import {
+  deleteIngestionQueue,
+  getIngestionQueue,
+} from "~/services/ingestionLogs.server";
 
 export const DeleteEpisodeBodyRequest = z.object({
-  episodeUuid: z.string().uuid("Episode UUID must be a valid UUID"),
+  id: z.string(),
 });
 
 const { action, loader } = createHybridActionApiRoute(
@@ -19,8 +23,22 @@ const { action, loader } = createHybridActionApiRoute(
   },
   async ({ body, authentication }) => {
     try {
+      const ingestionQueue = await getIngestionQueue(body.id);
+
+      if (!ingestionQueue) {
+        return json(
+          {
+            error: "Episode not found or unauthorized",
+            code: "not_found",
+          },
+          { status: 404 },
+        );
+      }
+
+      const output = ingestionQueue.output as any;
+
       const result = await deleteEpisodeWithRelatedNodes({
-        episodeUuid: body.episodeUuid,
+        episodeUuid: output?.episodeUuid,
         userId: authentication.userId,
       });
 
@@ -33,6 +51,8 @@ const { action, loader } = createHybridActionApiRoute(
           { status: 404 },
         );
       }
+
+      await deleteIngestionQueue(ingestionQueue.id);
 
       return json({
         success: true,

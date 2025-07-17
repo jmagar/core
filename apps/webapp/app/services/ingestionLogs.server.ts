@@ -44,3 +44,19 @@ export async function getIngestionLogs(
     },
   };
 }
+
+export const getIngestionQueue = async (id: string) => {
+  return await prisma.ingestionQueue.findUnique({
+    where: {
+      id,
+    },
+  });
+};
+
+export const deleteIngestionQueue = async (id: string) => {
+  return await prisma.ingestionQueue.delete({
+    where: {
+      id,
+    },
+  });
+};
