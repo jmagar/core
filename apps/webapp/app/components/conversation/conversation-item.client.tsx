@@ -5,6 +5,7 @@ import { UserTypeEnum } from "@core/types";
 import { type ConversationHistory } from "@core/database";
 import { cn } from "~/lib/utils";
 import { extensionsForConversation } from "./editor-extensions";
+import { skillExtension } from "../editor/skill-extension";
 
 interface AIConversationItemProps {
   conversationHistory: ConversationHistory;
@@ -20,7 +21,7 @@ export const ConversationItem = ({
   const id = `a${conversationHistory.id.replace(/-/g, "")}`;
 
   const editor = useEditor({
-    extensions: [...extensionsForConversation],
+    extensions: [...extensionsForConversation, skillExtension],
     editable: false,
     content: conversationHistory.message,
   });

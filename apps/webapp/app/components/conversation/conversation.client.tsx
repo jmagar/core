@@ -8,11 +8,6 @@ import { History } from "@tiptap/extension-history";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Text } from "@tiptap/extension-text";
 import { Button } from "../ui";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "../ui/resizable";
 
 export const ConversationNew = ({
   user,
@@ -45,106 +40,96 @@ export const ConversationNew = ({
   );
 
   return (
-    <ResizablePanelGroup direction="horizontal" className="rounded-md">
-      <ResizableHandle className="w-1" />
+    <Form
+      action="/home/conversation"
+      method="post"
+      onSubmit={(e) => submitForm(e)}
+      className="h-[calc(100vh_-_56px)] pt-2"
+    >
+      <div className={cn("flex h-[calc(100vh_-_56px)] flex-col")}>
+        <div className="flex h-full w-full flex-col items-start justify-start overflow-y-auto p-4">
+          <div className="flex w-full flex-col items-center">
+            <div className="w-full max-w-[90ch]">
+              <h1 className="mx-1 text-left text-[32px] font-medium">
+                Hello <span className="text-primary">{user.name}</span>
+              </h1>
 
-      <ResizablePanel
-        collapsible
-        collapsedSize={0}
-        className="flex h-[calc(100vh_-_24px)] w-full flex-col"
-      >
-        <Form
-          action="/home/conversation"
-          method="post"
-          onSubmit={(e) => submitForm(e)}
-          className="pt-2"
-        >
-          <div className={cn("flex h-[calc(100vh_-_56px)] flex-col")}>
-            <div className="flex h-full w-full flex-col items-start justify-start overflow-y-auto p-4">
-              <div className="flex w-full flex-col items-center">
-                <div className="w-full max-w-[90ch]">
-                  <h1 className="mx-1 text-left text-[32px] font-medium">
-                    Hello <span className="text-primary">{user.name}</span>
-                  </h1>
+              <p className="text-muted-foreground mx-1 mb-4">
+                Demo UI: basic conversation to showcase memory integration.
+              </p>
+              <div className="bg-background-3 rounded-lg border-1 border-gray-300 py-2">
+                <EditorRoot>
+                  <EditorContent
+                    ref={editorRef}
+                    autofocus
+                    extensions={[
+                      Placeholder.configure({
+                        placeholder: () => {
+                          return "Ask CORE ...";
+                        },
+                        includeChildren: true,
+                      }),
+                      Document,
+                      Paragraph,
+                      Text,
+                      HardBreak.configure({
+                        keepMarks: true,
+                      }),
+                      History,
+                    ]}
+                    editorProps={{
+                      attributes: {
+                        class: `prose prose-lg dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full`,
+                      },
+                      handleKeyDown: (_view: any, event: KeyboardEvent) => {
+                        // This is the ProseMirror event, not React's
+                        if (event.key === "Enter" && !event.shiftKey) {
+                          event.preventDefault();
 
-                  <p className="text-muted-foreground mx-1 mb-4">
-                    Demo UI: basic conversation to showcase memory integration.
-                  </p>
-                  <div className="bg-background-3 rounded-lg border-1 border-gray-300 py-2">
-                    <EditorRoot>
-                      <EditorContent
-                        ref={editorRef}
-                        autofocus
-                        extensions={[
-                          Placeholder.configure({
-                            placeholder: () => {
-                              return "Ask CORE ...";
-                            },
-                            includeChildren: true,
-                          }),
-                          Document,
-                          Paragraph,
-                          Text,
-                          HardBreak.configure({
-                            keepMarks: true,
-                          }),
-                          History,
-                        ]}
-                        editorProps={{
-                          attributes: {
-                            class: `prose prose-lg dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full`,
-                          },
-                          handleKeyDown: (_view: any, event: KeyboardEvent) => {
-                            // This is the ProseMirror event, not React's
-                            if (event.key === "Enter" && !event.shiftKey) {
-                              event.preventDefault();
+                          if (content) {
+                            submit(
+                              { message: content, title: content },
+                              {
+                                action: "/home/conversation",
+                                method: "post",
+                              },
+                            );
 
-                              if (content) {
-                                submit(
-                                  { message: content, title: content },
-                                  {
-                                    action: "/home/conversation",
-                                    method: "post",
-                                  },
-                                );
-
-                                setContent("");
-                                setTitle("");
-                              }
-                              return true;
-                            }
-                            return false;
-                          },
-                        }}
-                        immediatelyRender={false}
-                        className={cn(
-                          "editor-container text-md max-h-[400px] min-h-[30px] w-full min-w-full overflow-auto px-3 pt-1 sm:rounded-lg",
-                        )}
-                        onUpdate={({ editor }: { editor: any }) => {
-                          const html = editor.getHTML();
-                          const text = editor.getText();
-                          setContent(html);
-                          setTitle(text);
-                        }}
-                      />
-                    </EditorRoot>
-                    <div className="mb-1 flex justify-end px-3">
-                      <Button
-                        variant="default"
-                        className="gap-1 shadow-none transition-all duration-500 ease-in-out"
-                        type="submit"
-                        size="lg"
-                      >
-                        Chat
-                      </Button>
-                    </div>
-                  </div>
+                            setContent("");
+                            setTitle("");
+                          }
+                          return true;
+                        }
+                        return false;
+                      },
+                    }}
+                    immediatelyRender={false}
+                    className={cn(
+                      "editor-container text-md max-h-[400px] min-h-[30px] w-full min-w-full overflow-auto px-3 pt-1 sm:rounded-lg",
+                    )}
+                    onUpdate={({ editor }: { editor: any }) => {
+                      const html = editor.getHTML();
+                      const text = editor.getText();
+                      setContent(html);
+                      setTitle(text);
+                    }}
+                  />
+                </EditorRoot>
+                <div className="mb-1 flex justify-end px-3">
+                  <Button
+                    variant="default"
+                    className="gap-1 shadow-none transition-all duration-500 ease-in-out"
+                    type="submit"
+                    size="lg"
+                  >
+                    Chat
+                  </Button>
                 </div>
               </div>
             </div>
           </div>
-        </Form>
-      </ResizablePanel>
-    </ResizablePanelGroup>
+        </div>
+      </div>
+    </Form>
   );
 };

@@ -24,17 +24,20 @@ const MCP_CALLBACK_URL = `${CALLBACK_URL}/mcp`;
 const session: Record<string, SessionRecord> = {};
 const mcpSession: Record<
   string,
-  { integrationDefinitionId: string; redirectURL: string }
+  {
+    integrationDefinitionId: string;
+    redirectURL: string;
+    workspaceId: string;
+    userId: string;
+    integrationAccountId: string;
+  }
 > = {};
 
 export type CallbackParams = Record<string, string>;
 
 // Remix-style callback handler
 // Accepts a Remix LoaderFunctionArgs-like object: { request }
-export async function callbackHandler(
-  params: CallbackParams,
-  request: Request,
-) {
+export async function callbackHandler(params: CallbackParams) {
   if (!params.state) {
     throw new Error("No state found");
   }
@@ -134,14 +137,14 @@ export async function callbackHandler(
             ...params,
             redirect_uri: CALLBACK_URL,
           },
-          integrationDefinition,
         },
       },
       sessionRecord.userId,
+      sessionRecord.workspaceId,
     );
 
     await tasks.trigger<typeof scheduler>("scheduler", {
-      integrationAccountId: integrationAccount.id,
+      integrationAccountId: integrationAccount?.id,
     });
 
     return new Response(null, {
@@ -253,7 +256,7 @@ export async function getRedirectURLForMCP(
   userId: string,
   workspaceId?: string,
 ) {
-  const { integrationDefinitionId } = oAuthBody;
+  const { integrationDefinitionId, integrationAccountId } = oAuthBody;
 
   logger.info(
     `We got OAuth request for ${workspaceId}: ${userId}: ${integrationDefinitionId}`,
@@ -264,6 +267,10 @@ export async function getRedirectURLForMCP(
   const integrationDefinition = await getIntegrationDefinitionWithId(
     integrationDefinitionId,
   );
+
+  if (!integrationAccountId) {
+    throw new Error("No integration account found");
+  }
 
   if (!integrationDefinition) {
     throw new Error("No integration definition found");
@@ -290,6 +297,9 @@ export async function getRedirectURLForMCP(
   mcpSession[state] = {
     integrationDefinitionId: integrationDefinition.id,
     redirectURL,
+    userId,
+    workspaceId: workspaceId as string,
+    integrationAccountId,
   };
 
   return {

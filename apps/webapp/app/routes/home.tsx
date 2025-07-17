@@ -7,7 +7,6 @@ import { clearRedirectTo, commitSession } from "~/services/redirectTo.server";
 
 import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
-import { SiteHeader } from "~/components/ui/header";
 import { FloatingIngestionStatus } from "~/components/ingestion/floating-ingestion-status";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -40,8 +39,7 @@ export default function Home() {
     >
       <AppSidebar variant="inset" />
       <SidebarInset className="bg-background-2 h-full rounded pr-0">
-        <SiteHeader />
-        <div className="flex h-[calc(100vh_-_56px)] flex-col rounded">
+        <div className="flex h-full flex-col rounded">
           <div className="@container/main flex h-full flex-col gap-2">
             <div className="flex h-full flex-col">
               <Outlet />

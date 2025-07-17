@@ -3,17 +3,15 @@ import { logger } from "@trigger.dev/sdk/v3";
 import { jsonSchema, tool, type ToolSet } from "ai";
 
 import { type MCPTool } from "./types";
-
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 export class MCP {
   private Client: any;
   private clients: Record<string, any> = {};
-  private StdioTransport: any;
 
   constructor() {}
 
   public async init() {
     this.Client = await MCP.importClient();
-    this.StdioTransport = await MCP.importStdioTransport();
   }
 
   private static async importClient() {
@@ -23,22 +21,16 @@ export class MCP {
     return Client;
   }
 
-  async load(agents: string[], mcpConfig: any) {
+  async load(agents: string[], headers: any) {
     await Promise.all(
       agents.map(async (agent) => {
-        const mcp = mcpConfig.mcpServers[agent];
-
-        return await this.connectToServer(agent, mcp.command, mcp.args, {
-          ...mcp.env,
-          DATABASE_URL: mcp.env?.DATABASE_URL ?? "",
-        });
+        return await this.connectToServer(
+          agent,
+          `${process.env.API_BASE_URL}/api/v1/mcp/${agent}`,
+          headers,
+        );
       }),
     );
-  }
-
-  private static async importStdioTransport() {
-    const { StdioClientTransport } = await import("./stdio");
-    return StdioClientTransport;
   }
 
   async allTools(): Promise<ToolSet> {
@@ -113,12 +105,7 @@ export class MCP {
     return response;
   }
 
-  async connectToServer(
-    name: string,
-    command: string,
-    args: string[],
-    env: any,
-  ) {
+  async connectToServer(name: string, url: string, headers: any) {
     try {
       const client = new this.Client(
         {
@@ -130,12 +117,9 @@ export class MCP {
         },
       );
 
-      // Conf
-      // igure the transport for MCP server
-      const transport = new this.StdioTransport({
-        command,
-        args,
-        env,
+      // Configure the transport for MCP server
+      const transport = new StreamableHTTPClientTransport(new URL(url), {
+        requestInit: { headers },
       });
 
       // Connect to the MCP server

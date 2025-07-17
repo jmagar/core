@@ -4,7 +4,7 @@ import {
 } from "@remix-run/server-runtime";
 import { sort } from "fast-sort";
 
-import { useParams, useRevalidator } from "@remix-run/react";
+import { useParams, useRevalidator, useNavigate } from "@remix-run/react";
 import {
   requireUser,
   requireUserId,
@@ -25,6 +25,8 @@ import {
 import { useTypedLoaderData } from "remix-typedjson";
 import React from "react";
 import { ScrollAreaWithAutoScroll } from "~/components/use-auto-scroll";
+import { PageHeader } from "~/components/common/page-header";
+import { Plus } from "lucide-react";
 
 import { json } from "@remix-run/node";
 import { env } from "~/env.server";
@@ -84,6 +86,8 @@ export default function SingleConversation() {
   const { conversationId } = useParams();
   const revalidator = useRevalidator();
 
+  const navigate = useNavigate();
+
   React.useEffect(() => {
     if (run) {
       setConversationResponse(run);
@@ -129,49 +133,57 @@ export default function SingleConversation() {
   }
 
   return (
-    <ResizablePanelGroup direction="horizontal" className="!rounded-md">
-      <ResizableHandle className="w-1" />
+    <>
+      <PageHeader
+        title="Conversation"
+        breadcrumbs={[
+          { label: "Conversations", href: "/home/conversation" },
+          { label: conversation.title || "Untitled" },
+        ]}
+        actions={[
+          {
+            label: "New conversation",
+            icon: <Plus size={14} />,
+            onClick: () => navigate("/home/conversation"),
+            variant: "secondary",
+          },
+        ]}
+      />
 
-      <ResizablePanel
-        collapsible
-        collapsedSize={0}
-        className="flex w-full flex-col"
-      >
-        <div className="relative flex h-[calc(100vh_-_70px)] w-full flex-col items-center justify-center overflow-auto">
-          <div className="flex h-[calc(100vh_-_56px)] w-full flex-col justify-end overflow-hidden">
-            <ScrollAreaWithAutoScroll>
-              {getConversations()}
-              {conversationResponse && (
-                <StreamingConversation
-                  runId={conversationResponse.id}
-                  token={conversationResponse.token}
-                  afterStreaming={() => {
-                    setConversationResponse(undefined);
-                    revalidator.revalidate();
-                  }}
-                  apiURL={apiURL}
+      <div className="relative flex h-[calc(100vh_-_56px)] w-full flex-col items-center justify-center overflow-auto">
+        <div className="flex h-[calc(100vh_-_80px)] w-full flex-col justify-end overflow-hidden">
+          <ScrollAreaWithAutoScroll>
+            {getConversations()}
+            {conversationResponse && (
+              <StreamingConversation
+                runId={conversationResponse.id}
+                token={conversationResponse.token}
+                afterStreaming={() => {
+                  setConversationResponse(undefined);
+                  revalidator.revalidate();
+                }}
+                apiURL={apiURL}
+              />
+            )}
+          </ScrollAreaWithAutoScroll>
+
+          <div className="flex w-full flex-col items-center">
+            <div className="w-full max-w-[97ch] px-1 pr-2">
+              {conversation?.status !== "need_approval" && (
+                <ConversationTextarea
+                  conversationId={conversationId as string}
+                  className="bg-background-3 w-full border-1 border-gray-300"
+                  isLoading={
+                    !!conversationResponse ||
+                    conversation?.status === "running" ||
+                    stopLoading
+                  }
                 />
               )}
-            </ScrollAreaWithAutoScroll>
-
-            <div className="flex w-full flex-col items-center">
-              <div className="w-full max-w-[97ch] px-1 pr-2">
-                {conversation?.status !== "need_approval" && (
-                  <ConversationTextarea
-                    conversationId={conversationId as string}
-                    className="bg-background-3 w-full border-1 border-gray-300"
-                    isLoading={
-                      !!conversationResponse ||
-                      conversation?.status === "running" ||
-                      stopLoading
-                    }
-                  />
-                )}
-              </div>
             </div>
           </div>
         </div>
-      </ResizablePanel>
-    </ResizablePanelGroup>
+      </div>
+    </>
   );
 }

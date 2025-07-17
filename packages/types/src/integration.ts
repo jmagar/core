@@ -56,7 +56,7 @@ export interface Identifier {
   type?: string;
 }
 
-export type MessageType = "spec" | "activity" | "state" | "identifier";
+export type MessageType = "spec" | "activity" | "state" | "identifier" | "account";
 
 export interface Message {
   type: MessageType;

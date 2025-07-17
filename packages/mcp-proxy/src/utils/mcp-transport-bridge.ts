@@ -9,8 +9,8 @@ export function createMCPTransportBridge(
   serverTransport: Transport,
   options: {
     debug?: boolean;
-    onMessage?: (direction: 'client-to-server' | 'server-to-client', message: any) => void;
-    onError?: (error: Error, source: 'client' | 'server') => void;
+    onMessage?: (direction: "client-to-server" | "server-to-client", message: any) => void;
+    onError?: (error: Error, source: "client" | "server") => void;
   } = {}
 ) {
   let clientClosed = false;
@@ -22,24 +22,41 @@ export function createMCPTransportBridge(
   const logError = debug ? console.error : () => {};
 
   // Forward messages from client to server
-  clientTransport.onmessage = (message: any) => {
-    log('[Client→Server]', message.method || message.id);
-    onMessage?.('client-to-server', message);
-    
-    serverTransport.send(message).catch(error => {
-      logError('Error sending to server:', error);
-      onError?.(error, 'server');
+  clientTransport.onmessage = (message: any, extra: any) => {
+    console.log(JSON.stringify(message));
+    log("[Client→Server]", message.method || message.id);
+    onMessage?.("client-to-server", message);
+
+    // Forward any extra parameters (like resumption tokens) to the server
+    const serverOptions: any = {};
+    if (extra?.relatedRequestId) {
+      serverOptions.relatedRequestId = extra.relatedRequestId;
+    }
+
+    serverTransport.send(message, serverOptions).catch((error) => {
+      logError("Error sending to server:", error);
+      onError?.(error, "server");
     });
   };
 
   // Forward messages from server to client
-  serverTransport.onmessage = (message: any) => {
-    log('[Server→Client]', message.method || message.id);
-    onMessage?.('server-to-client', message);
-    
-    clientTransport.send(message).catch(error => {
-      logError('Error sending to client:', error);
-      onError?.(error, 'client');
+  serverTransport.onmessage = (message: any, extra: any) => {
+    console.log(JSON.stringify(message), JSON.stringify(extra));
+    log("[Server→Client]", message.method || message.id);
+    onMessage?.("server-to-client", message);
+
+    // Forward the server's session ID as resumption token to client
+    const clientOptions: any = {};
+    if (serverTransport.sessionId) {
+      clientOptions.resumptionToken = serverTransport.sessionId;
+    }
+    if (extra?.relatedRequestId) {
+      clientOptions.relatedRequestId = extra.relatedRequestId;
+    }
+
+    clientTransport.send(message, clientOptions).catch((error) => {
+      logError("Error sending to client:", error);
+      onError?.(error, "client");
     });
   };
 
@@ -47,30 +64,31 @@ export function createMCPTransportBridge(
   clientTransport.onclose = () => {
     if (serverClosed) return;
     clientClosed = true;
-    log('Client transport closed, closing server transport');
-    serverTransport.close().catch(error => {
-      logError('Error closing server transport:', error);
+    log("Client transport closed, closing server transport");
+    serverTransport.close().catch((error) => {
+      logError("Error closing server transport:", error);
     });
   };
 
   serverTransport.onclose = () => {
     if (clientClosed) return;
     serverClosed = true;
-    log('Server transport closed, closing client transport');
-    clientTransport.close().catch(error => {
-      logError('Error closing client transport:', error);
+    console.log("closing");
+    log("Server transport closed, closing client transport");
+    clientTransport.close().catch((error) => {
+      logError("Error closing client transport:", error);
     });
   };
 
   // Error handling
   clientTransport.onerror = (error: Error) => {
-    logError('Client transport error:', error);
-    onError?.(error, 'client');
+    logError("Client transport error:", error);
+    onError?.(error, "client");
   };
 
   serverTransport.onerror = (error: Error) => {
-    logError('Server transport error:', error);
-    onError?.(error, 'server');
+    logError("Server transport error:", error);
+    onError?.(error, "server");
   };
 
   return {
@@ -79,13 +97,10 @@ export function createMCPTransportBridge(
      */
     start: async () => {
       try {
-        await Promise.all([
-          clientTransport.start(),
-          serverTransport.start()
-        ]);
-        log('MCP transport bridge started successfully');
+        await Promise.all([clientTransport.start(), serverTransport.start()]);
+        log("MCP transport bridge started successfully");
       } catch (error) {
-        logError('Error starting transport bridge:', error);
+        logError("Error starting transport bridge:", error);
         throw error;
       }
     },
@@ -95,13 +110,10 @@ export function createMCPTransportBridge(
      */
     close: async () => {
       try {
-        await Promise.all([
-          clientTransport.close(),
-          serverTransport.close()
-        ]);
-        log('MCP transport bridge closed successfully');
+        await Promise.all([clientTransport.close(), serverTransport.close()]);
+        log("MCP transport bridge closed successfully");
       } catch (error) {
-        logError('Error closing transport bridge:', error);
+        logError("Error closing transport bridge:", error);
         throw error;
       }
     },
@@ -111,6 +123,6 @@ export function createMCPTransportBridge(
      */
     get isClosed() {
       return clientClosed || serverClosed;
-    }
+    },
   };
 }

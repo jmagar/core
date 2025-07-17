@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
 import { Search } from "lucide-react";
-import { IntegrationCard } from "./IntegrationCard";
-import { IntegrationAuthDialog } from "./IntegrationAuthDialog";
+import { IntegrationCard } from "./integration-card";
 
 interface IntegrationGridProps {
   integrations: Array<{
@@ -19,7 +18,6 @@ interface IntegrationGridProps {
 export function IntegrationGrid({
   integrations,
   activeAccountIds,
-  showDetail = false,
 }: IntegrationGridProps) {
   const hasActiveAccount = (integrationDefinitionId: string) =>
     activeAccountIds.has(integrationDefinitionId);
@@ -34,31 +32,15 @@ export function IntegrationGrid({
   }
 
   return (
-    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {integrations.map((integration) => {
         const isConnected = hasActiveAccount(integration.id);
 
-        if (showDetail) {
-          return (
-            <IntegrationCard
-              key={integration.id}
-              integration={integration}
-              isConnected={isConnected}
-              showDetail={true}
-            />
-          );
-        }
-
         return (
-          <IntegrationAuthDialog
-            key={integration.id}
+          <IntegrationCard
             integration={integration}
-          >
-            <IntegrationCard
-              integration={integration}
-              isConnected={isConnected}
-            />
-          </IntegrationAuthDialog>
+            isConnected={isConnected}
+          />
         );
       })}
     </div>

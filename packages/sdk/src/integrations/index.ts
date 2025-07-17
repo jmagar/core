@@ -1,1 +1,1 @@
-export { IntegrationCLI } from './integration_cli';
+export { IntegrationCLI } from './integration-cli';

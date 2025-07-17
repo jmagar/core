@@ -107,10 +107,31 @@ const websearchTool = tool({
   parameters: WebSearchSchema,
 });
 
+const loadMCPTools = tool({
+  description:
+    "Load tools for a specific integration. Call this when you need to use a third-party service.",
+  parameters: jsonSchema({
+    type: "object",
+    properties: {
+      integration: {
+        type: "array",
+        items: {
+          type: "string",
+        },
+        description:
+          'Array of integration names to load (e.g., ["github", "linear", "slack"])',
+      },
+    },
+    required: ["integration"],
+    additionalProperties: false,
+  }),
+});
+
 const internalTools = [
   "core--progress_update",
   "core--search_memory",
   "core--add_memory",
+  "core--load_mcp",
 ];
 
 async function addResources(messages: CoreMessage[], resources: Resource[]) {
@@ -198,6 +219,7 @@ async function makeNextCall(
   TOOLS: ToolSet,
   totalCost: TotalCost,
   guardLoop: number,
+  mcpServers: string[],
 ): Promise<LLMOutputInterface> {
   const { context, history, previousHistory } = executionState;
 
@@ -205,6 +227,7 @@ async function makeNextCall(
     USER_MESSAGE: executionState.query,
     CONTEXT: context,
     USER_MEMORY: executionState.userMemoryContext,
+    AVAILABLE_MCP_TOOLS: mcpServers.join(", "),
   };
 
   let messages: CoreMessage[] = [];
@@ -257,15 +280,19 @@ export async function* run(
   previousHistory: CoreMessage[],
   mcp: MCP,
   stepHistory: HistoryStep[],
+  mcpServers: string[],
+  mcpHeaders: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): AsyncGenerator<AgentMessage, any, any> {
   let guardLoop = 0;
 
   let tools = {
+    ...(await mcp.allTools()),
     "core--progress_update": progressUpdateTool,
     "core--search_memory": searchMemoryTool,
     "core--add_memory": addMemoryTool,
     "core--websearch": websearchTool,
+    "core--load_mcp": loadMCPTools,
   };
 
   logger.info("Tools have been formed");
@@ -301,6 +328,7 @@ export async function* run(
         tools,
         totalCost,
         guardLoop,
+        mcpServers,
       );
 
       let toolCallInfo;
@@ -532,6 +560,14 @@ export async function* run(
                   result =
                     "Web search failed - please check your search configuration";
                 }
+              } else if (toolName === "load_mcp") {
+                // Load MCP integration and update available tools
+                await mcp.load(skillInput.integration, mcpHeaders);
+                tools = {
+                  ...tools,
+                  ...(await mcp.allTools()),
+                };
+                result = "MCP integration loaded successfully";
               }
             }
             // Handle other MCP tools

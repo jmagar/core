@@ -14,6 +14,7 @@ import { SearchBodyRequest } from "./search";
 import { SearchService } from "~/services/search.server";
 import { GraphVisualizationClient } from "~/components/graph/graph-client";
 import { LoaderCircle } from "lucide-react";
+import { PageHeader } from "~/components/common/page-header";
 
 export async function action({ request }: ActionFunctionArgs) {
   const userId = await requireUserId(request);
@@ -84,18 +85,21 @@ export default function Dashboard() {
   }, [userId]);
 
   return (
-    <div className="home flex h-[calc(100vh_-_56px)] flex-col overflow-y-auto p-3 text-base">
-      <div className="flex grow items-center justify-center rounded">
-        {loading ? (
-          <div className="flex h-full w-full flex-col items-center justify-center">
-            <LoaderCircle size={18} className="mr-1 animate-spin" />
-            <span className="text-muted-foreground">Loading graph...</span>
-          </div>
-        ) : (
-          typeof window !== "undefined" &&
-          nodeLinks && <GraphVisualizationClient triplets={nodeLinks} />
-        )}
+    <>
+      <PageHeader title="Memory graph" />
+      <div className="home flex h-[calc(100vh_-_56px)] flex-col overflow-y-auto p-3 text-base">
+        <div className="flex grow items-center justify-center rounded">
+          {loading ? (
+            <div className="flex h-full w-full flex-col items-center justify-center">
+              <LoaderCircle size={18} className="mr-1 animate-spin" />
+              <span className="text-muted-foreground">Loading graph...</span>
+            </div>
+          ) : (
+            typeof window !== "undefined" &&
+            nodeLinks && <GraphVisualizationClient triplets={nodeLinks} />
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

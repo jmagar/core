@@ -1,6 +1,7 @@
 import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
-import { createMCPProxy } from "@core/mcp-proxy";
+
 import { getIntegrationDefinitionWithSlug } from "~/services/integrationDefinition.server";
+import { proxyRequest } from "~/utils/proxy.server";
 import { z } from "zod";
 import { getIntegrationAccount } from "~/services/integrationAccount.server";
 
@@ -59,49 +60,35 @@ const { action, loader } = createActionApiRoute(
         );
       }
 
-      const { serverUrl, transportStrategy } = spec.mcpAuth;
+      const { serverUrl } = spec.mcpAuth;
 
-      const mcpProxy = createMCPProxy(
-        {
-          serverUrl,
-          timeout: 30000,
-          debug: true,
-          transportStrategy: transportStrategy || "sse-first",
-          // Fix this
-          redirectUrl: "",
-        },
-        // Callback to load credentials from the database
-        async () => {
-          // Find the integration account for this user and integration
-          const integrationAccount = await getIntegrationAccount(
-            integrationDefinition.id,
-            authentication.userId,
-          );
-
-          const integrationConfig =
-            integrationAccount?.integrationConfiguration as any;
-
-          if (!integrationAccount || !integrationConfig) {
-            return null;
-          }
-
-          return {
-            serverUrl,
-            tokens: {
-              access_token: integrationConfig.access_token,
-              token_type: integrationConfig.token_type || "bearer",
-              expires_in: integrationConfig.expires_in || 3600,
-              refresh_token: integrationConfig.refresh_token,
-              scope: integrationConfig.scope || "read write",
-            },
-            expiresAt: integrationConfig.expiresAt
-              ? new Date(integrationConfig.expiresAt)
-              : new Date(Date.now() + 3600 * 1000),
-          };
-        },
+      // Find the integration account for this user and integration
+      const integrationAccount = await getIntegrationAccount(
+        integrationDefinition.id,
+        authentication.userId,
       );
 
-      return await mcpProxy(request, "");
+      const integrationConfig =
+        integrationAccount?.integrationConfiguration as any;
+
+      if (!integrationAccount || !integrationConfig || !integrationConfig.mcp) {
+        return new Response(
+          JSON.stringify({
+            error: "No integration account with mcp config",
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      // Proxy the request to the serverUrl
+      return await proxyRequest(
+        request,
+        serverUrl,
+        integrationConfig.mcp.tokens.access_token,
+      );
     } catch (error: any) {
       console.error("MCP Proxy Error:", error);
       return new Response(JSON.stringify({ error: error.message }), {

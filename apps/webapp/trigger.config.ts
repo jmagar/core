@@ -27,8 +27,8 @@ export default defineConfig({
   build: {
     extensions: [
       syncEnvVars(() => ({
-        DATABASE_URL: process.env.DATABASE_URL,
-        BACKEND_HOST: process.env.BACKEND_HOST,
+        DATABASE_URL: process.env.DATABASE_URL as string,
+        API_BASE_URL: process.env.API_BASE_URL as string,
       })),
       prismaExtension({
         schema: "prisma/schema.prisma",

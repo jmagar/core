@@ -1,11 +1,13 @@
 import { json } from "@remix-run/node";
 import { z } from "zod";
-import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
-import { createIntegrationAccount } from "~/services/integrationAccount.server";
+import { createHybridActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
 import { IntegrationEventType } from "@core/types";
 import { runIntegrationTrigger } from "~/services/integration.server";
 import { getIntegrationDefinitionWithId } from "~/services/integrationDefinition.server";
 import { logger } from "~/services/logger.service";
+import { getWorkspaceByUser } from "~/models/workspace.server";
+import { tasks } from "@trigger.dev/sdk";
+import { scheduler } from "~/trigger/integrations/scheduler";
 
 // Schema for creating an integration account with API key
 const IntegrationAccountBodySchema = z.object({
@@ -14,30 +16,30 @@ const IntegrationAccountBodySchema = z.object({
 });
 
 // Route for creating an integration account directly with an API key
-const { action, loader } = createActionApiRoute(
+const { action, loader } = createHybridActionApiRoute(
   {
     body: IntegrationAccountBodySchema,
     allowJWT: true,
     authorization: {
-      action: "create",
-      subject: "IntegrationAccount",
+      action: "integrationaccount:create",
     },
     corsStrategy: "all",
   },
   async ({ body, authentication }) => {
     const { integrationDefinitionId, apiKey } = body;
     const { userId } = authentication;
+    const workspace = await getWorkspaceByUser(authentication.userId);
 
     try {
       // Get the integration definition
       const integrationDefinition = await getIntegrationDefinitionWithId(
-        integrationDefinitionId
+        integrationDefinitionId,
       );
 
       if (!integrationDefinition) {
         return json(
           { error: "Integration definition not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -50,26 +52,22 @@ const { action, loader } = createActionApiRoute(
             apiKey,
           },
         },
-        userId
+        userId,
+        workspace?.id,
       );
 
       if (!setupResult || !setupResult.accountId) {
         return json(
           { error: "Failed to setup integration with the provided API key" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
-      // Create the integration account
-      const integrationAccount = await createIntegrationAccount({
-        accountId: setupResult.accountId,
-        integrationDefinitionId,
-        userId,
-        config: setupResult.config || {},
-        settings: setupResult.settings || {},
+      await tasks.trigger<typeof scheduler>("scheduler", {
+        integrationAccountId: setupResult?.id,
       });
 
-      return json({ success: true, integrationAccount });
+      return json({ success: true, setupResult });
     } catch (error) {
       logger.error("Error creating integration account", {
         error,
@@ -78,10 +76,10 @@ const { action, loader } = createActionApiRoute(
       });
       return json(
         { error: "Failed to create integration account" },
-        { status: 500 }
+        { status: 500 },
       );
     }
-  }
+  },
 );
 
 export { action, loader };

@@ -142,7 +142,7 @@ export const ConversationList = ({
               className={cn(
                 "border-border h-auto w-full justify-start rounded p-2 py-1 text-left",
                 currentConversationId === conversation.id &&
-                  "bg-accent text-accent-foreground font-semibold",
+                  "bg-accent font-semibold",
               )}
               onClick={() => {
                 navigate(`/home/conversation/${conversation.id}`);
@@ -155,7 +155,7 @@ export const ConversationList = ({
               <div className="flex w-full items-start space-x-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p className={cn("truncate font-normal")}>
+                    <p className={cn("text-foreground truncate font-normal")}>
                       {conversation.title || "Untitled Conversation"}
                     </p>
                   </div>

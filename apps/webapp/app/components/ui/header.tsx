@@ -1,13 +1,13 @@
 import { useLocation, useNavigate } from "@remix-run/react";
 import { Button } from "./button";
-import { Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import { SidebarTrigger } from "./sidebar";
-import React from "react";
 
 const PAGE_TITLES: Record<string, string> = {
   "/home/dashboard": "Memory graph",
   "/home/conversation": "Conversation",
   "/home/integrations": "Integrations",
+  "/home/integration": "Integrations",
   "/home/logs": "Logs",
 };
 
@@ -50,6 +50,36 @@ function getLogsTab(pathname: string): "all" | "activity" {
   return "all";
 }
 
+// Back and Forward navigation component
+function NavigationBackForward() {
+  const navigate = useNavigate();
+
+  return (
+    <div className="mr-1 flex items-center gap-1">
+      <Button
+        variant="ghost"
+        size="xs"
+        aria-label="Back"
+        onClick={() => navigate(-1)}
+        className="rounded"
+        type="button"
+      >
+        <ArrowLeft size={16} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="xs"
+        aria-label="Forward"
+        onClick={() => navigate(1)}
+        className="rounded"
+        type="button"
+      >
+        <ArrowRight size={16} />
+      </Button>
+    </div>
+  );
+}
+
 export function SiteHeader() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -72,8 +102,10 @@ export function SiteHeader() {
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b border-gray-300 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center justify-between gap-1 px-4 pr-2 lg:gap-2">
-        <div className="flex items-center gap-1">
-          <SidebarTrigger className="-ml-1" />
+        <div className="-ml-1 flex items-center gap-1">
+          {/* Back/Forward navigation before SidebarTrigger */}
+          <NavigationBackForward />
+          <SidebarTrigger className="mr-1" />
 
           <h1 className="text-base">{title}</h1>
 

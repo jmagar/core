@@ -5,14 +5,16 @@ import {
   RiSlackFill,
 } from "@remixicon/react";
 import { LayoutGrid } from "lucide-react";
+import { LinearIcon, SlackIcon } from "./icons";
 
 export const ICON_MAPPING = {
-  slack: RiSlackFill,
+  slack: SlackIcon,
   email: RiMailFill,
   discord: RiDiscordFill,
   github: RiGithubFill,
 
   gmail: RiMailFill,
+  linear: LinearIcon,
 
   // Default icon
   integration: LayoutGrid,

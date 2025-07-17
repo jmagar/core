@@ -1,5 +1,5 @@
 import { type OAuth2Params } from "@core/types";
-import { IsBoolean, IsString } from "class-validator";
+import { IsBoolean, IsOptional, IsString } from "class-validator";
 import type { IntegrationDefinitionV2 } from "@core/database";
 import { z } from "zod";
 
@@ -25,12 +25,17 @@ export class OAuthBodyInterface {
 
   @IsString()
   integrationDefinitionId: string;
+
+  @IsString()
+  @IsOptional()
+  integrationAccountId?: string;
 }
 
 export const OAuthBodySchema = z.object({
   redirectURL: z.string(),
   integrationDefinitionId: z.string(),
   mcp: z.boolean().optional().default(false),
+  integrationAccountId: z.string().optional(),
 });
 
 export type CallbackParams = Record<string, string>;

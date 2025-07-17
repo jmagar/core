@@ -180,6 +180,7 @@ export class NodeOAuthClientProvider implements OAuthClientProvider {
       authorizationUrl.searchParams.set("resource", this.authorizeResource);
     }
 
+    // Keep it
     console.log(this.authorizationUrl);
 
     // Store the URL instead of opening browser

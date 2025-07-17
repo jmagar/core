@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { getIcon, type IconType } from "~/components/icon-utils";
+import { Badge } from "../ui/badge";
 
 interface IntegrationCardProps {
   integration: {
@@ -19,26 +20,20 @@ interface IntegrationCardProps {
     slug?: string;
   };
   isConnected: boolean;
-  onClick?: () => void;
-  showDetail?: boolean;
 }
 
 export function IntegrationCard({
   integration,
   isConnected,
-  onClick,
-  showDetail = false,
 }: IntegrationCardProps) {
   const Component = getIcon(integration.icon as IconType);
 
-  const CardWrapper = showDetail ? Link : "div";
-  const cardProps = showDetail
-    ? { to: `/home/integration/${integration.slug || integration.id}` }
-    : { onClick, className: "cursor-pointer" };
-
   return (
-    <CardWrapper {...cardProps}>
-      <Card className="transition-all hover:shadow-md">
+    <Link
+      to={`/home/integration/${integration.slug || integration.id}`}
+      className="bg-background-3 h-full rounded-lg"
+    >
+      <Card className="transition-all">
         <CardHeader className="p-4">
           <div className="bg-background-2 mb-2 flex h-6 w-6 items-center justify-center rounded">
             <Component size={18} />
@@ -51,13 +46,13 @@ export function IntegrationCard({
         {isConnected && (
           <CardFooter className="p-3">
             <div className="flex w-full items-center justify-end">
-              <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
+              <Badge className="h-6 rounded bg-green-100 p-2 text-xs text-green-800">
                 Connected
-              </span>
+              </Badge>
             </div>
           </CardFooter>
         )}
       </Card>
-    </CardWrapper>
+    </Link>
   );
 }

@@ -5,7 +5,9 @@ import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { requireUserId, requireWorkpace } from "~/services/session.server";
 import { getIntegrationDefinitions } from "~/services/integrationDefinition.server";
 import { getIntegrationAccounts } from "~/services/integrationAccount.server";
-import { IntegrationGrid } from "~/components/integrations/IntegrationGrid";
+import { IntegrationGrid } from "~/components/integrations/integration-grid";
+import { PageHeader } from "~/components/common/page-header";
+import { Plus } from "lucide-react";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await requireUserId(request);
@@ -38,15 +40,28 @@ export default function Integrations() {
   );
 
   return (
-    <div className="home flex h-full flex-col overflow-y-auto p-4 px-5">
-      <div className="space-y-1 text-base">
-        <p className="text-muted-foreground">Connect your tools and services</p>
-      </div>
-
-      <IntegrationGrid
-        integrations={integrationDefinitions}
-        activeAccountIds={activeAccountIds}
+    <div className="flex h-full flex-col">
+      <PageHeader
+        title="Integrations"
+        actions={[
+          {
+            label: "Request New Integration",
+            icon: <Plus size={14} />,
+            onClick: () =>
+              window.open(
+                "https://github.com/redplanethq/core/issues/new",
+                "_blank",
+              ),
+            variant: "secondary",
+          },
+        ]}
       />
+      <div className="home flex h-[calc(100vh_-_56px)] flex-col overflow-y-auto p-4 px-5">
+        <IntegrationGrid
+          integrations={integrationDefinitions}
+          activeAccountIds={activeAccountIds}
+        />
+      </div>
     </div>
   );
 }

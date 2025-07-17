@@ -52,7 +52,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="mt-1 flex w-full items-center justify-start gap-2">
+            <div className="mt-1 ml-1 flex w-full items-center justify-start gap-2">
               <Logo width={20} height={20} />
               C.O.R.E.
             </div>

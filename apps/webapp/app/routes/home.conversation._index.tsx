@@ -17,6 +17,7 @@ import {
   CreateConversationSchema,
 } from "~/services/conversation.server";
 import { json } from "@remix-run/node";
+import { PageHeader } from "~/components/common/page-header";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // Only return userId, not the heavy nodeLinks
@@ -67,6 +68,9 @@ export default function Chat() {
   const { user } = useTypedLoaderData<typeof loader>();
 
   return (
-    <>{typeof window !== "undefined" && <ConversationNew user={user} />}</>
+    <>
+      <PageHeader title="Conversation" />
+      {typeof window !== "undefined" && <ConversationNew user={user} />}
+    </>
   );
 }

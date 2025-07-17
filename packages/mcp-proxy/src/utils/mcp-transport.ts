@@ -12,6 +12,7 @@ export class RemixMCPTransport implements Transport {
     private request: Request,
     private sendResponse: (response: Response) => void
   ) {}
+
   sessionId?: string;
   setProtocolVersion?: (version: string) => void;
 
@@ -55,15 +56,18 @@ export class RemixMCPTransport implements Transport {
       throw new Error("Transport is closed");
     }
 
+    // Prepare headers
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    };
+
     // Send the MCP response back as HTTP response
     const response = new Response(JSON.stringify(message), {
       status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
+      headers,
     });
 
     this.sendResponse(response);
@@ -83,5 +87,7 @@ export class RemixMCPTransport implements Transport {
 
   onmessage: (message: any) => void = () => {};
   onclose: () => void = () => {};
-  onerror: (error: Error) => void = () => {};
+  async onerror(error: Error) {
+    console.log(error);
+  }
 }

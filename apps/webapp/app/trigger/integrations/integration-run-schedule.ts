@@ -3,8 +3,6 @@ import { IntegrationEventType } from "@core/types";
 import { logger, schedules, tasks } from "@trigger.dev/sdk/v3";
 
 import { type integrationRun } from "./integration-run";
-import { getOrCreatePersonalAccessToken } from "../utils/utils";
-import { nanoid } from "nanoid";
 
 const prisma = new PrismaClient();
 
@@ -27,7 +25,7 @@ export const integrationRunSchedule = schedules.task({
 
     if (!integrationAccount) {
       const deletedSchedule = await schedules.del(externalId);
-      logger.info("No integration account found");
+      logger.info("No integration account found, deleting schedule");
       return deletedSchedule;
     }
 
@@ -36,22 +34,20 @@ export const integrationRunSchedule = schedules.task({
       return null;
     }
 
-    const pat = await getOrCreatePersonalAccessToken({
-      name: `integration_scheduled_${nanoid(10)}`,
-      userId: integrationAccount.workspace.userId as string,
+    logger.info("Triggering scheduled integration run", {
+      integrationId: integrationAccount.integrationDefinition.id,
+      integrationSlug: integrationAccount.integrationDefinition.slug,
+      accountId: integrationAccount.id,
     });
-
-    if (!pat || !pat.token) {
-      logger.info("No pat token found");
-      return null;
-    }
 
     return await tasks.trigger<typeof integrationRun>("integration-run", {
       event: IntegrationEventType.SYNC,
-      pat: pat.token,
-      patId: pat.id,
       integrationAccount,
       integrationDefinition: integrationAccount.integrationDefinition,
+      eventBody: {
+        scheduled: true,
+        scheduledAt: new Date().toISOString(),
+      },
     });
   },
 });

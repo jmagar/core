@@ -1,39 +1,12 @@
 import { tasks } from "@trigger.dev/sdk/v3";
 
-import { getOrCreatePersonalAccessToken } from "./personalAccessToken.server";
 import { logger } from "./logger.service";
 import { type integrationRun } from "~/trigger/integrations/integration-run";
 
-import type { IntegrationDefinitionV2 } from "@core/database";
-
-/**
- * Prepares the parameters for triggering an integration.
- * If userId is provided, gets or creates a personal access token for the user.
- */
-async function prepareIntegrationTrigger(
-  integrationDefinition: IntegrationDefinitionV2,
-  userId?: string,
-) {
-  logger.info(`Loading integration ${integrationDefinition.slug}`);
-
-  let pat = "";
-  let patId = "";
-  if (userId) {
-    // Use the integration slug as the token name for uniqueness
-    const tokenResult = await getOrCreatePersonalAccessToken({
-      name: integrationDefinition.slug ?? "integration",
-      userId,
-    });
-    pat = tokenResult.token ?? "";
-    patId = tokenResult.id ?? "";
-  }
-
-  return {
-    integrationDefinition,
-    pat,
-    patId,
-  };
-}
+import type {
+  IntegrationAccount,
+  IntegrationDefinitionV2,
+} from "@core/database";
 
 /**
  * Triggers an integration run asynchronously.
@@ -43,11 +16,24 @@ export async function runIntegrationTriggerAsync(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   event: any,
   userId?: string,
+  workspaceId?: string,
 ) {
-  const params = await prepareIntegrationTrigger(integrationDefinition, userId);
+  logger.info(
+    `Triggering async integration run for ${integrationDefinition.slug}`,
+    {
+      integrationId: integrationDefinition.id,
+      event: event.event,
+      userId,
+      workspaceId,
+    },
+  );
+
   return await tasks.trigger<typeof integrationRun>("integration-run", {
-    ...params,
-    event,
+    integrationDefinition,
+    event: event.event,
+    eventBody: event.eventBody,
+    integrationAccount: event.integrationAccount,
+    workspaceId,
   });
 }
 
@@ -59,14 +45,26 @@ export async function runIntegrationTrigger(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   event: any,
   userId?: string,
+  workspaceId?: string,
+  integrationAccount?: IntegrationAccount,
 ) {
-  const params = await prepareIntegrationTrigger(integrationDefinition, userId);
+  logger.info(
+    `Triggering sync integration run for ${integrationDefinition.slug}`,
+    {
+      integrationId: integrationDefinition.id,
+      event: event.event,
+      userId,
+      workspaceId,
+    },
+  );
 
   const response = await tasks.triggerAndPoll<typeof integrationRun>(
     "integration-run",
     {
-      ...params,
-      integrationAccount: event.integrationAccount,
+      integrationDefinition,
+      integrationAccount,
+      workspaceId,
+      userId,
       event: event.event,
       eventBody: event.eventBody,
     },

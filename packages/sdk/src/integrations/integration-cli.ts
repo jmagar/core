@@ -56,7 +56,7 @@ export abstract class IntegrationCLI {
           });
 
           for (const message of messages) {
-            console.log(JSON.stringify(message, null, 2));
+            console.log(JSON.stringify(message));
           }
         } catch (error) {
           console.error('Error during setup:', error);
@@ -83,7 +83,7 @@ export abstract class IntegrationCLI {
           });
 
           for (const message of messages) {
-            console.log(JSON.stringify(message, null, 2));
+            console.log(JSON.stringify(message));
           }
         } catch (error) {
           console.error('Error processing data:', error);
@@ -105,7 +105,7 @@ export abstract class IntegrationCLI {
           });
 
           for (const message of messages) {
-            console.log(JSON.stringify(message, null, 2));
+            console.log(JSON.stringify(message));
           }
         } catch (error) {
           console.error('Error identifying account:', error);
@@ -126,7 +126,7 @@ export abstract class IntegrationCLI {
             data: spec,
           };
           // For spec, we keep the single message output for compatibility
-          console.log(JSON.stringify(message, null, 2));
+          console.log(JSON.stringify(message));
         } catch (error) {
           console.error('Error getting spec:', error);
           process.exit(1);
@@ -153,7 +153,7 @@ export abstract class IntegrationCLI {
           });
 
           for (const message of messages) {
-            console.log(JSON.stringify(message, null, 2));
+            console.log(JSON.stringify(message));
           }
         } catch (error) {
           console.error('Error during sync:', error);

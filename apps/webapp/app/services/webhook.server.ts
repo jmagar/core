@@ -42,7 +42,7 @@ export class WebhookService {
 
       if (integrationDefinition) {
         try {
-          const accountIdResponse = await runIntegrationTrigger(
+          const identifyResponse = await runIntegrationTrigger(
             integrationDefinition,
             {
               event: IntegrationEventType.IDENTIFY,
@@ -55,18 +55,56 @@ export class WebhookService {
 
           let accountId: string | undefined;
 
-          if (
-            accountIdResponse?.message?.startsWith("The event payload type is")
-          ) {
-            accountId = undefined;
+          // Handle new CLI message format response
+          if (identifyResponse?.success && identifyResponse?.result) {
+            // Check if there are identifiers in the response
+            if (
+              identifyResponse.result.identifiers &&
+              identifyResponse.result.identifiers.length > 0
+            ) {
+              accountId = identifyResponse.result.identifiers[0].id;
+            } else if (
+              identifyResponse.result.activities &&
+              identifyResponse.result.activities.length > 0
+            ) {
+              // Sometimes the account ID might be in activities data
+              const firstActivity = identifyResponse.result.activities[0];
+              accountId = firstActivity.accountId || firstActivity.id;
+            } else {
+              // Check raw output for backward compatibility
+              accountId = identifyResponse.rawOutput?.trim();
+            }
+          } else if (identifyResponse?.error) {
+            logger.warn("Integration IDENTIFY command failed", {
+              error: identifyResponse.error,
+              sourceName,
+            });
           } else {
-            accountId = accountIdResponse;
+            // Handle legacy response format for backward compatibility
+            if (
+              identifyResponse?.message?.startsWith("The event payload type is")
+            ) {
+              accountId = undefined;
+            } else {
+              accountId = identifyResponse;
+            }
           }
 
           if (accountId) {
             integrationAccount = await prisma.integrationAccount.findFirst({
               where: { accountId },
               include: { integrationDefinition: true },
+            });
+
+            logger.info("Found integration account for webhook", {
+              accountId,
+              integrationAccountId: integrationAccount?.id,
+              sourceName,
+            });
+          } else {
+            logger.warn("No account ID found from IDENTIFY command", {
+              sourceName,
+              response: identifyResponse,
             });
           }
         } catch (error) {
@@ -85,22 +123,38 @@ export class WebhookService {
 
     if (integrationAccount) {
       try {
-        await runIntegrationTrigger(
+        logger.info(`Processing webhook for ${sourceName}`, {
+          integrationAccountId: integrationAccount.id,
+          integrationSlug: integrationAccount.integrationDefinition.slug,
+        });
+
+        const processResponse = await runIntegrationTrigger(
           integrationAccount.integrationDefinition,
           {
             event: IntegrationEventType.PROCESS,
-            integrationAccount,
             eventBody: {
               eventHeaders,
               eventData: { ...eventBody },
             },
           },
           integrationAccount.integratedById,
+          integrationAccount.workspaceId,
+          integrationAccount,
         );
 
-        logger.log(`Successfully processed webhook for ${sourceName}`, {
-          integrationAccountId: integrationAccount.id,
-        });
+        if (processResponse?.success) {
+          logger.log(`Successfully processed webhook for ${sourceName}`, {
+            integrationAccountId: integrationAccount.id,
+            activitiesCreated: processResponse.result?.activities?.length || 0,
+            messagesProcessed: processResponse.messages?.length || 0,
+          });
+        } else {
+          logger.warn(`Webhook processing had issues for ${sourceName}`, {
+            integrationAccountId: integrationAccount.id,
+            error: processResponse?.error,
+            success: processResponse?.success,
+          });
+        }
       } catch (error) {
         logger.error(`Failed to process webhook for ${sourceName}`, {
           error,

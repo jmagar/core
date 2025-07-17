@@ -197,74 +197,16 @@ export const init = async ({ payload }: { payload: InitChatPayload }) => {
 
     return config;
   });
-
-  // Create MCP server configurations for each integration account
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const integrationMCPServers: Record<string, any> = {};
-
-  for (const account of integrationAccounts) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const spec = account.integrationDefinition?.spec as any;
-      if (spec.mcp) {
-        const mcpSpec = spec.mcp;
-        const configuredMCP = { ...mcpSpec };
-
-        // Replace config placeholders in environment variables
-        if (configuredMCP.env) {
-          for (const [key, value] of Object.entries(configuredMCP.env)) {
-            if (typeof value === "string" && value.includes("${config:")) {
-              // Extract the config key from the placeholder
-              const configKey = value.match(/\$\{config:(.*?)\}/)?.[1];
-              if (
-                configKey &&
-                account.integrationConfiguration &&
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (account.integrationConfiguration as any)[configKey]
-              ) {
-                configuredMCP.env[key] = value.replace(
-                  `\${config:${configKey}}`,
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  (account.integrationConfiguration as any)[configKey],
-                );
-              }
-            }
-
-            if (
-              typeof value === "string" &&
-              value.includes("${integrationConfig:")
-            ) {
-              // Extract the config key from the placeholder
-              const configKey = value.match(
-                /\$\{integrationConfig:(.*?)\}/,
-              )?.[1];
-              if (
-                configKey &&
-                account.integrationDefinition.config &&
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (account.integrationDefinition.config as any)[configKey]
-              ) {
-                configuredMCP.env[key] = value.replace(
-                  `\${integrationConfig:${configKey}}`,
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  (account.integrationDefinition.config as any)[configKey],
-                );
-              }
-            }
-          }
-        }
-
-        // Add to the MCP servers collection
-        integrationMCPServers[account.integrationDefinition.slug] =
-          configuredMCP;
+  // Create MCP server for each integration account
+  const mcpServers: string[] = integrationAccounts
+    .map((account) => {
+      const integrationConfig = account.integrationConfiguration as any;
+      if (integrationConfig.mcp) {
+        return account.integrationDefinition.slug;
       }
-    } catch (error) {
-      logger.error(
-        `Failed to configure MCP for ${account.integrationDefinition?.slug}:`,
-        { error },
-      );
-    }
-  }
+      return undefined;
+    })
+    .filter((slug): slug is string => slug !== undefined);
 
   return {
     conversation,
@@ -273,6 +215,7 @@ export const init = async ({ payload }: { payload: InitChatPayload }) => {
     token: pat.token,
     userId: user?.id,
     userName: user?.name,
+    mcpServers,
   };
 };
 

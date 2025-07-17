@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -9,16 +8,12 @@
     "resolveJsonModule": true,
     "outDir": "./dist",
     "rootDir": "./src",
-
     "lib": ["dom", "dom.iterable", "esnext"],
     "baseUrl": "frontend",
     "allowJs": false,
-
     "allowSyntheticDefaultImports": true,
-
     "module": "esnext",
     "moduleResolution": "node",
-
     "isolatedModules": true,
     "strictNullChecks": true,
     "removeComments": true,

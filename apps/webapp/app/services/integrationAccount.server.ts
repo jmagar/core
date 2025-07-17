@@ -13,27 +13,10 @@ export const getIntegrationAccount = async (
   });
 };
 
-export const createIntegrationAccount = async ({
-  integrationDefinitionId,
-  userId,
-  accountId,
-  config,
-  settings,
-}: {
-  integrationDefinitionId: string;
-  userId: string;
-  accountId: string;
-  config?: Record<string, any>;
-  settings?: Record<string, any>;
-}) => {
-  return prisma.integrationAccount.create({
-    data: {
-      accountId,
-      integrationDefinitionId,
-      integratedById: userId,
-      config: config || {},
-      settings: settings || {},
-      isActive: true,
+export const getIntegrationAccountForId = async (id: string) => {
+  return await prisma.integrationAccount.findUnique({
+    where: {
+      id,
     },
   });
 };
@@ -46,6 +29,16 @@ export const getIntegrationAccounts = async (userId: string) => {
     },
     include: {
       integrationDefinition: true,
+    },
+  });
+};
+
+export const getIntegrationAccountForSlug = async (slug: string) => {
+  return await prisma.integrationAccount.findFirst({
+    where: {
+      integrationDefinition: {
+        slug,
+      },
     },
   });
 };

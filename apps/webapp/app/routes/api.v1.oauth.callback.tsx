@@ -14,7 +14,7 @@ const { loader } = createActionApiRoute(
     for (const [key, value] of url.searchParams.entries()) {
       params[key] = value;
     }
-    return await callbackHandler(params, request);
+    return await callbackHandler(params);
   },
 );
 

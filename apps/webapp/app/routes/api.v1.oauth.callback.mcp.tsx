@@ -6,6 +6,10 @@ import { createMCPAuthClient } from "@core/mcp-proxy";
 import { logger } from "~/services/logger.service";
 import { env } from "~/env.server";
 import { getIntegrationDefinitionForState } from "~/services/oauth/oauth.server";
+import {
+  getIntegrationAccount,
+  getIntegrationAccountForId,
+} from "~/services/integrationAccount.server";
 
 const CALLBACK_URL = `${env.APP_ORIGIN}/api/v1/oauth/callback`;
 const MCP_CALLBACK_URL = `${CALLBACK_URL}/mcp`;
@@ -26,14 +30,22 @@ export async function loader({ request }: LoaderFunctionArgs) {
     });
   }
 
-  const { integrationDefinitionId, redirectURL } =
-    await getIntegrationDefinitionForState(state);
+  const {
+    integrationDefinitionId,
+    redirectURL,
+    userId,
+    workspaceId,
+    integrationAccountId,
+  } = await getIntegrationDefinitionForState(state);
 
   try {
     // For now, we'll assume Linear integration - in the future this should be derived from state
     const integrationDefinition = await getIntegrationDefinitionWithId(
       integrationDefinitionId,
     );
+
+    const integrationAccount =
+      await getIntegrationAccountForId(integrationAccountId);
 
     if (!integrationDefinition) {
       throw new Error("Integration definition not found");
@@ -71,11 +83,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
             state,
             redirect_uri: MCP_CALLBACK_URL,
           },
-          integrationDefinition,
+          mcp: true,
         },
       },
       // We need to get userId from somewhere - for now using undefined
-      undefined,
+      userId,
+      workspaceId,
+      integrationAccount ?? undefined,
     );
 
     return new Response(null, {

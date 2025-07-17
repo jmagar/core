@@ -30,7 +30,7 @@ export const NavMain = ({
               <Button
                 isActive={location.pathname.includes(item.url)}
                 className={cn(
-                  "bg-grayAlpha-100 w-fit gap-1 !rounded-md",
+                  "bg-grayAlpha-100 text-foreground w-fit gap-1 !rounded-md",
                   location.pathname.includes(item.url) &&
                     "!bg-accent !text-accent-foreground",
                 )}

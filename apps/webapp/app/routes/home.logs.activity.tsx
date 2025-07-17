@@ -1,35 +1,37 @@
 import { useState } from "react";
+import { useNavigate } from "@remix-run/react";
 import { useLogs } from "~/hooks/use-logs";
 import { LogsFilters } from "~/components/logs/logs-filters";
 import { VirtualLogsList } from "~/components/logs/virtual-logs-list";
-import { AppContainer, PageContainer, PageBody } from "~/components/layout/app-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
+import { AppContainer, PageContainer } from "~/components/layout/app-layout";
+import { Card, CardContent } from "~/components/ui/card";
 import { Activity } from "lucide-react";
+import { PageHeader } from "~/components/common/page-header";
 
 export default function LogsActivity() {
+  const navigate = useNavigate();
   const [selectedSource, setSelectedSource] = useState<string | undefined>();
   const [selectedStatus, setSelectedStatus] = useState<string | undefined>();
-  
-  const { 
-    logs, 
-    hasMore, 
-    loadMore, 
-    availableSources, 
-    isLoading, 
-    isInitialLoad 
-  } = useLogs({ 
-    endpoint: '/api/v1/logs/activity', 
-    source: selectedSource, 
-    status: selectedStatus 
+
+  const {
+    logs,
+    hasMore,
+    loadMore,
+    availableSources,
+    isLoading,
+    isInitialLoad,
+  } = useLogs({
+    endpoint: "/api/v1/logs/activity",
+    source: selectedSource,
+    status: selectedStatus,
   });
 
   if (isInitialLoad) {
     return (
       <AppContainer>
         <PageContainer>
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="flex h-64 items-center justify-center">
+            <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
           </div>
         </PageContainer>
       </AppContainer>
@@ -37,80 +39,64 @@ export default function LogsActivity() {
   }
 
   return (
-    <AppContainer>
-      <PageContainer>
-        <PageBody>
-          <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Activity className="h-6 w-6 text-primary" />
-                <div>
-                  <h1 className="text-2xl font-bold">Activity Ingestion Logs</h1>
+    <div className="flex h-full flex-col">
+      <PageHeader
+        title="Logs"
+        tabs={[
+          {
+            label: "All",
+            value: "all",
+            isActive: false,
+            onClick: () => navigate("/home/logs/all"),
+          },
+          {
+            label: "Activity",
+            value: "activity",
+            isActive: true,
+            onClick: () => navigate("/home/logs/activity"),
+          },
+        ]}
+      />
+      <div className="flex h-[calc(100vh_-_56px)] flex-col space-y-6 p-4 px-5">
+        {logs.length > 0 && (
+          <LogsFilters
+            availableSources={availableSources}
+            selectedSource={selectedSource}
+            selectedStatus={selectedStatus}
+            onSourceChange={setSelectedSource}
+            onStatusChange={setSelectedStatus}
+          />
+        )}
+
+        {/* Logs List */}
+        <div className="space-y-4">
+          {logs.length === 0 ? (
+            <Card>
+              <CardContent className="bg-background-2 flex items-center justify-center py-16">
+                <div className="text-center">
+                  <Activity className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+                  <h3 className="mb-2 text-lg font-semibold">
+                    No activity logs found
+                  </h3>
                   <p className="text-muted-foreground">
-                    View ingestion logs for activities from connected integrations
+                    {selectedSource || selectedStatus
+                      ? "Try adjusting your filters to see more results."
+                      : "No activity ingestion logs are available yet."}
                   </p>
                 </div>
-              </div>
-              <Badge variant="outline" className="text-sm">
-                {logs.length} activity logs loaded
-              </Badge>
-            </div>
-
-            {/* Filters */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Filters</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <LogsFilters
-                  availableSources={availableSources}
-                  selectedSource={selectedSource}
-                  selectedStatus={selectedStatus}
-                  onSourceChange={setSelectedSource}
-                  onStatusChange={setSelectedStatus}
-                />
               </CardContent>
             </Card>
-
-            {/* Logs List */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Activity Ingestion Queue</h2>
-                {hasMore && (
-                  <span className="text-sm text-muted-foreground">
-                    Scroll to load more...
-                  </span>
-                )}
-              </div>
-              
-              {logs.length === 0 ? (
-                <Card>
-                  <CardContent className="flex items-center justify-center py-16">
-                    <div className="text-center">
-                      <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No activity logs found</h3>
-                      <p className="text-muted-foreground">
-                        {selectedSource || selectedStatus 
-                          ? 'Try adjusting your filters to see more results.'
-                          : 'No activity ingestion logs are available yet.'}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <VirtualLogsList
-                  logs={logs}
-                  hasMore={hasMore}
-                  loadMore={loadMore}
-                  isLoading={isLoading}
-                  height={600}
-                />
-              )}
-            </div>
-          </div>
-        </PageBody>
-      </PageContainer>
-    </AppContainer>
+          ) : (
+            <VirtualLogsList
+              logs={logs}
+              hasMore={hasMore}
+              loadMore={loadMore}
+              isLoading={isLoading}
+              height={600}
+            />
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

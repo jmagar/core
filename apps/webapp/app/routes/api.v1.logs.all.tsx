@@ -109,6 +109,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const integrationDef =
       log.activity?.integrationAccount?.integrationDefinition;
     const logData = log.data as any;
+
     return {
       id: log.id,
       source: integrationDef?.name || logData?.source || "Unknown",
