@@ -37,6 +37,7 @@ type CreatePersonalAccessTokenOptions = {
   userId: string;
 };
 
+// TODO remove from here
 // Helper functions for token management
 function createToken() {
   return `${tokenPrefix}${tokenGenerator()}`;
@@ -188,9 +189,9 @@ export const init = async ({ payload }: { payload: InitChatPayload }) => {
     if (config.url?.startsWith("https://core::memory")) {
       // Handle both search and ingest endpoints
       if (config.url.includes("/search")) {
-        config.url = `${process.env.API_BASE_URL}/search`;
-      } else if (config.url.includes("/ingest")) {
-        config.url = `${process.env.API_BASE_URL}/ingest`;
+        config.url = `${process.env.API_BASE_URL}/api/v1/search`;
+      } else if (config.url.includes("/add")) {
+        config.url = `${process.env.API_BASE_URL}/api/v1/add`;
       }
       config.headers.Authorization = `Bearer ${pat.token}`;
     }

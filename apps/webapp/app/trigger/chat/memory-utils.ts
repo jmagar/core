@@ -20,7 +20,10 @@ export interface AddMemoryParams {
 
 export const searchMemory = async (params: SearchMemoryParams) => {
   try {
-    const response = await axios.post("https://core::memory/search", params);
+    const response = await axios.post(
+      "https://core::memory/api/v1/search",
+      params,
+    );
     return response.data;
   } catch (error) {
     logger.error("Memory search failed", { error, params });
@@ -39,7 +42,7 @@ export const addMemory = async (params: AddMemoryParams) => {
     };
 
     const response = await axios.post(
-      "https://core::memory/ingest",
+      "https://core::memory/api/v1/add",
       memoryInput,
     );
     return response.data;

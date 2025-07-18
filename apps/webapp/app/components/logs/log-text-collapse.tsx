@@ -99,9 +99,8 @@ export function LogTextCollapse({
                   <p
                     className="px-3 py-2 text-sm break-words whitespace-pre-wrap"
                     style={{ lineHeight: "1.5" }}
-                  >
-                    {text}
-                  </p>
+                    dangerouslySetInnerHTML={{ __html: text }}
+                  />
                 </div>
               </DialogContent>
             </Dialog>
