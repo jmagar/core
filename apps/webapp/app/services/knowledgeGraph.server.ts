@@ -748,7 +748,7 @@ export class KnowledgeGraphService {
       // Phase 2: Find semantically similar statements
       const semanticMatches = await findSimilarStatements({
         factEmbedding: triple.statement.factEmbedding,
-        threshold: 0.7,
+        threshold: 0.85,
         excludeIds: checkedStatementIds,
         userId: triple.provenance.userId,
       });

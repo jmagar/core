@@ -83,9 +83,9 @@ export function LogTextCollapse({
             isLong ? "max-h-16 overflow-hidden" : "",
           )}
           style={{ lineHeight: "1.5" }}
-        >
-          {displayText}
-        </p>
+          dangerouslySetInnerHTML={{ __html: text }}
+        />
+
         {isLong && (
           <>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

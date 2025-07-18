@@ -17,7 +17,7 @@ import {
 
 const chatQueue = queue({
   name: "chat-queue",
-  concurrencyLimit: 10,
+  concurrencyLimit: 50,
 });
 
 /**

@@ -55,7 +55,7 @@ export const getInitials = (name: string, noOfChar?: number | undefined) => {
   return words
     .map((word) => word.charAt(0))
     .filter((char) => char !== "")
-    .slice(0, noOfChar ? noOfChar : 2)
+    .slice(0, noOfChar ? noOfChar : 1)
     .join("")
     .toUpperCase();
 };

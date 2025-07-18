@@ -55,7 +55,7 @@ export const ConversationNew = ({
               </h1>
 
               <p className="text-muted-foreground mx-1 mb-4">
-                Demo UI: basic conversation to showcase memory integration.
+                Update your memory or ask about anything it already knows
               </p>
               <div className="bg-background-3 rounded-lg border-1 border-gray-300 py-2">
                 <EditorRoot>
