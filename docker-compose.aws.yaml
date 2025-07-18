@@ -26,6 +26,9 @@ services:
       - OLLAMA_URL=${OLLAMA_URL}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL}
       - MODEL=${MODEL}
+      - TRIGGER_PROJECT_ID=${TRIGGER_PROJECT_ID}
+      - TRIGGER_API_URL=${TRIGGER_API_URL}
+      - TRIGGER_SECRET_KEY=${TRIGGER_SECRET_KEY}
     ports:
       - "3033:3000"
     depends_on:
