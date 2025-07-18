@@ -1,9 +1,11 @@
 import { queue, task } from "@trigger.dev/sdk";
+import { PrismaClient } from "@prisma/client";
 
 import { logger } from "~/services/logger.service";
 import { WebhookDeliveryStatus } from "@core/database";
 import crypto from "crypto";
-import { prisma } from "~/db.server";
+
+const prisma = new PrismaClient();
 
 const webhookQueue = queue({
   name: "webhook-delivery-queue",

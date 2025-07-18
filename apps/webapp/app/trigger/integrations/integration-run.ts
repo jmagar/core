@@ -132,7 +132,7 @@ const executeCLICommand = async (
 
       // Use node to execute the integration file
       const childProcess = spawn("node", args, {
-        env: process.env,
+        env: undefined,
         cwd: tempDir,
         stdio: ["pipe", "pipe", "pipe"],
       });

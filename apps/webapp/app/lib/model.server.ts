@@ -1,4 +1,3 @@
-import { LLMMappings, LLMModelEnum } from "@core/types";
 import {
   type CoreMessage,
   type LanguageModelV1,
@@ -8,7 +7,7 @@ import {
 } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { logger } from "~/services/logger.service";
-import { env } from "~/env.server";
+
 import { createOllama, type OllamaProvider } from "ollama-ai-provider";
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
@@ -20,7 +19,7 @@ export async function makeModelCall(
   options?: any,
 ) {
   let modelInstance;
-  const model = env.MODEL;
+  const model = process.env.MODEL as any;
   const ollamaUrl = process.env.OLLAMA_URL;
   let ollama: OllamaProvider | undefined;
 
@@ -79,7 +78,7 @@ export async function makeModelCall(
 }
 
 export async function getEmbedding(text: string) {
-  const ollamaUrl = env.OLLAMA_URL;
+  const ollamaUrl = process.env.OLLAMA_URL;
 
   if (!ollamaUrl) {
     // Use OpenAI embedding model when explicitly requested
@@ -91,13 +90,13 @@ export async function getEmbedding(text: string) {
   }
 
   // Default to using Ollama
-  const model = env.EMBEDDING_MODEL;
+  const model = process.env.EMBEDDING_MODEL;
 
   const ollama = createOllama({
     baseURL: ollamaUrl,
   });
   const { embedding } = await embed({
-    model: ollama.embedding(model),
+    model: ollama.embedding(model as string),
     value: text,
   });
 

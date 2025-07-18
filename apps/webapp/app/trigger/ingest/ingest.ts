@@ -1,10 +1,21 @@
 import { queue, task } from "@trigger.dev/sdk";
-import { type z } from "zod";
+import { z } from "zod";
 import { KnowledgeGraphService } from "~/services/knowledgeGraph.server";
-import { prisma } from "~/db.server";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
 import { IngestionStatus } from "@core/database";
 import { logger } from "~/services/logger.service";
-import { type IngestBodyRequest } from "~/lib/ingest.server";
+
+export const IngestBodyRequest = z.object({
+  episodeBody: z.string(),
+  referenceTime: z.string(),
+  metadata: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
+  source: z.string(),
+  spaceId: z.string().optional(),
+  sessionId: z.string().optional(),
+});
 
 const ingestionQueue = queue({
   name: "ingestion-queue",
@@ -34,10 +45,13 @@ export const ingestTask = task({
 
       const episodeBody = payload.body as any;
 
-      const episodeDetails = await knowledgeGraphService.addEpisode({
-        ...episodeBody,
-        userId: payload.userId,
-      });
+      const episodeDetails = await knowledgeGraphService.addEpisode(
+        {
+          ...episodeBody,
+          userId: payload.userId,
+        },
+        prisma,
+      );
 
       await prisma.ingestionQueue.update({
         where: { id: payload.queueId },

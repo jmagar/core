@@ -1,4 +1,4 @@
-import { useNavigate } from "@remix-run/react";
+import { useNavigate, useNavigation } from "@remix-run/react";
 import { Button } from "~/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { SidebarTrigger } from "~/components/ui/sidebar";
@@ -67,8 +67,28 @@ export function PageHeader({
   tabs,
   showBackForward = true,
 }: PageHeaderProps) {
+  const navigation = useNavigation();
+  const isLoading =
+    navigation.state === "loading" || navigation.state === "submitting";
+
   return (
-    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b border-gray-300 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+    <header className="relative flex h-(--header-height) shrink-0 items-center gap-2 border-b border-gray-300 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+      {/* Keyframes for the loading bar animation */}
+      <style>
+        {`
+          @keyframes pageheader-loading-bar {
+            0% {
+              transform: translateX(-100%);
+            }
+            60% {
+              transform: translateX(0%);
+            }
+            100% {
+              transform: translateX(100%);
+            }
+          }
+        `}
+      </style>
       <div className="flex w-full items-center justify-between gap-1 px-4 pr-2 lg:gap-2">
         <div className="-ml-1 flex items-center gap-1">
           {/* Back/Forward navigation before SidebarTrigger */}
@@ -132,6 +152,25 @@ export function PageHeader({
           </div>
         )}
       </div>
+
+      {isLoading && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute top-[40px] left-0 z-20 h-0.5 w-full overflow-hidden rounded-md"
+        >
+          <div
+            className={`bg-primary h-full w-full transition-opacity duration-200 ${
+              isLoading ? "opacity-100" : "opacity-0"
+            }`}
+            style={{
+              transform: isLoading ? "translateX(-100%)" : "translateX(-100%)",
+              animation: isLoading
+                ? "pageheader-loading-bar 1.2s cubic-bezier(0.4,0,0.2,1) infinite"
+                : "none",
+            }}
+          />
+        </div>
+      )}
     </header>
   );
 }

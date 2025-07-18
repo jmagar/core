@@ -1,12 +1,14 @@
 import neo4j from "neo4j-driver";
 import { type RawTriplet } from "~/components/graph/type";
-import { env } from "~/env.server";
 import { logger } from "~/services/logger.service";
 
 // Create a driver instance
 const driver = neo4j.driver(
-  env.NEO4J_URI,
-  neo4j.auth.basic(env.NEO4J_USERNAME, env.NEO4J_PASSWORD),
+  process.env.NEO4J_URI ?? "bolt://localhost:7687",
+  neo4j.auth.basic(
+    process.env.NEO4J_USERNAME as string,
+    process.env.NEO4J_PASSWORD as string,
+  ),
   {
     maxConnectionPoolSize: 50,
     logging: {

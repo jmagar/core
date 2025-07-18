@@ -7,7 +7,7 @@ import { getIntegrationDefinitionWithId } from "~/services/integrationDefinition
 import { logger } from "~/services/logger.service";
 import { getWorkspaceByUser } from "~/models/workspace.server";
 import { tasks } from "@trigger.dev/sdk";
-import { scheduler } from "~/trigger/integrations/scheduler";
+import { type scheduler } from "~/trigger/integrations/scheduler";
 
 // Schema for creating an integration account with API key
 const IntegrationAccountBodySchema = z.object({

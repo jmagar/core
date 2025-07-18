@@ -5,7 +5,7 @@ import { LogsFilters } from "~/components/logs/logs-filters";
 import { VirtualLogsList } from "~/components/logs/virtual-logs-list";
 import { AppContainer, PageContainer } from "~/components/layout/app-layout";
 import { Card, CardContent } from "~/components/ui/card";
-import { Activity } from "lucide-react";
+import { Activity, LoaderCircle } from "lucide-react";
 import { PageHeader } from "~/components/common/page-header";
 
 export default function LogsActivity() {
@@ -31,7 +31,7 @@ export default function LogsActivity() {
       <AppContainer>
         <PageContainer>
           <div className="flex h-64 items-center justify-center">
-            <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
+            <LoaderCircle className="text-primary h-4 w-4 animate-spin" />
           </div>
         </PageContainer>
       </AppContainer>

@@ -18,7 +18,8 @@
     "db:studio": "dotenv -- turbo run db:studio",
     "db:populate": "dotenv -- turbo run db:populate",
     "generate": "dotenv -- turbo run generate",
-    "trigger:dev": "dotenv -- turbo run trigger:dev"
+    "trigger:dev": "dotenv -- turbo run trigger:dev",
+    "trigger:deploy": "dotenv -- turbo run trigger:deploy"
   },
   "devDependencies": {
     "dotenv-cli": "^7.4.4",

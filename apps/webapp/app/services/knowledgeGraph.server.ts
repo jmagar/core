@@ -45,9 +45,9 @@ import {
   getNodeTypes,
   getNodeTypesString,
   isPresetType,
-  getAllPresetTypes,
 } from "~/utils/presets/nodes";
 import { normalizePrompt } from "./prompts";
+import { type PrismaClient } from "@prisma/client";
 
 // Default number of previous episodes to retrieve for context
 const DEFAULT_EPISODE_WINDOW = 5;
@@ -63,7 +63,7 @@ export class KnowledgeGraphService {
    * This method extracts information from the episode, creates nodes and statements,
    * and updates the HelixDB database according to the reified + temporal approach.
    */
-  async addEpisode(params: AddEpisodeParams) {
+  async addEpisode(params: AddEpisodeParams, prisma: PrismaClient) {
     const startTime = Date.now();
     const now = new Date();
 
@@ -81,6 +81,7 @@ export class KnowledgeGraphService {
         params.episodeBody,
         params.source,
         params.userId,
+        prisma,
       );
 
       const relatedEpisodesEntities = await getRelatedEpisodesEntities({
@@ -1008,6 +1009,7 @@ export class KnowledgeGraphService {
     episodeBody: string,
     source: string,
     userId: string,
+    prisma: PrismaClient,
   ) {
     let appEnumValues: Apps[] = [];
     if (Apps[source.toUpperCase() as keyof typeof Apps]) {
@@ -1020,6 +1022,7 @@ export class KnowledgeGraphService {
     const ingestionRules = await this.getIngestionRulesForSource(
       source,
       userId,
+      prisma,
     );
 
     const context = {
@@ -1117,10 +1120,10 @@ export class KnowledgeGraphService {
   private async getIngestionRulesForSource(
     source: string,
     userId: string,
+    prisma: PrismaClient,
   ): Promise<string | null> {
     try {
       // Import prisma here to avoid circular dependencies
-      const { prisma } = await import("~/db.server");
 
       // Get the user's workspace
       const user = await prisma.user.findUnique({

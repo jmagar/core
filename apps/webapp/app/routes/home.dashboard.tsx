@@ -1,48 +1,11 @@
-import { parse } from "@conform-to/zod";
-import { json } from "@remix-run/node";
-
 import { useState, useEffect } from "react";
-import {
-  type LoaderFunctionArgs,
-  type ActionFunctionArgs,
-} from "@remix-run/server-runtime";
+import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { requireUserId } from "~/services/session.server";
-import { addToQueue, IngestBodyRequest } from "~/lib/ingest.server";
 import { useTypedLoaderData } from "remix-typedjson";
 
-import { SearchBodyRequest } from "./search";
-import { SearchService } from "~/services/search.server";
 import { GraphVisualizationClient } from "~/components/graph/graph-client";
 import { LoaderCircle } from "lucide-react";
 import { PageHeader } from "~/components/common/page-header";
-
-export async function action({ request }: ActionFunctionArgs) {
-  const userId = await requireUserId(request);
-  const formData = await request.formData();
-
-  // Check if this is a search request by looking for query parameter
-  if (formData.has("query")) {
-    // Handle ingest request
-    const submission = parse(formData, { schema: SearchBodyRequest });
-    const searchService = new SearchService();
-
-    if (!submission.value || submission.intent !== "submit") {
-      return json(submission);
-    }
-
-    const results = await searchService.search(submission.value.query, userId);
-    return json(results);
-  }
-
-  // Handle ingest request
-  const submission = parse(formData, { schema: IngestBodyRequest });
-
-  if (!submission.value || submission.intent !== "submit") {
-    return json(submission);
-  }
-
-  return await addToQueue(submission.value, userId);
-}
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // Only return userId, not the heavy nodeLinks

@@ -22,7 +22,7 @@ export class Logger {
     level: LogLevel = "info",
     filteredKeys: string[] = [],
     jsonReplacer?: (key: string, value: unknown) => unknown,
-    additionalFields?: () => Record<string, unknown>
+    additionalFields?: () => Record<string, unknown>,
   ) {
     this.#name = name;
     this.#level = logLevels.indexOf((env.APP_LOG_LEVEL ?? level) as LogLevel);
@@ -37,14 +37,19 @@ export class Logger {
       logLevels[this.#level],
       this.#filteredKeys,
       this.#jsonReplacer,
-      () => ({ ...this.#additionalFields(), ...fields })
+      () => ({ ...this.#additionalFields(), ...fields }),
     );
   }
 
   // Return a new Logger instance with the same name and a new log level
   // but filter out the keys from the log messages (at any level)
   filter(...keys: string[]) {
-    return new Logger(this.#name, logLevels[this.#level], keys, this.#jsonReplacer);
+    return new Logger(
+      this.#name,
+      logLevels[this.#level],
+      keys,
+      this.#jsonReplacer,
+    );
   }
 
   static satisfiesLogLevel(logLevel: LogLevel, setLevel: LogLevel) {
@@ -94,7 +99,10 @@ export class Logger {
     const structuredMessage = extractStructuredMessageFromArgs(...args);
 
     const structuredLog = {
-      ...structureArgs(safeJsonClone(args) as Record<string, unknown>[], this.#filteredKeys),
+      ...structureArgs(
+        safeJsonClone(args) as Record<string, unknown>[],
+        this.#filteredKeys,
+      ),
       ...this.#additionalFields(),
       ...(structuredError ? { error: structuredError } : {}),
       timestamp: new Date(),
@@ -103,9 +111,13 @@ export class Logger {
       ...(structuredMessage ? { $message: structuredMessage } : {}),
       level,
       traceId:
-        currentSpan && currentSpan.isRecording() ? currentSpan?.spanContext().traceId : undefined,
+        currentSpan && currentSpan.isRecording()
+          ? currentSpan?.spanContext().traceId
+          : undefined,
       parentSpanId:
-        currentSpan && currentSpan.isRecording() ? currentSpan?.spanContext().spanId : undefined,
+        currentSpan && currentSpan.isRecording()
+          ? currentSpan?.spanContext().spanId
+          : undefined,
     };
 
     // If the span is not recording, and it's a debug log, mark it so we can filter it out when we forward it
@@ -120,7 +132,9 @@ export class Logger {
 // Detect if args is an error object
 // Or if args contains an error object at the "error" key
 // In both cases, return the error object as a structured error
-function extractStructuredErrorFromArgs(...args: Array<Record<string, unknown> | undefined>) {
+function extractStructuredErrorFromArgs(
+  ...args: Array<Record<string, unknown> | undefined>
+) {
   const error = args.find((arg) => arg instanceof Error) as Error | undefined;
 
   if (error) {
@@ -144,7 +158,9 @@ function extractStructuredErrorFromArgs(...args: Array<Record<string, unknown> |
   return;
 }
 
-function extractStructuredMessageFromArgs(...args: Array<Record<string, unknown> | undefined>) {
+function extractStructuredMessageFromArgs(
+  ...args: Array<Record<string, unknown> | undefined>
+) {
   // Check to see if there is a `message` key in the args, and if so, return it
   const structuredMessage = args.find((arg) => arg?.message);
 
@@ -187,7 +203,10 @@ function safeJsonClone(obj: unknown) {
 }
 
 // If args is has a single item that is an object, return that object
-function structureArgs(args: Array<Record<string, unknown>>, filteredKeys: string[] = []) {
+function structureArgs(
+  args: Array<Record<string, unknown>>,
+  filteredKeys: string[] = [],
+) {
   if (!args) {
     return;
   }
@@ -197,7 +216,10 @@ function structureArgs(args: Array<Record<string, unknown>>, filteredKeys: strin
   }
 
   if (args.length === 1 && typeof args[0] === "object") {
-    return filterKeys(JSON.parse(JSON.stringify(args[0], bigIntReplacer)), filteredKeys);
+    return filterKeys(
+      JSON.parse(JSON.stringify(args[0], bigIntReplacer)),
+      filteredKeys,
+    );
   }
 
   return args;
@@ -270,7 +292,7 @@ export const logger = new Logger(
     const fields = currentFieldsStore.getStore();
     const httpContext = getHttpContext();
     return { ...fields, http: httpContext };
-  }
+  },
 );
 
 export const workerLogger = new Logger(
@@ -281,7 +303,7 @@ export const workerLogger = new Logger(
   () => {
     const fields = currentFieldsStore.getStore();
     return fields ? { ...fields } : {};
-  }
+  },
 );
 
 export const socketLogger = new Logger(
@@ -292,5 +314,5 @@ export const socketLogger = new Logger(
   () => {
     const fields = currentFieldsStore.getStore();
     return fields ? { ...fields } : {};
-  }
+  },
 );

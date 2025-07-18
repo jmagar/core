@@ -36,6 +36,10 @@
     "trigger:dev": {
       "interactive": true,
       "cache": false
+    },
+    "trigger:deploy": {
+      "interactive": true,
+      "cache": false
     }
   },
   "globalDependencies": [ ".env" ],

@@ -1,6 +1,6 @@
-import { Activity, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { type Message } from "@core/types";
-import { addToQueue } from "~/lib/ingest.server";
+import { addToQueue } from "./queue";
 
 const prisma = new PrismaClient();
 

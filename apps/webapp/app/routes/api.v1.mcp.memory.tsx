@@ -2,16 +2,13 @@ import { json } from "@remix-run/node";
 import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import {
-  isInitializeRequest,
-  JSONRPCMessage,
-} from "@modelcontextprotocol/sdk/types.js";
+import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { createHybridActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
-import { addToQueue, IngestBodyRequest } from "~/lib/ingest.server";
+import { addToQueue } from "~/lib/ingest.server";
 import { SearchService } from "~/services/search.server";
-import { PassThrough } from "stream";
 import { handleTransport } from "~/utils/mcp";
+import { IngestBodyRequest } from "~/trigger/ingest/ingest";
 
 // Map to store transports by session ID with cleanup tracking
 const transports: {

@@ -1,17 +1,8 @@
 // lib/ingest.queue.ts
 import { IngestionStatus } from "@core/database";
-import { z } from "zod";
+import { type z } from "zod";
 import { prisma } from "~/db.server";
-import { ingestTask } from "~/trigger/ingest/ingest";
-
-export const IngestBodyRequest = z.object({
-  episodeBody: z.string(),
-  referenceTime: z.string(),
-  metadata: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
-  source: z.string(),
-  spaceId: z.string().optional(),
-  sessionId: z.string().optional(),
-});
+import { type IngestBodyRequest, ingestTask } from "~/trigger/ingest/ingest";
 
 export const addToQueue = async (
   body: z.infer<typeof IngestBodyRequest>,

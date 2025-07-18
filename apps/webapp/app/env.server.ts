@@ -84,3 +84,4 @@ const EnvironmentSchema = z.object({
 
 export type Environment = z.infer<typeof EnvironmentSchema>;
 export const env = EnvironmentSchema.parse(process.env);
+// export const env = process.env;
