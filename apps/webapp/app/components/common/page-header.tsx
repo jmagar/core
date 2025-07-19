@@ -159,7 +159,7 @@ export function PageHeader({
           className="pointer-events-none absolute top-[40px] left-0 z-20 h-0.5 w-full overflow-hidden rounded-md"
         >
           <div
-            className={`bg-primary h-full w-full transition-opacity duration-200 ${
+            className={`bg-primary/50 h-full w-full transition-opacity duration-200 ${
               isLoading ? "opacity-100" : "opacity-0"
             }`}
             style={{
