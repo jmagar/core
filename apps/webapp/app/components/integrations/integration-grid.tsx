@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Search } from "lucide-react";
+import { Layout, LayoutGrid, Search } from "lucide-react";
 import { IntegrationCard } from "./integration-card";
 
 interface IntegrationGridProps {
@@ -25,8 +25,8 @@ export function IntegrationGrid({
   if (integrations.length === 0) {
     return (
       <div className="mt-20 flex flex-col items-center justify-center">
-        <Search className="text-muted-foreground mb-2 h-12 w-12" />
-        <h3 className="text-lg font-medium">No integrations found</h3>
+        <LayoutGrid className="text-muted-foreground mb-2 h-10 w-10" />
+        <h3 className="text-lg">No integrations found</h3>
       </div>
     );
   }

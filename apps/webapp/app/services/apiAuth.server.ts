@@ -1,4 +1,5 @@
 import { findUserByToken } from "~/models/personal-token.server";
+import { oauth2Service } from "~/services/oauth2.server";
 
 // See this for more: https://twitter.com/mattpocockuk/status/1653403198885904387?s=20
 export type Prettify<T> = {
@@ -12,10 +13,14 @@ export type ApiAuthenticationResult =
 export type ApiAuthenticationResultSuccess = {
   ok: true;
   apiKey: string;
-  type: "PRIVATE";
+  type: "PRIVATE" | "OAUTH2";
   userId: string;
   scopes?: string[];
   oneTimeUse?: boolean;
+  oauth2?: {
+    clientId: string;
+    scope: string | null;
+  };
 };
 
 export type ApiAuthenticationResultFailure = {
@@ -53,6 +58,27 @@ export async function authenticateApiKeyWithFailure(
   apiKey: string,
   options: { allowPublicKey?: boolean; allowJWT?: boolean } = {},
 ): Promise<ApiAuthenticationResult> {
+  // First try OAuth2 access token
+  try {
+    const accessToken = await oauth2Service.validateAccessToken(apiKey);
+    if (accessToken) {
+      return {
+        ok: true,
+        apiKey,
+        type: "OAUTH2",
+        userId: accessToken.user.id,
+        scopes: accessToken.scope ? accessToken.scope.split(' ') : undefined,
+        oauth2: {
+          clientId: accessToken.client.clientId,
+          scope: accessToken.scope,
+        },
+      };
+    }
+  } catch (error) {
+    // If OAuth2 token validation fails, continue to PAT validation
+  }
+
+  // Fall back to PAT authentication
   const result = getApiKeyResult(apiKey);
 
   if (!result) {

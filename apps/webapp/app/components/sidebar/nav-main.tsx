@@ -3,7 +3,6 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
 import { useLocation, useNavigate } from "@remix-run/react";

@@ -1,5 +1,4 @@
 import { intro, outro, note, log, confirm } from '@clack/prompts';
-import { isValidCoreRepo } from '../utils/git.js';
 import { executeDockerCommandInteractive } from '../utils/docker-interactive.js';
 import { printCoreBrainLogo } from '../utils/ascii.js';
 import path from 'path';
@@ -10,36 +9,15 @@ export async function startCommand() {
   
   intro('🚀 Starting Core Development Environment');
 
-  // Step 1: Validate repository
-  if (!isValidCoreRepo()) {
-    log.warning('This directory is not a Core repository');
-    note('The Core repository is required to run the development environment.\nWould you like to clone it in the current directory?', '🔍 Repository Not Found');
-    
-    const shouldClone = await confirm({
-      message: 'Clone the Core repository here?',
-    });
+  // Step 1: Confirm this is the Core repository
+  const isCoreRepo = await confirm({
+    message: 'Are you currently in the Core repository directory?',
+  });
 
-    if (!shouldClone) {
-      outro('❌ Setup cancelled. Please navigate to the Core repository or clone it first.');
-      process.exit(1);
-    }
-
-    // Clone the repository
-    try {
-      await executeDockerCommandInteractive('git clone https://github.com/redplanethq/core.git .', {
-        cwd: process.cwd(),
-        message: 'Cloning Core repository...',
-        showOutput: true
-      });
-      
-      log.success('Core repository cloned successfully!');
-      note('You can now run "core start" to start the development environment.', '✅ Repository Ready');
-      outro('🎉 Core repository is now available!');
-      process.exit(0);
-    } catch (error: any) {
-      outro(`❌ Failed to clone repository: ${error.message}`);
-      process.exit(1);
-    }
+  if (!isCoreRepo) {
+    note('Please navigate to the Core repository first:\n\ngit clone https://github.com/redplanethq/core.git\ncd core\n\nThen run "core start" again.', '📥 Core Repository Required');
+    outro('❌ Please navigate to the Core repository first.');
+    process.exit(1);
   }
 
   const rootDir = process.cwd();

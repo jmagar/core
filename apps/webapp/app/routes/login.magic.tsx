@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Form, useNavigation } from "@remix-run/react";
-import { Inbox, Loader, Mail } from "lucide-react";
+import { Inbox, Loader, LoaderCircle, Mail } from "lucide-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { z } from "zod";
 import { LoginPageLayout } from "~/components/layout/login-page-layout";
@@ -203,7 +203,7 @@ export default function LoginMagicLinkPage() {
                     data-action="send a magic link"
                   >
                     {isLoading ? (
-                      <Loader className="mr-2 size-5" color="white" />
+                      <LoaderCircle className="text-primary h-4 w-4 animate-spin" />
                     ) : (
                       <Mail className="text-text-bright mr-2 size-5" />
                     )}

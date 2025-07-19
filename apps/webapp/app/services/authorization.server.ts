@@ -7,7 +7,7 @@ export type AuthorizationResources = {
 };
 
 export type AuthorizationEntity = {
-  type: "PRIVATE";
+  type: "PRIVATE" | "OAUTH2";
   scopes?: string[];
 };
 
@@ -23,6 +23,11 @@ export function checkAuthorization(
 ): AuthorizationResult {
   // "PRIVATE" is a secret key and has access to everything
   if (entity.type === "PRIVATE") {
+    return { authorized: true };
+  }
+
+  // "OAUTH2" tokens are also authorized (scope-based authorization can be added later)
+  if (entity.type === "OAUTH2") {
     return { authorized: true };
   }
 

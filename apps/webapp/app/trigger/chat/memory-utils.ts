@@ -12,7 +12,6 @@ export interface SearchMemoryParams {
 export interface AddMemoryParams {
   message: string;
   referenceTime?: string;
-  source?: string;
   spaceId?: string;
   sessionId?: string;
   metadata?: any;
@@ -38,7 +37,7 @@ export const addMemory = async (params: AddMemoryParams) => {
       ...params,
       episodeBody: params.message,
       referenceTime: params.referenceTime || new Date().toISOString(),
-      source: params.source || "CORE",
+      source: "CORE",
     };
 
     const response = await axios.post(

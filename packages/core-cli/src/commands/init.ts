@@ -1,5 +1,4 @@
 import { intro, outro, text, confirm, spinner, note, log } from "@clack/prompts";
-import { isValidCoreRepo } from "../utils/git.js";
 import { fileExists, updateEnvFile } from "../utils/file.js";
 import { checkPostgresHealth } from "../utils/docker.js";
 import { executeDockerCommandInteractive } from "../utils/docker-interactive.js";
@@ -14,42 +13,17 @@ export async function initCommand() {
 
   intro("🚀 Core Development Environment Setup");
 
-  // Step 1: Validate repository
-  if (!isValidCoreRepo()) {
-    log.warning("This directory is not a Core repository");
-    note(
-      "The Core repository is required to run the development environment.\nWould you like to clone it in the current directory?",
-      "🔍 Repository Not Found"
-    );
+  // Step 1: Confirm this is the Core repository
+  note("Please ensure you have:\n• Docker and Docker Compose installed\n• Git installed\n• pnpm package manager installed\n• You are in the Core repository directory", "📋 Prerequisites");
+  
+  const isCoreRepo = await confirm({
+    message: "Are you currently in the Core repository directory?",
+  });
 
-    const shouldClone = await confirm({
-      message: "Clone the Core repository here?",
-    });
-
-    if (!shouldClone) {
-      outro("❌ Setup cancelled. Please navigate to the Core repository or clone it first.");
-      process.exit(1);
-    }
-
-    // Clone the repository
-    try {
-      await executeDockerCommandInteractive("git clone https://github.com/redplanethq/core.git .", {
-        cwd: process.cwd(),
-        message: "Cloning Core repository...",
-        showOutput: true,
-      });
-
-      log.success("Core repository cloned successfully!");
-      note(
-        'Please run "core init" again to initialize the development environment.',
-        "✅ Repository Ready"
-      );
-      outro("🎉 Core repository is now available!");
-      process.exit(0);
-    } catch (error: any) {
-      outro(`❌ Failed to clone repository: ${error.message}`);
-      process.exit(1);
-    }
+  if (!isCoreRepo) {
+    note("Please clone the Core repository first:\n\ngit clone https://github.com/redplanethq/core.git\ncd core\n\nThen run 'core init' again.", "📥 Clone Repository");
+    outro("❌ Setup cancelled. Please navigate to the Core repository first.");
+    process.exit(1);
   }
 
   const rootDir = process.cwd();

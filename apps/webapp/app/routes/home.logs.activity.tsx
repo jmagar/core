@@ -57,7 +57,7 @@ export default function LogsActivity() {
           },
         ]}
       />
-      <div className="flex h-[calc(100vh_-_56px)] flex-col space-y-6 p-4 px-5">
+      <div className="flex h-[calc(100vh_-_56px)] flex-col items-center space-y-6 p-4 px-5">
         {isInitialLoad ? (
           <>
             <LoaderCircle className="text-primary h-4 w-4 animate-spin" />{" "}

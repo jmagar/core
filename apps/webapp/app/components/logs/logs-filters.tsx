@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  ChevronsUpDown,
-  Filter,
-  FilterIcon,
-  ListFilter,
-  X,
-} from "lucide-react";
+import { ListFilter, X } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   Popover,

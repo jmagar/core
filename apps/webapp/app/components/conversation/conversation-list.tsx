@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { AutoSizer, List, type ListRowRenderer } from "react-virtualized";
 import { cn } from "~/lib/utils";
 import { Button } from "../ui";
+import { LoaderCircle } from "lucide-react";
 
 type ConversationItem = {
   id: string;
@@ -179,28 +180,27 @@ export const ConversationList = ({
 
   return (
     <div className="flex h-full flex-col pt-1 pl-1">
-      <div className="group grow overflow-hidden">
-        <AutoSizer>
-          {({ height, width }) => (
-            <List
-              height={height}
-              width={width}
-              rowCount={rowCount}
-              rowHeight={32} // Slightly taller for better click area
-              rowRenderer={rowRenderer}
-              overscanRowCount={5}
-            />
-          )}
-        </AutoSizer>
-      </div>
+      {!isLoading && conversations.length > 0 && (
+        <div className="group grow overflow-hidden">
+          <AutoSizer>
+            {({ height, width }) => (
+              <List
+                height={height}
+                width={width}
+                rowCount={rowCount}
+                rowHeight={32} // Slightly taller for better click area
+                rowRenderer={rowRenderer}
+                overscanRowCount={5}
+              />
+            )}
+          </AutoSizer>
+        </div>
+      )}
 
       {isLoading && conversations.length === 0 && (
         <div className="flex items-center justify-center p-8">
-          <div className="flex items-center space-x-2">
-            <div className="border-primary h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
-            <span className="text-muted-foreground text-sm">
-              Loading conversations...
-            </span>
+          <div className="flex flex-col items-center gap-2">
+            <LoaderCircle className="text-primary h-4 w-4 animate-spin" />
           </div>
         </div>
       )}

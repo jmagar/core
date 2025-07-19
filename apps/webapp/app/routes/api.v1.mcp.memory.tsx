@@ -8,7 +8,6 @@ import { createHybridActionApiRoute } from "~/services/routeBuilders/apiBuilder.
 import { addToQueue } from "~/lib/ingest.server";
 import { SearchService } from "~/services/search.server";
 import { handleTransport } from "~/utils/mcp";
-import { IngestBodyRequest } from "~/trigger/ingest/ingest";
 
 // Map to store transports by session ID with cleanup tracking
 const transports: {
@@ -39,16 +38,14 @@ const MCPRequestSchema = z.object({}).passthrough();
 
 // Search parameters schema for MCP tool
 const SearchParamsSchema = z.object({
-  query: z.string(),
-  startTime: z.string().optional(),
-  endTime: z.string().optional(),
-  spaceId: z.string().optional(),
-  limit: z.number().optional(),
-  maxBfsDepth: z.number().optional(),
-  includeInvalidated: z.boolean().optional(),
-  entityTypes: z.array(z.string()).optional(),
-  scoreThreshold: z.number().optional(),
-  minResults: z.number().optional(),
+  query: z.string().describe("The search query in third person perspective"),
+  validAt: z.string().optional().describe("The valid at time in ISO format"),
+  startTime: z.string().optional().describe("The start time in ISO format"),
+  endTime: z.string().optional().describe("The end time in ISO format"),
+});
+
+const IngestSchema = z.object({
+  message: z.string().describe("The data to ingest in text format"),
 });
 
 const searchService = new SearchService();
@@ -60,6 +57,22 @@ const handleMCPRequest = async (
   authentication: any,
 ) => {
   const sessionId = request.headers.get("mcp-session-id") as string | undefined;
+  const source = request.headers.get("source") as string | undefined;
+
+  if (!source) {
+    return json(
+      {
+        jsonrpc: "2.0",
+        error: {
+          code: -32601,
+          message: "No source found",
+        },
+        id: null,
+      },
+      { status: 400 },
+    );
+  }
+
   let transport: StreamableHTTPServerTransport;
 
   try {
@@ -104,14 +117,18 @@ const handleMCPRequest = async (
         {
           title: "Ingest Data",
           description: "Ingest data into the memory system",
-          inputSchema: IngestBodyRequest.shape,
+          inputSchema: IngestSchema.shape,
         },
         async (args) => {
           try {
             const userId = authentication.userId;
 
             const response = addToQueue(
-              args as z.infer<typeof IngestBodyRequest>,
+              {
+                episodeBody: args.message,
+                referenceTime: new Date().toISOString(),
+                source,
+              },
               userId,
             );
             return {

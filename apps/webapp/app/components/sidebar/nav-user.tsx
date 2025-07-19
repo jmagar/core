@@ -8,20 +8,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "../ui/sidebar";
+import { SidebarMenu, SidebarMenuItem, useSidebar } from "../ui/sidebar";
 import type { User } from "~/models/user.server";
 import { Button } from "../ui";
-import { cn } from "~/lib/utils";
-import { useLocation, useNavigate } from "@remix-run/react";
+import { useNavigate } from "@remix-run/react";
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
-  const location = useLocation();
   const navigate = useNavigate();
 
   return (
@@ -55,7 +48,7 @@ export function NavUser({ user }: { user: User }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="flex gap-2"
-              onClick={() => navigate("/settings")}
+              onClick={() => navigate("/settings/api")}
             >
               <Settings size={16} />
               Settings

@@ -35,19 +35,23 @@ npm install -g @redplanethq/core
 
 ### Initial Setup
 
-1. **Run the initialization command:**
+1. **Clone the Core repository:**
+   ```bash
+   git clone https://github.com/redplanethq/core.git
+   cd core
+   ```
 
+2. **Run the initialization command:**
    ```bash
    core init
    ```
 
-2. **The CLI will guide you through the complete setup process:**
+3. **The CLI will guide you through the complete setup process:**
 
-#### Step 1: Repository Validation
-
-- The CLI checks if you're in the Core repository
-- If not, it offers to clone the repository for you
-- Choose **Yes** to clone automatically, or **No** to clone manually
+#### Step 1: Prerequisites Check
+- The CLI shows a checklist of required tools
+- Confirms you're in the Core repository directory
+- Exits with instructions if prerequisites aren't met
 
 #### Step 2: Environment Configuration
 
@@ -130,9 +134,9 @@ After setup, these services will be available:
 
 If you run commands outside the Core repository:
 
-- The CLI will offer to clone the repository automatically
-- Choose **Yes** to clone in the current directory
-- Or navigate to the Core repository manually
+- The CLI will ask you to confirm you're in the Core repository
+- If not, it provides instructions to clone the repository
+- Navigate to the Core repository directory before running commands again
 
 ### Docker Issues
 
