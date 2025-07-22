@@ -53,14 +53,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     const spec = integrationDefinition.spec as any;
 
-    if (!spec.mcpAuth) {
+    if (!spec.mcp) {
       throw new Error("MCP auth configuration not found for this integration");
     }
 
-    const { transportStrategy, serverUrl } = spec.mcpAuth;
+    const { transportStrategy, url } = spec.mcp;
 
     const authClient = createMCPAuthClient({
-      serverUrl,
+      serverUrl: url,
       transportStrategy: transportStrategy || "sse-first",
       redirectUrl: MCP_CALLBACK_URL,
     });

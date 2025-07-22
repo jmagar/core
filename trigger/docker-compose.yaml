@@ -146,7 +146,7 @@ services:
       - webapp
     volumes:
       # registry-user:very-secure-indeed
-      - ../registry/auth.htpasswd:/auth/htpasswd:ro
+      - ./auth.htpasswd:/auth/htpasswd:ro
     environment:
       REGISTRY_AUTH: htpasswd
       REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm

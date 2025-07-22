@@ -45,7 +45,7 @@ export default function LogsAll() {
           },
         ]}
       />
-      <div className="flex h-[calc(100vh_-_56px)] flex-col items-center space-y-6 p-4 px-5">
+      <div className="flex h-[calc(100vh_-_56px)] w-full flex-col items-center space-y-6 p-4 px-5">
         {isInitialLoad ? (
           <>
             <LoaderCircle className="text-primary h-4 w-4 animate-spin" />{" "}
@@ -64,10 +64,10 @@ export default function LogsAll() {
               />
             )}
             {/* Logs List */}
-            <div className="space-y-4">
+            <div className="flex h-full w-full space-y-4">
               {logs.length === 0 ? (
-                <Card>
-                  <CardContent className="bg-background-2 flex items-center justify-center py-16">
+                <Card className="bg-background-2 w-full">
+                  <CardContent className="bg-background-2 flex w-full items-center justify-center py-16">
                     <div className="text-center">
                       <Database className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
                       <h3 className="mb-2 text-lg font-semibold">

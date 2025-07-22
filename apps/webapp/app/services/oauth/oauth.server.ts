@@ -278,14 +278,14 @@ export async function getRedirectURLForMCP(
 
   const spec = integrationDefinition.spec as any;
 
-  if (!spec.mcpAuth) {
+  if (!spec.mcp) {
     throw new Error("MCP auth configuration not found for this integration");
   }
 
-  const { serverUrl, transportStrategy } = spec.mcpAuth;
+  const { url, transportStrategy } = spec.mcp;
 
   const authClient = createMCPAuthClient({
-    serverUrl,
+    serverUrl: url,
     transportStrategy: transportStrategy || "sse-first",
     redirectUrl: MCP_CALLBACK_URL,
   });

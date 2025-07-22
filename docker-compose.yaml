@@ -40,7 +40,7 @@ services:
 
   postgres:
     container_name: core-postgres
-    image: redplanethq/postgres:0.1.0
+    image: redplanethq/postgres:0.1.2
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}

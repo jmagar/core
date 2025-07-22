@@ -5,6 +5,7 @@ export * from "./types/index.js";
 export {
   createMCPAuthClient,
   createMCPProxy,
+  createMCPStdioProxy,
   MCPAuthenticationClient,
 } from "./core/mcp-remote-client.js";
 

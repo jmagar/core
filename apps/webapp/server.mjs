@@ -47,6 +47,7 @@ async function init() {
   // handle SSR requests
   app.all("*", remixHandler);
 
+
   const port = process.env.REMIX_APP_PORT || 3000;
   app.listen(port, () =>
     console.log(`Express server listening at http://localhost:${port}`),

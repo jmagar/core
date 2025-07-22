@@ -1,14 +1,9 @@
-import React from "react";
-import { Theme, useTheme } from "remix-themes";
-
 export interface LogoProps {
   width: number;
   height: number;
 }
 
 export default function StaticLogo({ width, height }: LogoProps) {
-  const [theme] = useTheme();
-
   return (
     <svg
       width={width}

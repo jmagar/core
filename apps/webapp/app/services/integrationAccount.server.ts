@@ -10,6 +10,9 @@ export const getIntegrationAccount = async (
       integratedById: userId,
       isActive: true,
     },
+    include: {
+      integrationDefinition: true,
+    },
   });
 };
 

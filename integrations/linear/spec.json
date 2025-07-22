@@ -12,9 +12,9 @@
       "label": "Linear API Key"
     }
   },
-  "mcpAuth": {
-    "serverUrl": "https://mcp.linear.app/sse",
-    "transportStrategy": "sse-first",
-    "needsSeparateAuth": true
+  "mcp": {
+    "type": "http",
+    "url": "https://mcp.linear.app/mcp",
+    "needsAuth": true
   }
 }

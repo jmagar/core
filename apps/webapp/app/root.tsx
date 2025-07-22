@@ -4,7 +4,6 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useLoaderData,
 } from "@remix-run/react";
 import type {
   LinksFunction,
@@ -41,7 +40,6 @@ import {
   useTheme,
 } from "remix-themes";
 import clsx from "clsx";
-import { initNeo4jSchemaOnce } from "./lib/neo4j.server";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
@@ -49,8 +47,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const session = await getSession(request.headers.get("cookie"));
   const toastMessage = session.get("toastMessage") as ToastMessage;
   const { getTheme } = await themeSessionResolver(request);
-
-  await initNeo4jSchemaOnce();
 
   const posthogProjectKey = env.POSTHOG_PROJECT_KEY;
 
@@ -138,7 +134,6 @@ function App() {
 // `specifiedTheme` is the stored theme in the session storage.
 // `themeAction` is the action name that's used to change the theme in the session storage.
 export default function AppWithProviders() {
-  const data = useLoaderData<typeof loader>();
   return (
     <ThemeProvider specifiedTheme={Theme.LIGHT} themeAction="/action/set-theme">
       <App />

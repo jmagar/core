@@ -51,7 +51,7 @@ export interface ProxyConnectionConfig {
 /**
  * Transport strategy options
  */
-export type TransportStrategy = "sse-only" | "http-only" | "sse-first" | "http-first";
+export type TransportStrategy = "sse-only" | "http-only" | "sse-first" | "http-first" | "stdio";
 
 /**
  * Static OAuth client metadata

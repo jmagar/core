@@ -75,9 +75,9 @@ export default function LogsActivity() {
             )}
 
             {/* Logs List */}
-            <div className="space-y-4">
+            <div className="flex h-full w-full space-y-4">
               {logs.length === 0 ? (
-                <Card>
+                <Card className="bg-background-2 w-full">
                   <CardContent className="bg-background-2 flex items-center justify-center py-16">
                     <div className="text-center">
                       <Activity className="text-muted-foreground mx-auto mb-4 h-12 w-12" />

@@ -34,13 +34,24 @@ export class RemixMCPTransport implements Transport {
         throw new Error("Invalid JSON-RPC message");
       }
 
-      // Emit the message to handler
-      if (this.onmessage) {
-        try {
-          this.onmessage(message);
-        } catch (error) {
-          if (this.onerror) {
-            this.onerror(error as Error);
+      if (message.method.includes("notifications")) {
+        this.send({});
+        return;
+      }
+
+      console.log(message, "message");
+
+      if (Object.keys(message).length === 0) {
+        this.send({});
+      } else {
+        // Emit the message to handler
+        if (this.onmessage) {
+          try {
+            this.onmessage(message);
+          } catch (error) {
+            if (this.onerror) {
+              this.onerror(error as Error);
+            }
           }
         }
       }

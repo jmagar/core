@@ -137,7 +137,9 @@ export default function IntegrationDetail() {
   );
   const hasApiKey = !!specData?.auth?.api_key;
   const hasOAuth2 = !!specData?.auth?.OAuth2;
-  const hasMCPAuth = !!specData?.mcpAuth;
+  const hasMCPAuth = !!(
+    specData?.mcp.type === "url" && specData?.mcp.needsAuth
+  );
   const Component = getIcon(integration.icon as IconType);
 
   return (

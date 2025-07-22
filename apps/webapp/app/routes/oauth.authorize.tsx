@@ -199,13 +199,13 @@ export default function OAuthAuthorize() {
 
             <p className="text-muted-foreground mb-2 text-sm">Permissions</p>
             <ul className="text-muted-foreground text-sm">
-              {params.scope?.split(",").map((scope, index, arr) => {
+              {params.scope?.split(" ").map((scope, index, arr) => {
                 const isFirst = index === 0;
                 const isLast = index === arr.length - 1;
                 return (
                   <li
                     key={index}
-                    className={`border-border flex items-center gap-2 border-x border-t p-2 ${isLast ? "border-b" : ""} ${isFirst ? "rounded-tl-md rounded-tr-md" : ""} ${isLast ? "rounded-br-md rounded-bl-md" : ""} `}
+                    className={`flex items-center gap-2 border-x border-t border-gray-300 p-2 ${isLast ? "border-b" : ""} ${isFirst ? "rounded-tl-md rounded-tr-md" : ""} ${isLast ? "rounded-br-md rounded-bl-md" : ""} `}
                   >
                     <div>{getIcon(scope)}</div>
                     <div>

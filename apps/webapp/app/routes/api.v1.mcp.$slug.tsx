@@ -4,6 +4,9 @@ import { getIntegrationDefinitionWithSlug } from "~/services/integrationDefiniti
 import { proxyRequest } from "~/utils/proxy.server";
 import { z } from "zod";
 import { getIntegrationAccount } from "~/services/integrationAccount.server";
+import { createMCPStdioProxy } from "@core/mcp-proxy";
+import { randomUUID } from "node:crypto";
+import { configureStdioMCPEnvironment } from "~/trigger/utils/mcp";
 
 export const integrationSlugSchema = z.object({
   slug: z.string(),
@@ -48,7 +51,7 @@ const { action, loader } = createActionApiRoute(
 
       const spec = integrationDefinition.spec as any;
 
-      if (!spec.mcpAuth) {
+      if (!spec.mcp) {
         return new Response(
           JSON.stringify({
             error: "MCP auth configuration not found for this integration",
@@ -60,7 +63,7 @@ const { action, loader } = createActionApiRoute(
         );
       }
 
-      const { serverUrl } = spec.mcpAuth;
+      const { url, type } = spec.mcp;
 
       // Find the integration account for this user and integration
       const integrationAccount = await getIntegrationAccount(
@@ -68,29 +71,66 @@ const { action, loader } = createActionApiRoute(
         authentication.userId,
       );
 
-      const integrationConfig =
-        integrationAccount?.integrationConfiguration as any;
+      if (type === "http") {
+        const integrationConfig =
+          integrationAccount?.integrationConfiguration as any;
 
-      if (!integrationAccount || !integrationConfig || !integrationConfig.mcp) {
-        return new Response(
-          JSON.stringify({
-            error: "No integration account with mcp config",
-          }),
-          {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          },
+        if (
+          !integrationAccount ||
+          !integrationConfig ||
+          !integrationConfig.mcp
+        ) {
+          return new Response(
+            JSON.stringify({
+              error: "No integration account with mcp config",
+            }),
+            {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            },
+          );
+        }
+
+        // Proxy the request to the serverUrl
+        return await proxyRequest(
+          request,
+          url,
+          integrationConfig.mcp.tokens.access_token,
         );
-      }
+      } else {
+        if (!integrationAccount) {
+          return new Response(
+            JSON.stringify({
+              error: "No integration account found",
+            }),
+            {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            },
+          );
+        }
 
-      // Proxy the request to the serverUrl
-      return await proxyRequest(
-        request,
-        serverUrl,
-        integrationConfig.mcp.tokens.access_token,
-      );
+        // Configure environment variables using the utility function
+        const { env, args } = configureStdioMCPEnvironment(
+          spec,
+          integrationAccount,
+        );
+
+        // Get session_id from headers (case-insensitive), or generate a new uuid if not present
+        const sessionId =
+          request.headers.get("mcp-session-id") ||
+          request.headers.get("Mcp-Session-Id") ||
+          randomUUID();
+
+        // Use the saved local file instead of command
+        const executablePath = `./integrations/${slug}/main`;
+
+        return createMCPStdioProxy(request, executablePath, args, {
+          env,
+          sessionId,
+        });
+      }
     } catch (error: any) {
-      console.error("MCP Proxy Error:", error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { "Content-Type": "application/json" },

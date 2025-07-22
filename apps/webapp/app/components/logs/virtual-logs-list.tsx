@@ -153,7 +153,7 @@ export function VirtualLogsList({
   const itemCount = hasMore ? logs.length + 1 : logs.length;
 
   return (
-    <div className="h-[calc(100vh_-_132px)] overflow-hidden rounded-lg">
+    <div className="h-full grow overflow-hidden rounded-lg">
       <AutoSizer className="h-full">
         {({ width, height: autoHeight }) => (
           <InfiniteLoader

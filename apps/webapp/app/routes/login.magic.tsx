@@ -158,7 +158,8 @@ export default function LoginMagicLinkPage() {
 
               <Fieldset className="flex w-full flex-col items-center gap-y-2 px-2">
                 <FormButtons
-                  cancelButton={
+                  cancelButton={<></>}
+                  confirmButton={
                     <Button
                       type="submit"
                       name="action"
@@ -169,7 +170,6 @@ export default function LoginMagicLinkPage() {
                       Re-enter email
                     </Button>
                   }
-                  confirmButton={<></>}
                 />
               </Fieldset>
             </Card>

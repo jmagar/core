@@ -24,11 +24,14 @@ export interface OAuth2Context {
 
 export async function requireOAuth2(request: Request): Promise<OAuth2Context> {
   const authHeader = request.headers.get("authorization");
-  
+
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     throw json(
-      { error: "invalid_token", error_description: "Missing or invalid authorization header" },
-      { status: 401 }
+      {
+        error: "invalid_token",
+        error_description: "Missing or invalid authorization header",
+      },
+      { status: 401 },
     );
   }
 
@@ -36,7 +39,7 @@ export async function requireOAuth2(request: Request): Promise<OAuth2Context> {
 
   try {
     const accessToken = await oauth2Service.validateAccessToken(token);
-    
+
     return {
       user: {
         id: accessToken.user.id,
@@ -59,13 +62,18 @@ export async function requireOAuth2(request: Request): Promise<OAuth2Context> {
     };
   } catch (error) {
     throw json(
-      { error: "invalid_token", error_description: "Invalid or expired access token" },
-      { status: 401 }
+      {
+        error: "invalid_token",
+        error_description: "Invalid or expired access token",
+      },
+      { status: 401 },
     );
   }
 }
 
-export async function getOAuth2Context(request: Request): Promise<OAuth2Context | null> {
+export async function getOAuth2Context(
+  request: Request,
+): Promise<OAuth2Context | null> {
   try {
     return await requireOAuth2(request);
   } catch (error) {
@@ -73,20 +81,31 @@ export async function getOAuth2Context(request: Request): Promise<OAuth2Context 
   }
 }
 
-export function hasScope(context: OAuth2Context, requiredScope: string): boolean {
+export function hasScope(
+  context: OAuth2Context,
+  requiredScope: string,
+): boolean {
   if (!context.token.scope) {
     return false;
   }
-  
-  const scopes = context.token.scope.split(' ');
+
+  const scopes = context.token.scope.split(" ");
   return scopes.includes(requiredScope);
 }
 
-export function requireScope(context: OAuth2Context, requiredScope: string): void {
+export function requireScope(
+  context: OAuth2Context,
+  requiredScope: string,
+): void {
   if (!hasScope(context, requiredScope)) {
     throw json(
-      { error: "insufficient_scope", error_description: `Required scope: ${requiredScope}` },
-      { status: 403 }
+      {
+        error: "insufficient_scope",
+        error_description: `Required scope: ${requiredScope}`,
+      },
+      { status: 403 },
     );
   }
 }
+
+export function getEnvForCommand() {}
