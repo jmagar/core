@@ -6,7 +6,8 @@ import * as path from "path";
 
 import { type MCPTool } from "./types";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { prisma } from "~/db.server";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 export const configureStdioMCPEnvironment = (
   spec: any,

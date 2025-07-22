@@ -37,9 +37,6 @@ export async function initCommand() {
 
   const rootDir = process.cwd();
   const triggerDir = path.join(rootDir, "trigger");
-  const webappDir = path.join(rootDir, "apps", "webapp");
-  const databaseDir = path.join(rootDir, "packages", "database");
-  const typesDir = path.join(rootDir, "packages", "types");
 
   try {
     // Step 2: Setup .env file in root
@@ -231,7 +228,7 @@ export async function initCommand() {
 
     // Step 13: Handle Docker login
     note("Run the following command to login to Docker registry:", "🐳 Docker Registry Login");
-    await handleDockerLogin(triggerEnvPath);
+    await handleDockerLogin(rootDir, triggerEnvPath);
 
     // Step 14: Deploy Trigger.dev tasks
     await deployTriggerTasks(rootDir);
