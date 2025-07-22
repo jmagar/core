@@ -9,7 +9,7 @@ export const sessionStorage = createCookieSessionStorage<{
   [SESSION_KEY]: AuthUser;
 }>({
   cookie: {
-    name: "__session", // use any name you want here
+    name: "__session__core", // use any name you want here
     sameSite: "lax", // this helps with CSRF
     path: "/", // remember to add this so the cookie will work in all routes
     httpOnly: true, // for security reasons, make this cookie http only

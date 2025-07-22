@@ -6,7 +6,6 @@ import {
 } from "@remix-run/node";
 
 import { env } from "~/env.server";
-import { createThemeSessionResolver } from "remix-themes";
 
 export type ToastMessage = {
   message: string;

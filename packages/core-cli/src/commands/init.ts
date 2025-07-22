@@ -5,10 +5,11 @@ import { executeCommandInteractive } from "../utils/docker-interactive.js";
 import { printCoreBrainLogo } from "../utils/ascii.js";
 import { setupEnvFile } from "../utils/env.js";
 import { hasTriggerConfig } from "../utils/env-checker.js";
-import { getDockerCompatibleEnvVars } from "../utils/env-docker.js";
 import { handleDockerLogin } from "../utils/docker-login.js";
 import { deployTriggerTasks } from "../utils/trigger-deploy.js";
 import path from "path";
+import * as fs from "fs";
+import { initTriggerDatabase } from "../utils/database-init.js";
 
 export async function initCommand() {
   // Display the CORE brain logo
@@ -22,9 +23,19 @@ export async function initCommand() {
     "📋 Prerequisites"
   );
 
-  const isCoreRepo = await confirm({
-    message: "Are you currently in the Core repository directory?",
-  });
+  // Check if package.json name has "core" in it, else exit
+  const pkgPath = path.join(process.cwd(), "package.json");
+  let isCoreRepo = false;
+  try {
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+      if (typeof pkg.name === "string" && pkg.name.includes("core")) {
+        isCoreRepo = true;
+      }
+    }
+  } catch (err) {
+    // ignore, will prompt below
+  }
 
   if (!isCoreRepo) {
     note(
@@ -132,58 +143,9 @@ export async function initCommand() {
     } else {
       // Step 8: Show login instructions
       outro("🎉 Docker containers are now running!");
-      note(
-        "1. Open http://localhost:8030 in your browser\n2. Login to Trigger.dev (check container logs with: docker logs trigger-webapp --tail 50)",
-        "Next Steps"
-      );
+      const { prodSecretKey, projectRefId } = await initTriggerDatabase(triggerDir);
 
-      const loginConfirmed = await confirm({
-        message: "Have you logged in to Trigger.dev successfully?",
-      });
-
-      if (!loginConfirmed) {
-        outro("❌ Setup cancelled. Please login to Trigger.dev first and run the command again.");
-        process.exit(1);
-      }
-
-      // Step 9: Get project details
-      note(
-        "1. Create a new organization and project\n2. Go to project settings\n3. Copy the Project ID and Secret Key",
-        "In Trigger.dev (http://localhost:8030)"
-      );
-
-      const projectCreated = await confirm({
-        message: "Have you created an organization and project in Trigger.dev?",
-      });
-
-      if (!projectCreated) {
-        outro(
-          "❌ Setup cancelled. Please create an organization and project first and run the command again."
-        );
-        process.exit(1);
-      }
-
-      // Step 10: Get project ID and secret
-      const projectId = await text({
-        message: "Enter your Trigger.dev Project ID:",
-        validate: (value) => {
-          if (!value || value.length === 0) {
-            return "Project ID is required";
-          }
-          return;
-        },
-      });
-
-      const secretKey = await text({
-        message: "Enter your Trigger.dev Secret Key for production:",
-        validate: (value) => {
-          if (!value || value.length === 0) {
-            return "Secret Key is required";
-          }
-          return;
-        },
-      });
-
+      console.log(prodSecretKey, projectRefId);
       const openaiApiKey = await text({
         message: "Enter your OpenAI API Key:",
         validate: (value) => {
@@ -199,8 +161,8 @@ export async function initCommand() {
       s6.start("Updating .env with Trigger.dev configuration...");
 
       try {
-        await updateEnvFile(envPath, "TRIGGER_PROJECT_ID", projectId as string);
-        await updateEnvFile(envPath, "TRIGGER_SECRET_KEY", secretKey as string);
+        await updateEnvFile(envPath, "TRIGGER_PROJECT_ID", projectRefId as string);
+        await updateEnvFile(envPath, "TRIGGER_SECRET_KEY", prodSecretKey as string);
         await updateEnvFile(envPath, "OPENAI_API_KEY", openaiApiKey as string);
         s6.stop("✅ Updated .env with Trigger.dev configuration");
       } catch (error: any) {

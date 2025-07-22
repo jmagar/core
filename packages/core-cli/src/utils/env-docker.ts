@@ -1,5 +1,5 @@
 import path from "path";
-import fs from "fs";
+
 import dotenv from "dotenv";
 import dotenvExpand from "dotenv-expand";
 
@@ -12,7 +12,6 @@ export async function getDockerCompatibleEnvVars(rootDir: string): Promise<Recor
 
   try {
     // Use dotenv to parse and expand variables
-
     const envVarsExpand =
       dotenvExpand.expand(dotenv.config({ path: envPath, processEnv: {} })).parsed || {};
 
