@@ -9,7 +9,7 @@ import { handleDockerLogin } from "../utils/docker-login.js";
 import { deployTriggerTasks } from "../utils/trigger-deploy.js";
 import path from "path";
 import * as fs from "fs";
-import { initTriggerDatabase } from "../utils/database-init.js";
+import { createTriggerConfigJson, initTriggerDatabase } from "../utils/database-init.js";
 
 export async function initCommand() {
   // Display the CORE brain logo
@@ -66,6 +66,7 @@ export async function initCommand() {
       }
     } catch (error: any) {
       s1.stop(error.message);
+      outro("❌ Setup failed: " + error.message);
       process.exit(1);
     }
 
@@ -77,7 +78,8 @@ export async function initCommand() {
         showOutput: true,
       });
     } catch (error: any) {
-      throw error;
+      outro("❌ Setup failed: " + error.message);
+      process.exit(1);
     }
 
     // Step 4: Check if postgres is running
@@ -98,7 +100,7 @@ export async function initCommand() {
 
     if (retries >= maxRetries) {
       s3.stop("L PostgreSQL not accessible on localhost:5432");
-      outro("Please check your Docker setup and try again");
+      outro("❌ Please check your Docker setup and try again");
       process.exit(1);
     }
 
@@ -118,6 +120,7 @@ export async function initCommand() {
       }
     } catch (error: any) {
       s4.stop(error.message);
+      outro("❌ Setup failed: " + error.message);
       process.exit(1);
     }
 
@@ -129,7 +132,8 @@ export async function initCommand() {
         showOutput: true,
       });
     } catch (error: any) {
-      throw error;
+      outro("❌ Setup failed: " + error.message);
+      process.exit(1);
     }
 
     // Step 7: Check if Trigger.dev configuration already exists
@@ -142,10 +146,12 @@ export async function initCommand() {
       );
     } else {
       // Step 8: Show login instructions
-      outro("🎉 Docker containers are now running!");
-      const { prodSecretKey, projectRefId } = await initTriggerDatabase(triggerDir);
+      note("🎉 Docker containers are now running!");
 
-      console.log(prodSecretKey, projectRefId);
+      const { prodSecretKey, projectRefId, personalToken } = await initTriggerDatabase(triggerDir);
+
+      await createTriggerConfigJson(personalToken as string);
+
       const openaiApiKey = await text({
         message: "Enter your OpenAI API Key:",
         validate: (value) => {
@@ -167,24 +173,20 @@ export async function initCommand() {
         s6.stop("✅ Updated .env with Trigger.dev configuration");
       } catch (error: any) {
         s6.stop("❌ Failed to update .env file");
-        throw error;
+        outro("❌ Setup failed: " + error.message);
+        process.exit(1);
       }
 
       // Step 12: Restart root docker-compose with new configuration
       try {
-        await executeCommandInteractive("docker compose down", {
-          cwd: rootDir,
-          message: "Stopping Core services...",
-          showOutput: true,
-        });
-
         await executeCommandInteractive("docker compose up -d", {
           cwd: rootDir,
           message: "Starting Core services with new Trigger.dev configuration...",
           showOutput: true,
         });
       } catch (error: any) {
-        throw error;
+        outro("❌ Setup failed: " + error.message);
+        process.exit(1);
       }
     }
 
@@ -196,7 +198,6 @@ export async function initCommand() {
     await deployTriggerTasks(rootDir);
 
     // Step 15: Final instructions
-    outro("🎉 Setup Complete!");
     note(
       [
         "Your services are now running:",
@@ -212,6 +213,8 @@ export async function initCommand() {
       ].join("\n"),
       "🚀 Services Running"
     );
+    outro("🎉 Setup Complete!");
+    process.exit(0);
   } catch (error: any) {
     outro(`❌ Setup failed: ${error.message}`);
     process.exit(1);

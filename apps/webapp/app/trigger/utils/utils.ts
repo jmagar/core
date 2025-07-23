@@ -6,6 +6,7 @@ import {
   type Prisma,
   PrismaClient,
   UserType,
+  type UserUsage,
   type Workspace,
 } from "@prisma/client";
 
@@ -56,7 +57,11 @@ function encryptToken(value: string) {
   }
 
   const nonce = nodeCrypto.randomBytes(12);
-  const cipher = nodeCrypto.createCipheriv("aes-256-gcm", encryptionKey, nonce);
+  const cipher = nodeCrypto.createCipheriv(
+    "aes-256-gcm",
+    encryptionKey,
+    nonce as any,
+  );
 
   let encrypted = cipher.update(value, "utf8", "hex");
   encrypted += cipher.final("hex");
@@ -557,3 +562,28 @@ export async function webSearch(args: WebSearchArgs): Promise<WebSearchResult> {
     );
   }
 }
+
+export const getCreditsForUser = async (
+  userId: string,
+): Promise<UserUsage | null> => {
+  return await prisma.userUsage.findUnique({
+    where: {
+      userId,
+    },
+  });
+};
+
+export const updateUserCredits = async (
+  userUsage: UserUsage,
+  usedCredits: number,
+) => {
+  return await prisma.userUsage.update({
+    where: {
+      id: userUsage.id,
+    },
+    data: {
+      availableCredits: userUsage.availableCredits - usedCredits,
+      usedCredits: userUsage.usedCredits + usedCredits,
+    },
+  });
+};

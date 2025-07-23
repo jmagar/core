@@ -39,8 +39,6 @@ export class RemixMCPTransport implements Transport {
         return;
       }
 
-      console.log(message, "message");
-
       if (Object.keys(message).length === 0) {
         this.send({});
       } else {

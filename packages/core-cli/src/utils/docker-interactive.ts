@@ -27,7 +27,7 @@ export function executeCommandInteractive(command: string, options: CommandOptio
       cwd: options.cwd,
       stdio: options.showOutput ? ["ignore", "pipe", "pipe"] : "ignore",
       detached: false,
-      env: options.env ? { ...process.env, ...options.env } : { ...process.env },
+      env: options.env ? { ...process.env, ...options.env } : {},
     });
 
     let output = "";

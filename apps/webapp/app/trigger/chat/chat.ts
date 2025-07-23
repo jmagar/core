@@ -7,12 +7,14 @@ import { type HistoryStep } from "../utils/types";
 import {
   createConversationHistoryForAgent,
   deletePersonalAccessToken,
+  getCreditsForUser,
   getPreviousExecutionHistory,
   init,
   type RunChatPayload,
   updateConversationHistoryMessage,
   updateConversationStatus,
   updateExecutionStep,
+  updateUserCredits,
 } from "../utils/utils";
 
 const chatQueue = queue({
@@ -30,6 +32,8 @@ export const chat = task({
   queue: chatQueue,
   init,
   run: async (payload: RunChatPayload, { init }) => {
+    const usageCredits = await getCreditsForUser(init?.userId as string);
+
     await updateConversationStatus("running", payload.conversationId);
 
     try {
@@ -119,13 +123,7 @@ export const chat = task({
         payload.conversationId,
       );
 
-      // await addToMemory(
-      //   init.conversation.id,
-      //   message,
-      //   agentUserMessage,
-      //   init.preferences,
-      //   init.userName,
-      // );
+      usageCredits && (await updateUserCredits(usageCredits, creditForChat));
 
       if (init?.tokenId) {
         await deletePersonalAccessToken(init.tokenId);

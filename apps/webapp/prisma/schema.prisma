@@ -46,6 +46,110 @@ model AuthorizationCode {
   updatedAt DateTime @updatedAt
 }
 
+model OAuthAuthorizationCode {
+  id String @id @default(cuid())
+
+  code String @unique
+
+  // OAuth2 specific fields
+  clientId            String
+  userId              String
+  redirectUri         String
+  scope               String?
+  state               String?
+  codeChallenge       String?
+  codeChallengeMethod String?
+  expiresAt           DateTime
+  used                Boolean  @default(false)
+
+  // Relations
+  client OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OAuthClient {
+  id String @id @default(cuid())
+
+  clientId     String  @unique
+  clientSecret String
+  name         String
+  description  String?
+
+  // Redirect URIs (comma-separated for simplicity)
+  redirectUris String
+
+  // Allowed scopes (comma-separated)
+  allowedScopes String @default("read")
+
+  // Grant types allowed
+  grantTypes String @default("authorization_code")
+
+  // PKCE support
+  requirePkce Boolean @default(false)
+
+  // Client metadata
+  logoUrl     String?
+  homepageUrl String?
+
+  // GitHub-style features
+  isActive Boolean @default(true)
+
+  // Workspace relationship (like GitHub orgs)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+
+  // Created by user (for audit trail)
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String
+
+  // Relations
+  oauthAuthorizationCodes OAuthAuthorizationCode[]
+  accessTokens            OAuthAccessToken[]
+  refreshTokens           OAuthRefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OAuthAccessToken {
+  id String @id @default(cuid())
+
+  token     String   @unique
+  clientId  String
+  userId    String
+  scope     String?
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+
+  // Relations
+  client OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OAuthRefreshToken {
+  id String @id @default(cuid())
+
+  token     String   @unique
+  clientId  String
+  userId    String
+  scope     String?
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+
+  // Relations
+  client OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Conversation {
   id        String    @id @default(uuid())
   createdAt DateTime  @default(now())
@@ -319,6 +423,26 @@ model User {
   Conversation         Conversation[]
   ConversationHistory  ConversationHistory[]
   IngestionRule        IngestionRule[]
+
+  // OAuth2 relations
+  oauthAuthorizationCodes OAuthAuthorizationCode[]
+  oauthAccessTokens       OAuthAccessToken[]
+  oauthRefreshTokens      OAuthRefreshToken[]
+  oauthClientsCreated     OAuthClient[]
+  UserUsage               UserUsage?
+}
+
+model UserUsage {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deleted   DateTime?
+
+  availableCredits Int @default(0)
+  usedCredits      Int @default(0)
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique
 }
 
 model WebhookConfiguration {
@@ -375,6 +499,7 @@ model Workspace {
   WebhookConfiguration    WebhookConfiguration[]
   Conversation            Conversation[]
   IngestionRule           IngestionRule[]
+  OAuthClient             OAuthClient[]
 }
 
 enum AuthenticationMethod {

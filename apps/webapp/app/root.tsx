@@ -135,7 +135,11 @@ function App() {
 // `themeAction` is the action name that's used to change the theme in the session storage.
 export default function AppWithProviders() {
   return (
-    <ThemeProvider specifiedTheme={Theme.LIGHT} themeAction="/action/set-theme">
+    <ThemeProvider
+      specifiedTheme={Theme.LIGHT}
+      disableTransitionOnThemeChange={true}
+      themeAction="/action/set-theme"
+    >
       <App />
     </ThemeProvider>
   );

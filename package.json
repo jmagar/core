@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "build": "dotenv -- turbo run build",
-    "dev": "dotenv -- turbo run dev",
+    "dev": "dotenv -- turbo run dev --filter=!core-extension --filter=!@redplanethq/core",
     "lint": "dotenv -- turbo run lint",
     "format": "dotenv -- prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "dotenv -- turbo run check-types",

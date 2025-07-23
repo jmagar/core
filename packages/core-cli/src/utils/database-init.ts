@@ -6,21 +6,19 @@ import dotenv from "dotenv";
 import dotenvExpand from "dotenv-expand";
 import path from "node:path";
 import { log } from "@clack/prompts";
+import { customAlphabet } from "nanoid";
 
-// Generate a new token similar to the original: "tr_pat_" + 40 lowercase alphanumeric chars
-function generatePersonalToken(count: number) {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let token = "tr_pat_";
-  for (let i = 0; i < count; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
-}
+import $xdgAppPaths from "xdg-app-paths";
+import { mkdirSync, writeFileSync } from "node:fs";
+
+export const xdgAppPaths = $xdgAppPaths as unknown as typeof $xdgAppPaths.default;
+
+const tokenGenerator = customAlphabet("123456789abcdefghijkmnopqrstuvwxyz", 40);
 
 // Generate tokens internally
-const TRIGGER_TOKEN = nodeCrypto.randomBytes(32).toString("hex");
+let ENCRYPTION_KEY: string;
 const COMMON_ID = "9ea0412ea8ef441ca03c7952d011ab56";
-const key = generatePersonalToken(20);
+const key = tokenGenerator(20);
 
 export async function createOrg(knex: KnexT) {
   try {
@@ -90,17 +88,26 @@ export async function createPersonalToken(knex: KnexT) {
   log.step("Creating CLI personal access token...");
   // Generate a new token similar to the original: "tr_pat_" + 40 lowercase alphanumeric chars
 
-  const personalToken = generatePersonalToken(40);
+  const personalToken = `tr_pat_${tokenGenerator(40)}`;
+
   await knex("PersonalAccessToken").insert({
     id,
     name: "cli",
     userId: COMMON_ID,
     updatedAt: new Date(),
-    obfuscatedToken: personalToken,
+    obfuscatedToken: obfuscateToken(personalToken),
     hashedToken: hashToken(personalToken),
-    encryptedToken: {},
+    encryptedToken: encryptToken(personalToken),
   });
   log.success("CLI personal access token created.");
+
+  return personalToken;
+}
+
+function obfuscateToken(token: string) {
+  const withoutPrefix = token.replace("tr_pat_", "");
+  const obfuscated = `${withoutPrefix.slice(0, 4)}${"•".repeat(18)}${withoutPrefix.slice(-4)}`;
+  return `tr_pat_${obfuscated}`;
 }
 
 export async function createProject(knex: KnexT) {
@@ -179,9 +186,9 @@ export async function createProject(knex: KnexT) {
   }
 }
 
-export function encryptToken(value: string) {
+function encryptToken(value: string) {
   const nonce = nodeCrypto.randomBytes(12);
-  const cipher = nodeCrypto.createCipheriv("aes-256-gcm", TRIGGER_TOKEN, nonce);
+  const cipher = nodeCrypto.createCipheriv("aes-256-gcm", ENCRYPTION_KEY, nonce);
 
   let encrypted = cipher.update(value, "utf8", "hex");
   encrypted += cipher.final("hex");
@@ -203,10 +210,45 @@ export function hashToken(token: string): string {
 
 // Main initialization function
 export async function initTriggerDatabase(triggerDir: string) {
+  log.step("Waiting for Trigger.dev to be ready on http://localhost:8030/login...");
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+
+  // Check if Trigger.dev is up and /login returns 200 before proceeding
+  const MAX_RETRIES = 30;
+  const RETRY_DELAY_MS = 2000;
+  let loginOk = false;
+  for (let i = 0; i < MAX_RETRIES; i++) {
+    try {
+      const res = await fetch("http://localhost:8030/login");
+      if (res.status === 200) {
+        loginOk = true;
+        log.step("Trigger.dev is up and /login returned 200.");
+        break;
+      }
+    } catch (e) {
+      // ignore, will retry
+    }
+
+    if (i < MAX_RETRIES - 1) {
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+    }
+  }
+
+  if (!loginOk) {
+    log.error("Trigger.dev did not respond with 200 on /login after waiting.");
+    throw new Error("Trigger.dev is not ready at http://localhost:8030/login");
+  }
+
   const envPath = path.join(triggerDir, ".env");
   log.step(`Loading environment variables from ${envPath}...`);
   const envVarsExpand =
     dotenvExpand.expand(dotenv.config({ path: envPath, processEnv: {} })).parsed || {};
+
+  // Set the encryption key from the .env file
+  ENCRYPTION_KEY = envVarsExpand.ENCRYPTION_KEY as string;
+  if (!ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY not found in trigger/.env file");
+  }
 
   const knex = Knex({
     client: "pg", // Use PostgreSQL as the database client
@@ -220,19 +262,65 @@ export async function initTriggerDatabase(triggerDir: string) {
     await createOrg(knex);
 
     // Create personal access token
-    await createPersonalToken(knex);
+    const personalToken = await createPersonalToken(knex);
 
     // Create project and return details
     const projectDetails = await createProject(knex);
 
     log.success("Trigger.dev database initialized successfully.");
 
+    log.step("Setting things up...");
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
     return {
       prodSecretKey: projectDetails.prodSecret,
       projectRefId: projectDetails.projectRef,
+      personalToken,
     };
   } catch (error) {
     log.error(`Initialization failed: ${error}`);
     throw new Error(`Initialization failed: ${error}`);
   }
+}
+
+function getGlobalConfigFolderPath() {
+  const configDir = xdgAppPaths("trigger").config();
+
+  return configDir;
+}
+
+const CONFIG_FILE = "config.json";
+
+function getAuthConfigFilePath() {
+  return path.join(getGlobalConfigFolderPath(), CONFIG_FILE);
+}
+
+/**
+ * Creates the Trigger.dev CLI config.json file in ~/Library/Preferences/trigger/config.json
+ * with the given personal access token. If the config already exists, it will be deleted first.
+ *
+ * @param {string} personalToken - The personal access token to store in the config.
+ */
+export async function createTriggerConfigJson(personalToken: string) {
+  const configPath = getAuthConfigFilePath();
+
+  // If config.json exists, delete it
+  mkdirSync(path.dirname(configPath), {
+    recursive: true,
+  });
+
+  const config = {
+    version: 2,
+    currentProfile: "default",
+    profiles: {
+      default: {
+        accessToken: personalToken,
+        apiUrl: "http://localhost:8030",
+      },
+    },
+  };
+
+  writeFileSync(path.join(configPath), JSON.stringify(config, undefined, 2), {
+    encoding: "utf-8",
+  });
 }

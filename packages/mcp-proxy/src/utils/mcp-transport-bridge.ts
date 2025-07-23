@@ -23,7 +23,6 @@ export function createMCPTransportBridge(
 
   // Forward messages from client to server
   clientTransport.onmessage = (message: any, extra: any) => {
-    console.log(message);
     log("[Client→Server]", message.method || message.id);
     onMessage?.("client-to-server", message);
 
@@ -41,8 +40,6 @@ export function createMCPTransportBridge(
 
   // Forward messages from server to client
   serverTransport.onmessage = (message: any, extra: any) => {
-    console.log(message);
-    console.log(JSON.stringify(message), JSON.stringify(extra));
     log("[Server→Client]", message.method || message.id);
     onMessage?.("server-to-client", message);
 

@@ -3,7 +3,7 @@ import { env } from "~/env.server";
 
 export const impersonationSessionStorage = createCookieSessionStorage({
   cookie: {
-    name: "__impersonate", // use any name you want here
+    name: "__impersonate_core", // use any name you want here
     sameSite: "lax", // this helps with CSRF
     path: "/", // remember to add this so the cookie will work in all routes
     httpOnly: true, // for security reasons, make this cookie http only
