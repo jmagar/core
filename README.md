@@ -37,12 +37,14 @@
 ### C.O.R.E: Your digital brain for the AI era
 
 <p align="center">
-    <img src="https://deepwiki.com/badge.svg" alt="DeepWiki Badge" />
+    <a href="https://deepwiki.com/RedPlanetHQ/core">
+        <img src="https://deepwiki.com/badge.svg" alt="DeepWiki Badge" />
+    </a>
 </p>
-
 <p align="center">
     <a href="https://docs.heysol.ai/core/overview"><b>Documentation</b></a> •
     <a href="https://discord.gg/YGUZcvDjUa"><b>Discord</b></a>
+</p>
 </div>
 
 ## 🧠 C.O.R.E.
