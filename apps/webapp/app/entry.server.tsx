@@ -18,8 +18,12 @@ import { initializeStartupServices } from "./utils/startup";
 
 const ABORT_DELAY = 5_000;
 
-// Initialize startup services once per server process
-await initializeStartupServices();
+async function init() {
+  // Initialize startup services once per server process
+  await initializeStartupServices();
+}
+
+init();
 
 export default function handleRequest(
   request: Request,
