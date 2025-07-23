@@ -22,6 +22,7 @@ import {
   saveIntegrationAccountState,
   saveMCPConfig,
 } from "../utils/message-utils";
+import { triggerIntegrationWebhook } from "../webhooks/integration-webhook-delivery";
 
 /**
  * Determines if a string is a URL.
@@ -223,17 +224,23 @@ async function handleAccountMessage(
   const mcp = message.data.mcp;
 
   if (mcp) {
-    return await saveMCPConfig({
+    const config = await saveMCPConfig({
       integrationAccountId,
       config: message.data.config,
     });
+    await triggerIntegrationWebhook(
+      integrationAccountId,
+      userId,
+      "mcp.connected",
+    );
+    return config;
   }
 
   // Handle only one messages since account gets created only for one
   const {
     data: { settings, config, accountId },
   } = messages[0];
-  return await createIntegrationAccount({
+  const integrationAccount = await createIntegrationAccount({
     integrationDefinitionId: integrationDefinition.id,
     workspaceId,
     settings,
@@ -241,6 +248,24 @@ async function handleAccountMessage(
     accountId,
     userId,
   });
+
+  // Trigger OAuth integration webhook notifications
+  try {
+    await triggerIntegrationWebhook(
+      integrationAccount.id,
+      userId,
+      "integration.connected",
+    );
+  } catch (error) {
+    logger.error("Failed to trigger OAuth integration webhook", {
+      integrationAccountId: integrationAccount.id,
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    // Don't fail the integration creation if webhook delivery fails
+  }
+
+  return integrationAccount;
 }
 
 /**

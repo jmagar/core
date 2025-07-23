@@ -86,6 +86,32 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       );
     }
 
+    // Validate scopes
+    const validScopes = [
+      // Authentication scopes (Google-style)
+      "profile",
+      "email",
+      "openid",
+      // Integration scope
+      "integration",
+    ];
+
+    const requestedScopes = Array.isArray(allowedScopes)
+      ? allowedScopes
+      : [allowedScopes || "read"];
+    const invalidScopes = requestedScopes.filter(
+      (scope) => !validScopes.includes(scope),
+    );
+
+    if (invalidScopes.length > 0) {
+      return json(
+        {
+          error: `Invalid scopes: ${invalidScopes.join(", ")}. Valid scopes are: ${validScopes.join(", ")}`,
+        },
+        { status: 400 },
+      );
+    }
+
     // Get user's workspace
     const userRecord = await prisma.user.findUnique({
       where: { id: user.id },
@@ -94,6 +120,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (!userRecord?.Workspace) {
       return json({ error: "No workspace found" }, { status: 404 });
+    }
+
+    if (!userRecord?.admin) {
+      return json({ error: "No access to create OAuth app" }, { status: 404 });
     }
 
     // Generate client credentials
@@ -110,9 +140,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         redirectUris: Array.isArray(redirectUris)
           ? redirectUris.join(",")
           : redirectUris,
-        allowedScopes: Array.isArray(allowedScopes)
-          ? allowedScopes.join(",")
-          : allowedScopes || "read",
+        allowedScopes: requestedScopes.join(","),
         requirePkce: requirePkce || false,
         logoUrl: logoUrl || null,
         homepageUrl: homepageUrl || null,
@@ -138,8 +166,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({
       success: true,
       client,
-      message:
-        "OAuth client created successfully. Save the client_secret securely - it won't be shown again.",
+      message: "OAuth client created successfully",
     });
   } catch (error) {
     console.error("Error creating OAuth client:", error);

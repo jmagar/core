@@ -3,6 +3,7 @@ import { requireUserId } from "~/services/session.server";
 
 import { logger } from "~/services/logger.service";
 import { prisma } from "~/db.server";
+import { triggerIntegrationWebhook } from "~/trigger/webhooks/integration-webhook-delivery";
 
 export async function action({ request }: ActionFunctionArgs) {
   if (request.method !== "POST") {
@@ -51,6 +52,12 @@ export async function action({ request }: ActionFunctionArgs) {
         integrationConfiguration: updatedConfig,
       },
     });
+
+    await triggerIntegrationWebhook(
+      integrationAccountId,
+      userId,
+      "mcp.disconnected",
+    );
 
     logger.info("MCP configuration disconnected", {
       integrationAccountId,

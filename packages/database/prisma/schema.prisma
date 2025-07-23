@@ -46,110 +46,6 @@ model AuthorizationCode {
   updatedAt DateTime @updatedAt
 }
 
-model OAuthAuthorizationCode {
-  id String @id @default(cuid())
-
-  code String @unique
-
-  // OAuth2 specific fields
-  clientId            String
-  userId              String
-  redirectUri         String
-  scope               String?
-  state               String?
-  codeChallenge       String?
-  codeChallengeMethod String?
-  expiresAt           DateTime
-  used                Boolean  @default(false)
-
-  // Relations
-  client OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model OAuthClient {
-  id String @id @default(cuid())
-
-  clientId     String  @unique
-  clientSecret String
-  name         String
-  description  String?
-
-  // Redirect URIs (comma-separated for simplicity)
-  redirectUris String
-
-  // Allowed scopes (comma-separated)
-  allowedScopes String @default("read")
-
-  // Grant types allowed
-  grantTypes String @default("authorization_code")
-
-  // PKCE support
-  requirePkce Boolean @default(false)
-
-  // Client metadata
-  logoUrl     String?
-  homepageUrl String?
-
-  // GitHub-style features
-  isActive Boolean @default(true)
-
-  // Workspace relationship (like GitHub orgs)
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-
-  // Created by user (for audit trail)
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
-
-  // Relations
-  oauthAuthorizationCodes OAuthAuthorizationCode[]
-  accessTokens            OAuthAccessToken[]
-  refreshTokens           OAuthRefreshToken[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model OAuthAccessToken {
-  id String @id @default(cuid())
-
-  token     String   @unique
-  clientId  String
-  userId    String
-  scope     String?
-  expiresAt DateTime
-  revoked   Boolean  @default(false)
-
-  // Relations
-  client OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model OAuthRefreshToken {
-  id String @id @default(cuid())
-
-  token     String   @unique
-  clientId  String
-  userId    String
-  scope     String?
-  expiresAt DateTime
-  revoked   Boolean  @default(false)
-
-  // Relations
-  client OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model Conversation {
   id        String    @id @default(uuid())
   createdAt DateTime  @default(now())
@@ -290,6 +186,7 @@ model IntegrationAccount {
   workspace               Workspace               @relation(references: [id], fields: [workspaceId])
   workspaceId             String
   Activity                Activity[]
+  oauthIntegrationGrants  OAuthIntegrationGrant[]
 
   @@unique([accountId, integrationDefinitionId, workspaceId])
 }
@@ -322,6 +219,179 @@ model InvitationCode {
   users User[]
 
   createdAt DateTime @default(now())
+}
+
+model OAuthAuthorizationCode {
+  id String @id @default(cuid())
+
+  code String @unique
+
+  // OAuth2 specific fields
+  clientId            String
+  userId              String
+  redirectUri         String
+  scope               String?
+  state               String?
+  codeChallenge       String?
+  codeChallengeMethod String?
+  expiresAt           DateTime
+  used                Boolean  @default(false)
+
+  // Relations
+  client      OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OAuthAccessToken {
+  id String @id @default(cuid())
+
+  token     String   @unique
+  clientId  String
+  userId    String
+  scope     String?
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+
+  // Relations
+  client      OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OAuthClient {
+  id String @id @default(cuid())
+
+  clientId     String  @unique
+  clientSecret String
+  name         String
+  description  String?
+
+  // Redirect URIs (comma-separated for simplicity)
+  redirectUris String
+
+  // Allowed scopes (comma-separated)
+  allowedScopes String @default("read")
+
+  // Grant types allowed
+  grantTypes String @default("authorization_code")
+
+  // PKCE support
+  requirePkce Boolean @default(false)
+
+  // Client metadata
+  logoUrl     String?
+  homepageUrl String?
+
+  // Integration hub webhook support
+  webhookUrl    String?
+  webhookSecret String?
+
+  // GitHub-style features
+  isActive Boolean @default(true)
+
+  // Workspace relationship (like GitHub orgs)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+
+  // Created by user (for audit trail)
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String
+
+  // Relations
+  oauthAuthorizationCodes OAuthAuthorizationCode[]
+  accessTokens            OAuthAccessToken[]
+  refreshTokens           OAuthRefreshToken[]
+  integrationGrants       OAuthIntegrationGrant[]
+  oAuthClientInstallation OAuthClientInstallation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OAuthClientInstallation {
+  id String @id @default(cuid())
+
+  // The OAuth client being installed
+  oauthClient   OAuthClient @relation(fields: [oauthClientId], references: [id], onDelete: Cascade)
+  oauthClientId String
+
+  // The workspace where it's installed
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+
+  // Installation metadata
+  installedBy   User      @relation(fields: [installedById], references: [id])
+  installedById String
+  installedAt   DateTime  @default(now())
+  uninstalledAt DateTime?
+
+  // Installation status
+  isActive Boolean @default(true)
+
+  // Installation-specific settings
+  settings Json?
+
+  grantedScopes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([oauthClientId, workspaceId])
+}
+
+model OAuthRefreshToken {
+  id String @id @default(cuid())
+
+  token     String   @unique
+  clientId  String
+  userId    String
+  scope     String?
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+
+  // Relations
+  client      OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OAuthIntegrationGrant {
+  id String @id @default(cuid())
+
+  // OAuth client that has access
+  client   OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+
+  // User who granted access
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  // Integration account that was granted
+  integrationAccount   IntegrationAccount @relation(fields: [integrationAccountId], references: [id], onDelete: Cascade)
+  integrationAccountId String
+
+  // When access was granted/revoked
+  grantedAt DateTime  @default(now())
+  revokedAt DateTime?
+  isActive  Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clientId, userId, integrationAccountId])
 }
 
 model PersonalAccessToken {
@@ -429,6 +499,8 @@ model User {
   oauthAccessTokens       OAuthAccessToken[]
   oauthRefreshTokens      OAuthRefreshToken[]
   oauthClientsCreated     OAuthClient[]
+  oauthIntegrationGrants  OAuthIntegrationGrant[]
+  oAuthClientInstallation OAuthClientInstallation[]
   UserUsage               UserUsage?
 }
 
@@ -500,6 +572,10 @@ model Workspace {
   Conversation            Conversation[]
   IngestionRule           IngestionRule[]
   OAuthClient             OAuthClient[]
+  OAuthClientInstallation OAuthClientInstallation[]
+  OAuthAuthorizationCode  OAuthAuthorizationCode[]
+  OAuthAccessToken        OAuthAccessToken[]
+  OAuthRefreshToken       OAuthRefreshToken[]
 }
 
 enum AuthenticationMethod {

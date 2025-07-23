@@ -3,6 +3,7 @@ import { requireUserId } from "~/services/session.server";
 
 import { logger } from "~/services/logger.service";
 import { prisma } from "~/db.server";
+import { triggerIntegrationWebhook } from "~/trigger/webhooks/integration-webhook-delivery";
 
 export async function action({ request }: ActionFunctionArgs) {
   if (request.method !== "POST") {
@@ -28,6 +29,12 @@ export async function action({ request }: ActionFunctionArgs) {
         deleted: null,
       },
     });
+
+    await triggerIntegrationWebhook(
+      integrationAccountId,
+      userId,
+      "integration.disconnected",
+    );
 
     logger.info("Integration account disconnected (soft deleted)", {
       integrationAccountId,

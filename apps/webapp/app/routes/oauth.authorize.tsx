@@ -4,7 +4,7 @@ import {
   redirect,
 } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
-import { getUser } from "~/services/session.server";
+import { getUser, requireWorkpace } from "~/services/session.server";
 import {
   oauth2Service,
   OAuth2Errors,
@@ -14,7 +14,8 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Arrows } from "~/components/icons";
 import Logo from "~/components/logo/logo";
-import { AlignLeft, LayoutGrid, Pen } from "lucide-react";
+import { AlignLeft, LayoutGrid, Pen, User, Mail, Shield, Database } from "lucide-react";
+
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Check if user is authenticated
@@ -31,12 +32,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   let scopeParam = url.searchParams.get("scope") || undefined;
 
-  // If scope is present, remove spaces after commas (e.g., "read, write" -> "read,write")
+  // If scope is present, normalize it to comma-separated format
+  // Handle both space-separated (from URL encoding) and comma-separated scopes
   if (scopeParam) {
-    scopeParam = scopeParam
-      .split(",")
-      .map((s) => s.trim())
-      .join(",");
+    // First, try splitting by spaces (common in OAuth2 URLs)
+    let scopes = scopeParam.split(/\s+/).filter(s => s.length > 0);
+    
+    // If no spaces found, try splitting by commas
+    if (scopes.length === 1) {
+      scopes = scopeParam.split(",").map(s => s.trim()).filter(s => s.length > 0);
+    }
+    
+    scopeParam = scopes.join(",");
   } else {
     throw new Error("Scope is not found");
   }
@@ -77,6 +84,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       );
     }
 
+    // Validate scopes
+    if (!oauth2Service.validateScopes(client, params.scope || '')) {
+      return redirect(
+        `${params.redirect_uri}?error=${OAuth2Errors.INVALID_SCOPE}&error_description=Invalid scope${params.state ? `&state=${params.state}` : ""}`,
+      );
+    }
     return {
       user,
       client,
@@ -91,6 +104,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await getUser(request);
+  const workspace = await requireWorkpace(request);
 
   if (!user) {
     return redirect("/login");
@@ -136,7 +150,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         state: params.state,
         codeChallenge: params.code_challenge,
         codeChallengeMethod: params.code_challenge_method,
-      });
+        workspaceId: workspace.id,
+      });      
       // Redirect back to client with authorization code
       const redirectUrl = new URL(params.redirect_uri);
       redirectUrl.searchParams.set("code", authCode);
@@ -158,14 +173,45 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function OAuthAuthorize() {
-  const { user, client, params } = useLoaderData<typeof loader>();
+  const { user, client, params   } = useLoaderData<typeof loader>();
 
-  const getIcon = (scope: string) => {
-    if (scope === "read") {
-      return <AlignLeft size={16} />;
+
+  const getScopeIcon = (scope: string) => {
+    switch (scope) {
+      case "profile":
+        return <User size={16} />;
+      case "email":
+        return <Mail size={16} />;
+      case "openid":
+        return <Shield size={16} />;
+      case "integration":
+        return <Database size={16} />;
+      case "read":
+        return <Pen size={16} />;
+      case "write":
+        return <Pen size={16} />;
+      default:
+        return <AlignLeft size={16} />;
     }
+  };
 
-    return <Pen size={16} />;
+  const getScopeDescription = (scope: string) => {
+    switch (scope) {
+      case "profile":
+        return "View your basic profile information";
+      case "email":
+        return "View your email address";
+      case "openid":
+        return "Verify your identity using OpenID Connect";
+      case "integration":
+        return "Access and manage your workspace integrations";
+      case "read":
+        return "Read access to your account";
+      case "write":
+        return "Write access to your account";
+      default:
+        return `Access to ${scope}`;
+    }
   };
 
   return (
@@ -192,14 +238,15 @@ export default function OAuthAuthorize() {
                   {client.name} is requesting access
                 </p>
                 <p className="text-muted-foreground text-sm">
-                  Authenticating with your {user.name} workspace
+                  Authenticating with your {user.name} account
                 </p>
               </div>
             </div>
 
             <p className="text-muted-foreground mb-2 text-sm">Permissions</p>
             <ul className="text-muted-foreground text-sm">
-              {params.scope?.split(" ").map((scope, index, arr) => {
+              {params.scope?.split(",").map((scope, index, arr) => {
+                const trimmedScope = scope.trim();
                 const isFirst = index === 0;
                 const isLast = index === arr.length - 1;
                 return (
@@ -207,10 +254,9 @@ export default function OAuthAuthorize() {
                     key={index}
                     className={`flex items-center gap-2 border-x border-t border-gray-300 p-2 ${isLast ? "border-b" : ""} ${isFirst ? "rounded-tl-md rounded-tr-md" : ""} ${isLast ? "rounded-br-md rounded-bl-md" : ""} `}
                   >
-                    <div>{getIcon(scope)}</div>
+                    <div>{getScopeIcon(trimmedScope)}</div>
                     <div>
-                      {scope.charAt(0).toUpperCase() + scope.slice(1)} access to
-                      your workspace
+                      {getScopeDescription(trimmedScope)}
                     </div>
                   </li>
                 );
@@ -248,7 +294,7 @@ export default function OAuthAuthorize() {
                   name="code_challenge_method"
                   value={params.code_challenge_method}
                 />
-              )}
+              )}              
 
               <div className="flex justify-end space-x-3">
                 <Button

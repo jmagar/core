@@ -67,7 +67,7 @@ export async function authenticateApiKeyWithFailure(
         apiKey,
         type: "OAUTH2",
         userId: accessToken.user.id,
-        scopes: accessToken.scope ? accessToken.scope.split(' ') : undefined,
+        scopes: accessToken.scope ? accessToken.scope.split(" ") : undefined,
         oauth2: {
           clientId: accessToken.client.clientId,
           scope: accessToken.scope,
@@ -129,4 +129,49 @@ export function getApiKeyResult(apiKey: string): {
   type: "PRIVATE";
 } {
   return { apiKey, type: "PRIVATE" };
+}
+
+/**
+ * Authenticate OAuth2 requests specifically
+ * Returns structured result for OAuth endpoints
+ */
+export async function authenticateOAuthRequest(
+  request: Request,
+  scopes?: string[],
+): Promise<{
+  success: boolean;
+  user?: { id: string };
+  clientId?: string;
+  error?: string;
+}> {
+  const apiKey = getApiKeyFromRequest(request);
+
+  if (!apiKey) {
+    return {
+      success: false,
+      error: "Missing authorization header",
+    };
+  }
+
+  // Only allow OAuth2 tokens for OAuth API endpoints
+  try {
+    const accessToken = await oauth2Service.validateAccessToken(apiKey, scopes);
+    if (accessToken) {
+      return {
+        success: true,
+        user: { id: accessToken.user.id },
+        clientId: accessToken.client.clientId,
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: "Invalid or expired access token",
+    };
+  }
+
+  return {
+    success: false,
+    error: "Invalid access token",
+  };
 }

@@ -1,9 +1,11 @@
 import { queue, task } from "@trigger.dev/sdk";
 import { PrismaClient } from "@prisma/client";
-
 import { logger } from "~/services/logger.service";
 import { WebhookDeliveryStatus } from "@core/database";
-import crypto from "crypto";
+import {
+  deliverWebhook,
+  prepareWebhookTargets,
+} from "./webhook-delivery-utils";
 
 const prisma = new PrismaClient();
 
@@ -84,117 +86,60 @@ export const webhookDeliveryTask = task({
         },
       };
 
-      const payloadString = JSON.stringify(webhookPayload);
-      const deliveryResults = [];
+      // Convert webhooks to targets using common utils
+      const targets = prepareWebhookTargets(webhooks);
 
-      // Deliver to each webhook
-      for (const webhook of webhooks) {
-        const deliveryId = crypto.randomUUID();
+      // Use common delivery function
+      const result = await deliverWebhook({
+        payload: webhookPayload,
+        targets,
+        eventType: "activity.created",
+      });
 
-        try {
-          // Create delivery log entry
-          const deliveryLog = await prisma.webhookDeliveryLog.create({
-            data: {
-              webhookConfigurationId: webhook.id,
-              activityId: activity.id,
-              status: WebhookDeliveryStatus.FAILED, // Will update if successful
-            },
-          });
+      // Log delivery results to database using createMany for better performance
+      const logEntries = webhooks
+        .map((webhook, index) => {
+          const deliveryResult = result.deliveryResults[index];
+          if (!deliveryResult) return null;
 
-          // Prepare headers
-          const headers: Record<string, string> = {
-            "Content-Type": "application/json",
-            "User-Agent": "Echo-Webhooks/1.0",
-            "X-Webhook-Delivery": deliveryId,
-            "X-Webhook-Event": "activity.created",
+          return {
+            webhookConfigurationId: webhook.id,
+            activityId: activity.id,
+            status: deliveryResult.success
+              ? WebhookDeliveryStatus.SUCCESS
+              : WebhookDeliveryStatus.FAILED,
+            responseStatusCode: deliveryResult.status,
+            responseBody: deliveryResult.responseBody?.slice(0, 1000),
+            error: deliveryResult.error,
           };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
-          // Add HMAC signature if secret is configured
-          if (webhook.secret) {
-            const signature = crypto
-              .createHmac("sha256", webhook.secret)
-              .update(payloadString)
-              .digest("hex");
-            headers["X-Hub-Signature-256"] = `sha256=${signature}`;
-          }
-
-          // Make the HTTP request
-          const response = await fetch(webhook.url, {
-            method: "POST",
-            headers,
-            body: payloadString,
-            signal: AbortSignal.timeout(30000), // 30 second timeout
+      if (logEntries.length > 0) {
+        try {
+          await prisma.webhookDeliveryLog.createMany({
+            data: logEntries,
           });
-
-          const responseBody = await response.text().catch(() => "");
-
-          // Update delivery log with results
-          await prisma.webhookDeliveryLog.update({
-            where: { id: deliveryLog.id },
-            data: {
-              status: response.ok
-                ? WebhookDeliveryStatus.SUCCESS
-                : WebhookDeliveryStatus.FAILED,
-              responseStatusCode: response.status,
-              responseBody: responseBody.slice(0, 1000), // Limit response body length
-              error: response.ok
-                ? null
-                : `HTTP ${response.status}: ${response.statusText}`,
-            },
+        } catch (error) {
+          logger.error("Failed to log webhook deliveries", {
+            error,
+            count: logEntries.length,
           });
-
-          deliveryResults.push({
-            webhookId: webhook.id,
-            success: response.ok,
-            statusCode: response.status,
-            error: response.ok
-              ? null
-              : `HTTP ${response.status}: ${response.statusText}`,
-          });
-
-          logger.log(`Webhook delivery to ${webhook.url}: ${response.status}`);
-        } catch (error: any) {
-          // Update delivery log with error
-          const deliveryLog = await prisma.webhookDeliveryLog.findFirst({
-            where: {
-              webhookConfigurationId: webhook.id,
-              activityId: activity.id,
-            },
-            orderBy: { createdAt: "desc" },
-          });
-
-          if (deliveryLog) {
-            await prisma.webhookDeliveryLog.update({
-              where: { id: deliveryLog.id },
-              data: {
-                status: WebhookDeliveryStatus.FAILED,
-                error: error.message,
-              },
-            });
-          }
-
-          deliveryResults.push({
-            webhookId: webhook.id,
-            success: false,
-            error: error.message,
-          });
-
-          logger.error(`Error delivering webhook to ${webhook.url}:`, error);
         }
       }
 
-      const successCount = deliveryResults.filter((r) => r.success).length;
-      const totalCount = deliveryResults.length;
+      const successCount = result.summary.successful;
+      const totalCount = result.summary.total;
 
       logger.log(
         `Webhook delivery completed: ${successCount}/${totalCount} successful`,
       );
 
       return {
-        success: true,
+        success: result.success,
         delivered: successCount,
         total: totalCount,
-        results: deliveryResults,
+        results: result.deliveryResults,
       };
     } catch (error: any) {
       logger.error(
