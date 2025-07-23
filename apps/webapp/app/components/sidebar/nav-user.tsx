@@ -9,10 +9,9 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuItem, useSidebar } from "../ui/sidebar";
-import type { User } from "~/models/user.server";
 import { Button } from "../ui";
 import { useNavigate } from "@remix-run/react";
-import { ExtendedUser } from "~/hooks/useUser";
+import { type ExtendedUser } from "~/hooks/useUser";
 
 export function NavUser({ user }: { user: ExtendedUser }) {
   const { isMobile } = useSidebar();
