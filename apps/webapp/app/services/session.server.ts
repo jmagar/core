@@ -1,5 +1,5 @@
 import { redirect } from "@remix-run/node";
-import { getUserById } from "~/models/user.server";
+import { getUserById, getUserLeftCredits } from "~/models/user.server";
 import { sessionStorage } from "./sessionStorage.server";
 import { getImpersonationId } from "./impersonation.server";
 import { getWorkspaceByUser } from "~/models/workspace.server";
@@ -23,6 +23,14 @@ export async function getUser(request: Request) {
   if (user) return user;
 
   throw await logout(request);
+}
+
+export async function getUserRemainingCount(request: Request) {
+  const userId = await getUserId(request);
+  if (userId === undefined) return null;
+
+  const userUsage = await getUserLeftCredits(userId);
+  if (userUsage) return userUsage;
 }
 
 export async function requireUserId(request: Request, redirectTo?: string) {

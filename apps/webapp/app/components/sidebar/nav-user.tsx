@@ -12,8 +12,9 @@ import { SidebarMenu, SidebarMenuItem, useSidebar } from "../ui/sidebar";
 import type { User } from "~/models/user.server";
 import { Button } from "../ui";
 import { useNavigate } from "@remix-run/react";
+import { ExtendedUser } from "~/hooks/useUser";
 
-export function NavUser({ user }: { user: User }) {
+export function NavUser({ user }: { user: ExtendedUser }) {
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
 
@@ -38,9 +39,14 @@ export function NavUser({ user }: { user: User }) {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">
+                    Harshith Mullapudi
+                  </span>
                   <span className="text-muted-foreground truncate text-xs">
                     {user.email}
+                  </span>
+                  <span className="text-muted-foreground truncate text-xs">
+                    Credits: {user.availableCredits}
                   </span>
                 </div>
               </div>

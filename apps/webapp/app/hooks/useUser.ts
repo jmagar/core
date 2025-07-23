@@ -4,6 +4,10 @@ import { type loader } from "~/root";
 import { useChanged } from "./useChanged";
 import { useTypedMatchesData } from "./useTypedMatchData";
 
+export interface ExtendedUser extends User {
+  availableCredits?: number;
+}
+
 export function useIsImpersonating(matches?: UIMatch[]) {
   const data = useTypedMatchesData({
     id: "routes/_app.workspace.$workspaceSlug",
@@ -12,16 +16,18 @@ export function useIsImpersonating(matches?: UIMatch[]) {
   return data?.isImpersonating === true;
 }
 
-export function useOptionalUser(matches?: UIMatch[]): User | undefined {
+export function useOptionalUser(matches?: UIMatch[]): ExtendedUser | undefined {
   const routeMatch = useTypedMatchesData<typeof loader>({
     id: "root",
     matches,
   });
 
-  return routeMatch?.user ?? undefined;
+  return routeMatch?.user
+    ? { ...routeMatch?.user, availableCredits: routeMatch?.availableCredits }
+    : undefined;
 }
 
-export function useUser(matches?: UIMatch[]): User {
+export function useUser(matches?: UIMatch[]): ExtendedUser {
   const maybeUser = useOptionalUser(matches);
   if (!maybeUser) {
     throw new Error(
@@ -31,7 +37,9 @@ export function useUser(matches?: UIMatch[]): User {
   return maybeUser;
 }
 
-export function useUserChanged(callback: (user: User | undefined) => void) {
+export function useUserChanged(
+  callback: (user: ExtendedUser | undefined) => void,
+) {
   useChanged(useOptionalUser, callback);
 }
 

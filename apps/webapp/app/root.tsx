@@ -25,7 +25,7 @@ import {
   type ToastMessage,
 } from "./models/message.server";
 import { env } from "./env.server";
-import { getUser } from "./services/session.server";
+import { getUser, getUserRemainingCount } from "./services/session.server";
 import { usePostHog } from "./hooks/usePostHog";
 import {
   AppContainer,
@@ -49,10 +49,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { getTheme } = await themeSessionResolver(request);
 
   const posthogProjectKey = env.POSTHOG_PROJECT_KEY;
+  const user = await getUser(request);
+  const usage = await getUserRemainingCount(request);
 
   return typedjson(
     {
-      user: await getUser(request),
+      user: user,
+      availableCredits: usage?.availableCredits ?? 0,
       toastMessage,
       theme: getTheme(),
       posthogProjectKey,

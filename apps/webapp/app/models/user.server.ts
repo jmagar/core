@@ -177,6 +177,18 @@ export async function getUserById(id: User["id"]) {
   };
 }
 
+export async function getUserLeftCredits(id: User["id"]) {
+  const userUsage = await prisma.userUsage.findFirst({ where: { userId: id } });
+
+  if (!userUsage) {
+    return null;
+  }
+
+  return {
+    ...userUsage,
+  };
+}
+
 export async function getUserByEmail(email: User["email"]) {
   return prisma.user.findUnique({ where: { email } });
 }
