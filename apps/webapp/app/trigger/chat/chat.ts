@@ -91,7 +91,6 @@ export const chat = task({
       let conversationStatus = "success";
       for await (const step of stream) {
         if (step.type === "STEP") {
-          creditForChat += 1;
           const stepDetails = JSON.parse(step.message as string);
 
           if (stepDetails.skillStatus === ActionStatusEnum.TOOL_REQUEST) {
@@ -123,7 +122,7 @@ export const chat = task({
         payload.conversationId,
       );
 
-      usageCredits && (await updateUserCredits(usageCredits, creditForChat));
+      usageCredits && (await updateUserCredits(usageCredits, 1));
 
       if (init?.tokenId) {
         await deletePersonalAccessToken(init.tokenId);

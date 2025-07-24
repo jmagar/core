@@ -156,6 +156,11 @@ export async function findOrCreateGoogleUser({
       authIdentifier,
       email,
       authenticationMethod: "GOOGLE",
+      UserUsage: {
+        create: {
+          availableCredits: 200,
+        },
+      },
     },
   });
 
