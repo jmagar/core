@@ -271,10 +271,33 @@ export const fetchAndSaveStdioIntegrations = async () => {
               continue;
             }
 
-            const content = await response.text();
+            // Check if the response is binary (executable) or text
+            const contentType = response.headers.get("content-type");
+            const isBinary =
+              contentType &&
+              (contentType.includes("application/octet-stream") ||
+                contentType.includes("application/executable") ||
+                contentType.includes("application/x-executable") ||
+                contentType.includes("binary") ||
+                !contentType.includes("text/"));
+
+            let content: string | Buffer;
+
+            if (isBinary) {
+              // Handle binary files
+              const arrayBuffer = await response.arrayBuffer();
+              content = Buffer.from(arrayBuffer);
+            } else {
+              // Handle text files
+              content = await response.text();
+            }
 
             // Save the content to the target file
-            fs.writeFileSync(targetFile, content);
+            if (typeof content === "string") {
+              fs.writeFileSync(targetFile, content);
+            } else {
+              fs.writeFileSync(targetFile, content);
+            }
 
             // Make the file executable if it's a script
             if (process.platform !== "win32") {

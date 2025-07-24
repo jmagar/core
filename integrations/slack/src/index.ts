@@ -10,7 +10,7 @@ import {
 export async function run(eventPayload: IntegrationEventPayload) {
   switch (eventPayload.event) {
     case IntegrationEventType.SETUP:
-      return await integrationCreate(eventPayload.eventBody, eventPayload.integrationDefinition);
+      return await integrationCreate(eventPayload.eventBody);
 
     case IntegrationEventType.IDENTIFY:
       return eventPayload.eventBody.event.user;
@@ -40,12 +40,10 @@ class SlackCLI extends IntegrationCLI {
       description: 'Connect your workspace to Slack. Run your workflows from slack bookmarks',
       icon: 'slack',
       mcp: {
-        command: 'npx',
-        args: ['-y', '@modelcontextprotocol/server-slack'],
+        command: 'slack-mcp-server',
+        args: [],
         env: {
-          SLACK_BOT_TOKEN: '${config:access_token}',
-          SLACK_TEAM_ID: '${config:team_id}',
-          SLACK_CHANNEL_IDS: '${config:channel_ids}',
+          SLACK_MCP_XOXP_TOKEN: '${config:access_token}',
         },
       },
       auth: {

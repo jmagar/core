@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import React from "react";
 
 import { cn } from "../../lib/utils";
-import { Loader } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center whitespace-nowrap rounded transition-colors focus-visible:outline-none focus-visible:shadow-none disabled:pointer-events-none disabled:opacity-50 dark:focus-visible:ring-slate-300",
@@ -78,7 +78,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
         disabled={isLoading ?? disabled}
       >
-        {isLoading ? <Loader className="mr-2 animate-spin" /> : <></>}
+        {isLoading ? <LoaderCircle className="mr-2 animate-spin" /> : <></>}
         {children}
       </Comp>
     );

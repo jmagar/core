@@ -32,15 +32,18 @@ services:
     ports:
       - "3033:3000"
     depends_on:
-      - postgres
-      - redis
-      - neo4j
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      neo4j:
+        condition: service_healthy
     networks:
       - core
 
   postgres:
     container_name: core-postgres
-    image: postgres:15
+    image: redplanethq/postgres:0.1.0
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -51,6 +54,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - core
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     container_name: core-redis
@@ -72,6 +81,12 @@ services:
       - neo4j_data:/data
     networks:
       - core
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u $NEO4J_USERNAME -p $NEO4J_PASSWORD 'RETURN 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
 networks:
   core:

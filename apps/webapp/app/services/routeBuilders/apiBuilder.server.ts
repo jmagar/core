@@ -635,11 +635,13 @@ async function wrapResponse(
 }
 
 // New hybrid authentication types and functions
-export type HybridAuthenticationResult = ApiAuthenticationResultSuccess | {
-  ok: true;
-  type: "COOKIE";
-  userId: string;
-};
+export type HybridAuthenticationResult =
+  | ApiAuthenticationResultSuccess
+  | {
+      ok: true;
+      type: "COOKIE";
+      userId: string;
+    };
 
 async function authenticateHybridRequest(
   request: Request,
@@ -766,10 +768,9 @@ export function createHybridActionApiRoute<
     }
 
     try {
-      const authenticationResult = await authenticateHybridRequest(
-        request,
-        { allowJWT },
-      );
+      const authenticationResult = await authenticateHybridRequest(request, {
+        allowJWT,
+      });
 
       if (!authenticationResult) {
         return await wrapResponse(

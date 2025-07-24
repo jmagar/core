@@ -691,6 +691,50 @@ export class OAuth2Service {
       scope: storedRefreshToken.scope || undefined,
     };
   }
+
+  async createDynamicClient(params: {
+    name: string;
+    redirectUris: string[];
+    grantTypes?: string[];
+    clientType?: string;
+    responseTypes?: string[];
+    requirePkce?: boolean;
+    allowedScopes?: string;
+    description?: string;
+    workspaceId?: string;
+    createdById?: string;
+  }) {
+    // Generate secure client credentials
+    const clientId = crypto.randomBytes(16).toString("hex");
+    const clientSecret = crypto.randomBytes(32).toString("hex");
+
+    // Default values for MCP clients
+    const grantTypes = params.grantTypes || [
+      "authorization_code",
+      "refresh_token",
+    ];
+    const allowedScopes = params.allowedScopes || "mcp";
+    const requirePkce = params.requirePkce ?? true; // Default to true for security
+
+    const client = await prisma.oAuthClient.create({
+      data: {
+        clientId,
+        clientSecret,
+        name: params.name,
+        description:
+          params.description ||
+          `Dynamically registered ${params.clientType || "client"}`,
+        redirectUris: params.redirectUris.join(","),
+        grantTypes: grantTypes.join(","),
+        allowedScopes,
+        requirePkce,
+        clientType: "mcp",
+        isActive: true,
+      },
+    });
+
+    return client;
+  }
 }
 
 export const oauth2Service = new OAuth2Service();

@@ -287,6 +287,8 @@ model OAuthClient {
   // PKCE support
   requirePkce Boolean @default(false)
 
+  clientType String @default("regular")
+
   // Client metadata
   logoUrl     String?
   homepageUrl String?
@@ -299,12 +301,12 @@ model OAuthClient {
   isActive Boolean @default(true)
 
   // Workspace relationship (like GitHub orgs)
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String?
 
   // Created by user (for audit trail)
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+  createdById String?
 
   // Relations
   oauthAuthorizationCodes OAuthAuthorizationCode[]

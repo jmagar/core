@@ -1,9 +1,6 @@
-import axios from 'axios';
-
 export async function integrationCreate(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any,
-  integrationDefinition: any,
 ) {
   const { oauthResponse } = data;
   const integrationConfiguration = {
@@ -14,14 +11,14 @@ export async function integrationCreate(
     scope: oauthResponse.authed_user.scope,
   };
 
-  const payload = {
-    settings: {},
-    accountId: integrationConfiguration.userId,
-    config: integrationConfiguration,
-    integrationDefinitionId: integrationDefinition.id,
-  };
-
-  const integrationAccount = (await axios.post(`/api/v1/integration_account`, payload)).data;
-
-  return integrationAccount;
+  return [
+    {
+      type: 'account',
+      data: {
+        settings: {},
+        accountId: integrationConfiguration.userId,
+        config: integrationConfiguration,
+      },
+    },
+  ];
 }

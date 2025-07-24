@@ -5,6 +5,7 @@ import {
   useCallback,
   useImperativeHandle,
   forwardRef,
+  useState,
 } from "react";
 import Sigma from "sigma";
 import GraphologyGraph from "graphology";
@@ -186,10 +187,6 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
           }
           groups[key].relations.push(triplet.relation.value);
           groups[key].relationData.push(triplet.relation);
-          groups[key].label = groups[key].relations
-            .join(", ")
-            .replace("HAS_", "")
-            .toLowerCase();
 
           return groups;
         },
@@ -216,7 +213,7 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
       });
       graph.forEachEdge((edge) => {
         graph.setEdgeAttribute(edge, "highlighted", false);
-        graph.setEdgeAttribute(edge, "color", theme.link.stroke);
+        graph.setEdgeAttribute(edge, "color", "#0000001A");
       });
       selectedNodeRef.current = null;
       selectedEdgeRef.current = null;
@@ -271,6 +268,71 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
 
     useImperativeHandle(ref, () => graphRefMethods.current);
 
+    // Calculate optimal ForceAtlas2 parameters based on graph properties
+    const calculateOptimalParameters = useCallback((graph: GraphologyGraph) => {
+      const nodeCount = graph.order;
+      const edgeCount = graph.size;
+
+      if (nodeCount === 0)
+        return { scalingRatio: 30, gravity: 5, iterations: 600 };
+
+      // Calculate graph density (0 to 1)
+      const maxPossibleEdges = (nodeCount * (nodeCount - 1)) / 2;
+      const density = maxPossibleEdges > 0 ? edgeCount / maxPossibleEdges : 0;
+
+      // Calculate optimal scaling ratio based on node count
+      // More nodes = need more space to prevent overcrowding
+      let scalingRatio: number;
+      if (nodeCount < 10) {
+        scalingRatio = 15; // Tight for small graphs
+      } else if (nodeCount < 50) {
+        scalingRatio = 20 + (nodeCount - 10) * 0.5; // Gradual increase
+      } else if (nodeCount < 200) {
+        scalingRatio = 40 + (nodeCount - 50) * 0.2; // Slower increase
+      } else {
+        scalingRatio = Math.min(80, 70 + (nodeCount - 200) * 0.05); // Cap at 80
+      }
+
+      // Calculate optimal gravity based on density and node count
+      let gravity: number;
+      if (density > 0.3) {
+        // Dense graphs need less gravity to prevent overcrowding
+        gravity = 1 + density * 2;
+      } else if (density > 0.1) {
+        // Medium density graphs
+        gravity = 3 + density * 5;
+      } else {
+        // Sparse graphs need more gravity to keep components together
+        gravity = Math.min(8, 5 + (1 - density) * 3);
+      }
+
+      // Adjust gravity based on node count
+      if (nodeCount < 20) {
+        gravity *= 1.5; // Smaller graphs benefit from stronger gravity
+      } else if (nodeCount > 100) {
+        gravity *= 0.8; // Larger graphs need gentler gravity
+      }
+
+      // Calculate iterations based on complexity
+      const complexity = nodeCount + edgeCount;
+      let iterations: number;
+      if (complexity < 50) {
+        iterations = 400;
+      } else if (complexity < 200) {
+        iterations = 600;
+      } else if (complexity < 500) {
+        iterations = 800;
+      } else {
+        iterations = Math.min(1200, 1000 + complexity * 0.2);
+      }
+
+      return {
+        scalingRatio: Math.round(scalingRatio * 10) / 10,
+        gravity: Math.round(gravity * 10) / 10,
+        iterations: Math.round(iterations),
+      };
+    }, []);
+
     useEffect(() => {
       if (isInitializedRef.current || !containerRef.current) return;
       isInitializedRef.current = true;
@@ -303,25 +365,28 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
         // });
         // layout.start();
 
+        // Calculate optimal parameters for this graph
+        const optimalParams = calculateOptimalParameters(graph);
+
         const settings = forceAtlas2.inferSettings(graph);
         forceAtlas2.assign(graph, {
-          iterations: 600,
+          iterations: optimalParams.iterations,
           settings: {
             ...settings,
             barnesHutOptimize: true,
-            strongGravityMode: false,
-            gravity: 1,
-            scalingRatio: 10,
-            slowDown: 5,
+            strongGravityMode: true,
+            gravity: optimalParams.gravity,
+            scalingRatio: optimalParams.scalingRatio,
+            slowDown: 3,
           },
         });
 
         noverlap.assign(graph, {
-          maxIterations: 150,
+          maxIterations: 200,
           settings: {
-            margin: 5,
-            expansion: 1.1,
-            gridSize: 20,
+            margin: 10,
+            expansion: 1.5,
+            gridSize: 30,
           },
         });
       }

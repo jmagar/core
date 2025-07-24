@@ -1,7 +1,8 @@
-import { intro, outro, note, log, confirm } from "@clack/prompts";
+import { intro, outro, note, log } from "@clack/prompts";
 import { executeCommandInteractive } from "../utils/docker-interactive.js";
 import { printCoreBrainLogo } from "../utils/ascii.js";
 import path from "path";
+import * as fs from "fs";
 
 export async function startCommand() {
   // Display the CORE brain logo
@@ -10,9 +11,19 @@ export async function startCommand() {
   intro("🚀 Starting Core Development Environment");
 
   // Step 1: Confirm this is the Core repository
-  const isCoreRepo = await confirm({
-    message: "Are you currently in the Core repository directory?",
-  });
+  // Check if package.json name has "core" in it, else exit
+  const pkgPath = path.join(process.cwd(), "package.json");
+  let isCoreRepo = false;
+  try {
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+      if (typeof pkg.name === "string" && pkg.name.includes("core")) {
+        isCoreRepo = true;
+      }
+    }
+  } catch (err) {
+    // ignore, will prompt below
+  }
 
   if (!isCoreRepo) {
     note(

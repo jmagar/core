@@ -6,7 +6,7 @@ const ONE_DAY = 60 * 60 * 24;
 
 export const { commitSession, getSession } = createCookieSessionStorage({
   cookie: {
-    name: "__redirectTo",
+    name: "__redirectTo__core",
     path: "/",
     httpOnly: true,
     sameSite: "lax",

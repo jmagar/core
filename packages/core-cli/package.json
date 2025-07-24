@@ -1,6 +1,6 @@
 {
   "name": "@redplanethq/core",
-  "version": "0.1.6",
+  "version": "0.1.8",
   "description": "A Command-Line Interface for Core",
   "type": "module",
   "license": "MIT",

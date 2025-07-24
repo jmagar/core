@@ -5,10 +5,11 @@
   "icon": "slack",
   "mcp": {
     "type": "stdio",
-    "url": "",
-    "args": [ ],
+    "url": "https://integrations.heysol.ai/slack/mcp/slack-mcp-server",
+    "args": [],
     "env": {
-      "SLACK_MCP_XOXP_TOKEN": "${config:access_token}"
+      "SLACK_MCP_XOXP_TOKEN": "${config:access_token}",
+      "SLACK_MCP_ADD_MESSAGE_TOOL": true
     }
   },
   "auth": {

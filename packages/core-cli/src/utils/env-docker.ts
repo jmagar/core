@@ -1,7 +1,8 @@
 import path from "path";
 
-import dotenv from "dotenv";
-import dotenvExpand from "dotenv-expand";
+import { parse } from "dotenv";
+import { expand } from "dotenv-expand";
+import * as fs from "fs";
 
 /**
  * Reads environment variables from .env file and replaces localhost URLs with host.docker.internal
@@ -12,8 +13,10 @@ export async function getDockerCompatibleEnvVars(rootDir: string): Promise<Recor
 
   try {
     // Use dotenv to parse and expand variables
-    const envVarsExpand =
-      dotenvExpand.expand(dotenv.config({ path: envPath, processEnv: {} })).parsed || {};
+    const file = fs.readFileSync(envPath);
+
+    const parsed = parse(file);
+    const envVarsExpand = expand({ parsed, processEnv: {} }).parsed || {};
 
     const getEnvValue = (key: string): string => {
       return envVarsExpand[key] || "";

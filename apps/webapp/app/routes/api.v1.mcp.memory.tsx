@@ -35,6 +35,9 @@ setInterval(
 
 // MCP request body schema
 const MCPRequestSchema = z.object({}).passthrough();
+const SourceParams = z.object({
+  source: z.string().optional(),
+});
 
 // Search parameters schema for MCP tool
 const SearchParamsSchema = z.object({
@@ -55,9 +58,12 @@ const handleMCPRequest = async (
   request: Request,
   body: any,
   authentication: any,
+  params: z.infer<typeof SourceParams>,
 ) => {
   const sessionId = request.headers.get("mcp-session-id") as string | undefined;
-  const source = request.headers.get("source") as string | undefined;
+  const source =
+    (request.headers.get("source") as string | undefined) ??
+    (params.source as string | undefined);
 
   if (!source) {
     return json(
@@ -241,17 +247,23 @@ const handleDelete = async (request: Request, authentication: any) => {
 const { action, loader } = createHybridActionApiRoute(
   {
     body: MCPRequestSchema,
+    searchParams: SourceParams,
     allowJWT: true,
     authorization: {
       action: "mcp",
     },
     corsStrategy: "all",
   },
-  async ({ body, authentication, request }) => {
+  async ({ body, authentication, request, searchParams }) => {
     const method = request.method;
 
     if (method === "POST") {
-      return await handleMCPRequest(request, body, authentication);
+      return await handleMCPRequest(
+        request,
+        body,
+        authentication,
+        searchParams,
+      );
     } else if (method === "DELETE") {
       return await handleDelete(request, authentication);
     } else {

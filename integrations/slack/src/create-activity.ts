@@ -3,6 +3,23 @@ import axios from 'axios';
 
 import { getUserDetails } from './utils';
 
+interface SlackActivityCreateParams {
+  text: string;
+  sourceURL: string;
+}
+/**
+ * Creates an activity message based on Linear data
+ */
+function createActivityMessage(params: SlackActivityCreateParams) {
+  return {
+    type: 'activity',
+    data: {
+      text: params.text,
+      sourceURL: params.sourceURL,
+    },
+  };
+}
+
 async function getMessage(accessToken: string, channel: string, ts: string) {
   const result = await axios.get('https://slack.com/api/conversations.history', {
     headers: {
@@ -64,7 +81,7 @@ export const createActivityEvent = async (
       taskId: null,
     };
 
-    await axios.post('/api/v1/activity', activity);
+    return createActivityMessage(activity);
   }
 
   if (eventData.event.type === 'reaction_added' && eventData.event.reaction === 'eyes') {
@@ -120,7 +137,7 @@ export const createActivityEvent = async (
       integrationAccountId: config.integrationAccountId,
     };
 
-    await axios.post('/api/v1/activity', activity);
+    return createActivityMessage(activity);
   }
   return { message: `Processed activity from slack` };
 };

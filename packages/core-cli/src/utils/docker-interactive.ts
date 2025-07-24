@@ -10,6 +10,8 @@ export interface CommandOptions {
 
 export function executeCommandInteractive(command: string, options: CommandOptions): Promise<void> {
   return new Promise((resolve, reject) => {
+    console.log(process.env);
+
     const s = spinner();
     s.start(options.message);
 
@@ -27,7 +29,7 @@ export function executeCommandInteractive(command: string, options: CommandOptio
       cwd: options.cwd,
       stdio: options.showOutput ? ["ignore", "pipe", "pipe"] : "ignore",
       detached: false,
-      env: options.env ? { ...process.env, ...options.env } : {},
+      env: options.env ? { ...process.env, ...options.env } : { ...process.env },
     });
 
     let output = "";

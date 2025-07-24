@@ -14,8 +14,17 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Arrows } from "~/components/icons";
 import Logo from "~/components/logo/logo";
-import { AlignLeft, LayoutGrid, Pen, User, Mail, Shield, Database } from "lucide-react";
-
+import {
+  AlignLeft,
+  LayoutGrid,
+  Pen,
+  User,
+  Mail,
+  Shield,
+  Database,
+  LoaderCircle,
+} from "lucide-react";
+import { useState } from "react";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Check if user is authenticated
@@ -30,19 +39,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const url = new URL(request.url);
-  let scopeParam = url.searchParams.get("scope") || undefined;
+  let scopeParam = url.searchParams.get("scope") || "mcp";
 
   // If scope is present, normalize it to comma-separated format
   // Handle both space-separated (from URL encoding) and comma-separated scopes
   if (scopeParam) {
     // First, try splitting by spaces (common in OAuth2 URLs)
-    let scopes = scopeParam.split(/\s+/).filter(s => s.length > 0);
-    
+    let scopes = scopeParam.split(/\s+/).filter((s) => s.length > 0);
+
     // If no spaces found, try splitting by commas
     if (scopes.length === 1) {
-      scopes = scopeParam.split(",").map(s => s.trim()).filter(s => s.length > 0);
+      scopes = scopeParam
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
     }
-    
+
     scopeParam = scopes.join(",");
   } else {
     throw new Error("Scope is not found");
@@ -85,7 +97,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
 
     // Validate scopes
-    if (!oauth2Service.validateScopes(client, params.scope || '')) {
+    if (!oauth2Service.validateScopes(client, params.scope || "")) {
       return redirect(
         `${params.redirect_uri}?error=${OAuth2Errors.INVALID_SCOPE}&error_description=Invalid scope${params.state ? `&state=${params.state}` : ""}`,
       );
@@ -151,7 +163,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         codeChallenge: params.code_challenge,
         codeChallengeMethod: params.code_challenge_method,
         workspaceId: workspace.id,
-      });      
+      });
       // Redirect back to client with authorization code
       const redirectUrl = new URL(params.redirect_uri);
       redirectUrl.searchParams.set("code", authCode);
@@ -173,8 +185,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function OAuthAuthorize() {
-  const { user, client, params   } = useLoaderData<typeof loader>();
-
+  const { user, client, params } = useLoaderData<typeof loader>();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const getScopeIcon = (scope: string) => {
     switch (scope) {
@@ -255,68 +267,93 @@ export default function OAuthAuthorize() {
                     className={`flex items-center gap-2 border-x border-t border-gray-300 p-2 ${isLast ? "border-b" : ""} ${isFirst ? "rounded-tl-md rounded-tr-md" : ""} ${isLast ? "rounded-br-md rounded-bl-md" : ""} `}
                   >
                     <div>{getScopeIcon(trimmedScope)}</div>
-                    <div>
-                      {getScopeDescription(trimmedScope)}
-                    </div>
+                    <div>{getScopeDescription(trimmedScope)}</div>
                   </li>
                 );
               })}
             </ul>
 
-            <Form method="post" className="space-y-3">
-              <input type="hidden" name="client_id" value={params.client_id} />
-              <input
-                type="hidden"
-                name="redirect_uri"
-                value={params.redirect_uri}
-              />
-              <input
-                type="hidden"
-                name="response_type"
-                value={params.response_type}
-              />
-              {params.scope && (
-                <input type="hidden" name="scope" value={params.scope} />
-              )}
-              {params.state && (
-                <input type="hidden" name="state" value={params.state} />
-              )}
-              {params.code_challenge && (
-                <input
-                  type="hidden"
-                  name="code_challenge"
-                  value={params.code_challenge}
-                />
-              )}
-              {params.code_challenge_method && (
-                <input
-                  type="hidden"
-                  name="code_challenge_method"
-                  value={params.code_challenge_method}
-                />
-              )}              
-
-              <div className="flex justify-end space-x-3">
-                <Button
-                  type="submit"
-                  name="action"
-                  value="deny"
-                  size="lg"
-                  variant="secondary"
-                >
-                  Deny
-                </Button>
-                <Button
-                  type="submit"
-                  name="action"
-                  value="allow"
-                  size="lg"
-                  className="shadow-none"
-                >
-                  Allow Access
-                </Button>
+            {isRedirecting ? (
+              <div className="flex flex-col items-center justify-center py-8">
+                <LoaderCircle className="text-primary mb-2 h-4 w-4 animate-spin" />
+                <span className="text-muted-foreground text-sm">
+                  Redirecting to the page... (Close this page if it doesn't
+                  redirect in 5 seconds)
+                </span>
               </div>
-            </Form>
+            ) : (
+              <Form
+                method="post"
+                className="space-y-3"
+                onSubmit={(e) => {
+                  // Only show loading if allow is clicked
+                  const form = e.target as HTMLFormElement;
+                  const allowBtn = form.querySelector(
+                    'button[name="action"][value="allow"]',
+                  );
+                  if ((e.nativeEvent as SubmitEvent).submitter === allowBtn) {
+                    setIsRedirecting(true);
+                  }
+                }}
+              >
+                <input
+                  type="hidden"
+                  name="client_id"
+                  value={params.client_id}
+                />
+                <input
+                  type="hidden"
+                  name="redirect_uri"
+                  value={params.redirect_uri}
+                />
+                <input
+                  type="hidden"
+                  name="response_type"
+                  value={params.response_type}
+                />
+                {params.scope && (
+                  <input type="hidden" name="scope" value={params.scope} />
+                )}
+                {params.state && (
+                  <input type="hidden" name="state" value={params.state} />
+                )}
+                {params.code_challenge && (
+                  <input
+                    type="hidden"
+                    name="code_challenge"
+                    value={params.code_challenge}
+                  />
+                )}
+                {params.code_challenge_method && (
+                  <input
+                    type="hidden"
+                    name="code_challenge_method"
+                    value={params.code_challenge_method}
+                  />
+                )}
+
+                <div className="flex justify-end space-x-3">
+                  <Button
+                    type="submit"
+                    name="action"
+                    value="deny"
+                    size="lg"
+                    variant="secondary"
+                  >
+                    Deny
+                  </Button>
+                  <Button
+                    type="submit"
+                    name="action"
+                    value="allow"
+                    size="lg"
+                    className="shadow-none"
+                  >
+                    Allow Access
+                  </Button>
+                </div>
+              </Form>
+            )}
           </div>
         </CardContent>
       </Card>

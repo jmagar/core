@@ -19,8 +19,21 @@ export const createIntegrationAccount = async ({
   config?: Record<string, any>;
   settings?: Record<string, any>;
 }) => {
-  return prisma.integrationAccount.create({
-    data: {
+  return prisma.integrationAccount.upsert({
+    where: {
+      accountId_integrationDefinitionId_workspaceId: {
+        accountId,
+        integrationDefinitionId,
+        workspaceId,
+      },
+    },
+    update: {
+      integrationConfiguration: config || {},
+      settings: settings || {},
+      isActive: true,
+      deleted: null,
+    },
+    create: {
       accountId,
       integrationDefinitionId,
       integratedById: userId,

@@ -2,14 +2,14 @@
 import Knex, { Knex as KnexT } from "knex";
 import { v4 as uuidv4 } from "uuid";
 import nodeCrypto from "node:crypto";
-import dotenv from "dotenv";
-import dotenvExpand from "dotenv-expand";
+import { parse } from "dotenv";
+import { expand } from "dotenv-expand";
 import path from "node:path";
 import { log } from "@clack/prompts";
 import { customAlphabet } from "nanoid";
 
 import $xdgAppPaths from "xdg-app-paths";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 export const xdgAppPaths = $xdgAppPaths as unknown as typeof $xdgAppPaths.default;
 
@@ -241,8 +241,10 @@ export async function initTriggerDatabase(triggerDir: string) {
 
   const envPath = path.join(triggerDir, ".env");
   log.step(`Loading environment variables from ${envPath}...`);
-  const envVarsExpand =
-    dotenvExpand.expand(dotenv.config({ path: envPath, processEnv: {} })).parsed || {};
+  const file = readFileSync(envPath);
+
+  const parsed = parse(file);
+  const envVarsExpand = expand({ parsed, processEnv: {} }).parsed || {};
 
   // Set the encryption key from the .env file
   ENCRYPTION_KEY = envVarsExpand.ENCRYPTION_KEY as string;

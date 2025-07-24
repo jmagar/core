@@ -569,6 +569,7 @@ export class MCPAuthenticationClient {
       //   }
       // }
 
+      console.log("completeOAuthFlow", options);
       // Use the NodeOAuthClientProvider's completeAuth method
       await authProvider.completeAuth({
         authorizationCode: options.authorizationCode,

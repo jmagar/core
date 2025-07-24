@@ -15,7 +15,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
       <path
         d="M80.0827 34.974C92.7457 3.8081 120.792 17.7546 134.476 29.5676C135.325 30.301 135.792 31.3761 135.792 32.4985V250.806C135.792 251.98 135.258 253.117 134.349 253.858C103.339 279.155 85.2835 259.158 80.0827 245.771C44.9187 241.11 43.965 209.932 47.8837 194.925C15.173 187.722 17.5591 152.731 22.841 136.135C9.34813 107.747 33.9141 90.4097 47.8837 85.2899C40.524 50.5456 66.2831 37.2692 80.0827 34.974Z"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -23,12 +23,12 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(0.591888 0.80602 -0.783494 0.6214 77.3574 37.2551)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <path
         d="M49.1309 84.7972L136.212 176.505"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -36,7 +36,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(0.814972 0.5795 -0.549892 0.835235 32.5566 143.53)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -44,7 +44,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(0.686415 -0.72721 0.700262 0.713886 35.4785 139.482)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -52,7 +52,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(0.528012 -0.849237 0.830187 0.557485 49.1133 196.162)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -60,7 +60,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(-0.979793 0.200014 -0.185721 -0.982602 135.791 117.215)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -68,7 +68,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(0.532065 -0.846704 0.827428 0.561572 81.252 246.769)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -76,7 +76,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(-0.503861 -0.863784 0.846088 -0.533044 137.443 252.884)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -84,7 +84,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(-0.0852204 0.996362 -0.99576 -0.0919863 110.471 150.615)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -92,7 +92,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(0.998935 -0.0461398 0.0427267 0.999087 49.1133 198.186)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -100,7 +100,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(-0.165686 0.986178 -0.983932 -0.178541 100.73 66.6073)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <circle cx="103.955" cy="66.3968" r="11.0444" fill="#C15E50" />
       <circle cx="90.4996" cy="129.403" r="11.5465" fill="#C15E50" />
@@ -119,7 +119,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
       <path
         d="M202.806 247.026C190.143 278.192 162.097 264.245 148.413 252.432C147.563 251.699 147.097 250.624 147.097 249.501V31.1935C147.097 30.0203 147.631 28.8833 148.54 28.1417C179.549 2.84476 197.605 22.8418 202.806 36.2294C237.97 40.8903 238.924 72.0684 235.005 87.0748C267.716 94.2779 265.33 129.269 260.048 145.865C273.541 174.253 248.975 191.59 235.005 196.71C242.365 231.454 216.606 244.731 202.806 247.026Z"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -127,12 +127,12 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(-0.591888 -0.80602 0.783494 -0.6214 205.531 244.745)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <path
         d="M233.758 197.203L146.677 105.495"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -140,7 +140,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(-0.814972 -0.5795 0.549892 -0.835235 250.332 138.47)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -148,7 +148,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(-0.686415 0.72721 -0.700262 -0.713886 247.41 142.518)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -156,7 +156,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(-0.528012 0.849237 -0.830187 -0.557485 233.775 85.838)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -164,7 +164,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(0.979793 -0.200014 0.185721 0.982602 147.098 164.785)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -172,7 +172,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(-0.532065 0.846704 -0.827428 -0.561572 201.637 35.2307)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -180,7 +180,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(0.503861 0.863784 -0.846088 0.533044 145.445 29.1161)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -188,7 +188,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(0.0852204 -0.996362 0.99576 0.0919863 172.418 131.385)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -196,7 +196,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(-0.998935 0.0461398 -0.0427267 -0.999087 233.775 83.8137)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <line
         y1="-2.5"
@@ -204,7 +204,7 @@ export default function StaticLogo({ width, height }: LogoProps) {
         y2="-2.5"
         transform="matrix(0.165686 -0.986178 0.983932 0.178541 182.158 215.393)"
         stroke="#C15E50"
-        stroke-width="5"
+        strokeWidth="5"
       />
       <circle
         cx="178.934"

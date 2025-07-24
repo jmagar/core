@@ -10,6 +10,8 @@ import { deployTriggerTasks } from "../utils/trigger-deploy.js";
 import path from "path";
 import * as fs from "fs";
 import { createTriggerConfigJson, initTriggerDatabase } from "../utils/database-init.js";
+import { parse } from "dotenv";
+import { expand } from "dotenv-expand";
 
 export async function initCommand() {
   // Display the CORE brain logo
@@ -179,10 +181,17 @@ export async function initCommand() {
 
       // Step 12: Restart root docker-compose with new configuration
       try {
+        const file = fs.readFileSync(envPath);
+
+        const parsed = parse(file);
+        const envVarsExpand = expand({ parsed, processEnv: {} }).parsed || {};
+
+        console.log(envVarsExpand);
         await executeCommandInteractive("docker compose up -d", {
           cwd: rootDir,
           message: "Starting Core services with new Trigger.dev configuration...",
           showOutput: true,
+          env: envVarsExpand,
         });
       } catch (error: any) {
         outro("❌ Setup failed: " + error.message);

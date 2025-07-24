@@ -44,9 +44,26 @@ async function init() {
 
   app.use(morgan("tiny"));
 
+  app.get("/.well-known/oauth-authorization-server", (req, res) => {
+    res.json({
+      issuer: process.env.APP_ORIGIN,
+      authorization_endpoint: `${process.env.APP_ORIGIN}/oauth/authorize`,
+      token_endpoint: `${process.env.APP_ORIGIN}/oauth/token`,
+      registration_endpoint: `${process.env.APP_ORIGIN}/oauth/register`,
+      scopes_supported: ["mcp"],
+      response_types_supported: ["code"],
+      grant_types_supported: [
+        "authorization_code",
+        "refresh_token",
+        "client_credentials",
+      ],
+      code_challenge_methods_supported: ["S256"],
+      token_endpoint_auth_methods_supported: ["client_secret_basic", "none"],
+    });
+  });
+
   // handle SSR requests
   app.all("*", remixHandler);
-
 
   const port = process.env.REMIX_APP_PORT || 3000;
   app.listen(port, () =>

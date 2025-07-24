@@ -2,7 +2,6 @@ import { note, log } from "@clack/prompts";
 import { executeCommandInteractive } from "./docker-interactive.js";
 import { getDockerCompatibleEnvVars } from "./env-docker.js";
 import path from "path";
-import { createTriggerConfigJson } from "./database-init.js";
 
 export async function deployTriggerTasks(rootDir: string): Promise<void> {
   const webappDir = path.join(rootDir, "apps", "webapp");
