@@ -127,7 +127,7 @@ export async function callbackHandler(params: CallbackParams) {
       },
     );
 
-    const integrationAccount = await runIntegrationTrigger(
+    const setupResult = await runIntegrationTrigger(
       integrationDefinition,
       {
         event: IntegrationEventType.SETUP,
@@ -144,7 +144,7 @@ export async function callbackHandler(params: CallbackParams) {
     );
 
     await tasks.trigger<typeof scheduler>("scheduler", {
-      integrationAccountId: integrationAccount?.id,
+      integrationAccountId: setupResult?.account?.id,
     });
 
     return new Response(null, {

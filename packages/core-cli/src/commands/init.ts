@@ -186,7 +186,6 @@ export async function initCommand() {
         const parsed = parse(file);
         const envVarsExpand = expand({ parsed, processEnv: {} }).parsed || {};
 
-        console.log(envVarsExpand);
         await executeCommandInteractive("docker compose up -d", {
           cwd: rootDir,
           message: "Starting Core services with new Trigger.dev configuration...",

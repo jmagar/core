@@ -78,7 +78,7 @@ export abstract class IntegrationCLI {
 
           const messages: Message[] = await this.handleEvent({
             event: IntegrationEventType.PROCESS,
-            eventBody: { eventData },
+            eventBody: eventData,
             config,
           });
 

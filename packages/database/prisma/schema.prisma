@@ -482,6 +482,7 @@ model User {
 
   marketingEmails       Boolean @default(true)
   confirmedBasicDetails Boolean @default(false)
+  onboardingComplete    Boolean @default(false)
 
   referralSource String?
 

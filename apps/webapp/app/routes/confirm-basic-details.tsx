@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { useActionData } from "@remix-run/react";
-import { type ActionFunctionArgs, json } from "@remix-run/node";
+import {
+  type ActionFunctionArgs,
+  json,
+  type LoaderFunctionArgs,
+} from "@remix-run/node";
 import { useForm } from "@conform-to/react";
 import { getFieldsetConstraint, parse } from "@conform-to/zod";
 import { LoginPageLayout } from "~/components/layout/login-page-layout";
@@ -14,10 +18,11 @@ import {
 import { Button } from "~/components/ui";
 import { Input } from "~/components/ui/input";
 import { useState } from "react";
-import { requireUserId } from "~/services/session.server";
+import { requireUser, requireUserId } from "~/services/session.server";
 import { redirectWithSuccessMessage } from "~/models/message.server";
 import { rootPath } from "~/utils/pathBuilder";
 import { createWorkspace } from "~/models/workspace.server";
+import { typedjson } from "remix-typedjson";
 
 const schema = z.object({
   workspaceName: z
@@ -54,6 +59,14 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({ errors: { body: e.message } }, { status: 400 });
   }
 }
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const user = await requireUser(request);
+
+  return typedjson({
+    user,
+  });
+};
 
 export default function ConfirmBasicDetails() {
   const lastSubmission = useActionData<typeof action>();

@@ -13,13 +13,20 @@ export async function run(eventPayload: IntegrationEventPayload) {
       return await integrationCreate(eventPayload.eventBody);
 
     case IntegrationEventType.IDENTIFY:
-      return eventPayload.eventBody.event.user;
+      return [
+        {
+          type: 'identifier',
+          data:
+            eventPayload.eventBody.event.event.user ||
+            eventPayload.eventBody.event.event.message.user,
+        },
+      ];
 
     case IntegrationEventType.PROCESS:
       return createActivityEvent(eventPayload.eventBody.eventData, eventPayload.config);
 
     default:
-      return { message: `The event payload type is ${eventPayload.event}` };
+      return [{ type: 'error', data: `The event payload type is ${eventPayload.event}` }];
   }
 }
 

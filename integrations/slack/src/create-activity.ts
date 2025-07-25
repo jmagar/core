@@ -52,11 +52,10 @@ async function getConversationInfo(accessToken: string, channel: string) {
 
 export const createActivityEvent = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  eventBody: any,
+  eventData: any,
   config: any,
 ) => {
-  const { eventData } = eventBody;
-  if (eventData.event.type === 'message' && eventData.event.channel === 'D06UAK42494') {
+  if (eventData.event.type === 'message' && eventData.event.channel === 'D08TQATE3F0') {
     const event = eventData.event;
 
     if (!config) {
@@ -65,7 +64,7 @@ export const createActivityEvent = async (
 
     const accessToken = config.access_token;
 
-    const text = `DM with SOL channel Content: '${event.text}'`;
+    const text = `I DMed to you Content: '${event.text}'`;
 
     const permalinkResponse = await axios.get(
       `https://slack.com/api/chat.getPermalink?channel=${event.channel}&message_ts=${event.ts}`,
@@ -81,7 +80,7 @@ export const createActivityEvent = async (
       taskId: null,
     };
 
-    return createActivityMessage(activity);
+    return [createActivityMessage(activity)];
   }
 
   if (eventData.event.type === 'reaction_added' && eventData.event.reaction === 'eyes') {
@@ -121,7 +120,7 @@ export const createActivityEvent = async (
       conversationContext = `channel ${conversationInfo.name}(${conversationInfo.id})`;
     }
 
-    const text = `Message to User from ${userIdMap.get(eventMessage.user)?.real_name}(${eventMessage.user}) in ${conversationContext} at ${eventMessage.ts}. Content: '${eventMessageText}'`;
+    const text = `User ${userIdMap.get(eventMessage.user)?.real_name}(${eventMessage.user}) reacted with eyes emoji in ${conversationContext} at ${eventMessage.ts}. Content: '${eventMessageText}'`;
 
     const permalinkResponse = await axios.get(
       `https://slack.com/api/chat.getPermalink?channel=${channel}&message_ts=${ts}`,
@@ -137,9 +136,10 @@ export const createActivityEvent = async (
       integrationAccountId: config.integrationAccountId,
     };
 
-    return createActivityMessage(activity);
+    return [createActivityMessage(activity)];
   }
-  return { message: `Processed activity from slack` };
+
+  return [];
 };
 
 function getMentionUsers(message: string): string[] {

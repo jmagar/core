@@ -21,12 +21,6 @@ export class WebhookService {
       where: "WebhookService.handleEvents",
     });
 
-    // Check if the event is a URL verification challenge (Slack)
-    if (eventBody.type === "url_verification") {
-      logger.log("Responding to Slack URL verification challenge");
-      return { challenge: eventBody.challenge, status: "verified" };
-    }
-
     let integrationAccount:
       | (IntegrationAccount & {
           integrationDefinition: IntegrationDefinitionV2;

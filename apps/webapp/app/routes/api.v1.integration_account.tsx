@@ -56,7 +56,7 @@ const { action, loader } = createHybridActionApiRoute(
         workspace?.id,
       );
 
-      if (!setupResult || !setupResult.accountId) {
+      if (!setupResult.account || !setupResult.account.id) {
         return json(
           { error: "Failed to setup integration with the provided API key" },
           { status: 400 },
@@ -64,7 +64,7 @@ const { action, loader } = createHybridActionApiRoute(
       }
 
       await tasks.trigger<typeof scheduler>("scheduler", {
-        integrationAccountId: setupResult?.id,
+        integrationAccountId: setupResult?.account?.id,
       });
 
       return json({ success: true, setupResult });

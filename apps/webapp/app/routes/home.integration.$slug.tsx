@@ -164,7 +164,7 @@ export default function IntegrationDetail() {
         ]}
       />
       <div className="flex h-[calc(100vh_-_56px)] flex-col items-center overflow-hidden p-4 px-5">
-        <div className="max-w-5xl">
+        <div className="w-5xl">
           <Section
             title={integration.name}
             description={integration.description}

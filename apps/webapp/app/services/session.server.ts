@@ -61,6 +61,7 @@ export async function requireUser(request: Request) {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       confirmedBasicDetails: user.confirmedBasicDetails,
+      onboardingComplete: user.onboardingComplete,
       isImpersonating: !!impersonationId,
     };
   }

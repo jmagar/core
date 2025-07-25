@@ -1,10 +1,10 @@
 import { json } from "@remix-run/node";
 
-import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
+import { createHybridActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
 import { addToQueue } from "~/lib/ingest.server";
 import { IngestBodyRequest } from "~/trigger/ingest/ingest";
 
-const { action, loader } = createActionApiRoute(
+const { action, loader } = createHybridActionApiRoute(
   {
     body: IngestBodyRequest,
     allowJWT: true,

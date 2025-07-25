@@ -8,22 +8,31 @@ import { clearRedirectTo, commitSession } from "~/services/redirectTo.server";
 import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 import { FloatingIngestionStatus } from "~/components/ingestion/floating-ingestion-status";
+import { redirect } from "@remix-run/node";
+import { confirmBasicDetailsPath, onboardingPath } from "~/utils/pathBuilder";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
   const workspace = await requireWorkpace(request);
 
-  return typedjson(
-    {
-      user,
-      workspace,
-    },
-    {
-      headers: {
-        "Set-Cookie": await commitSession(await clearRedirectTo(request)),
+  //you have to confirm basic details before you can do anything
+  if (!user.confirmedBasicDetails) {
+    return redirect(confirmBasicDetailsPath());
+  } else if (!user.onboardingComplete) {
+    return redirect(onboardingPath());
+  } else {
+    return typedjson(
+      {
+        user,
+        workspace,
       },
-    },
-  );
+      {
+        headers: {
+          "Set-Cookie": await commitSession(await clearRedirectTo(request)),
+        },
+      },
+    );
+  }
 };
 
 export default function Home() {

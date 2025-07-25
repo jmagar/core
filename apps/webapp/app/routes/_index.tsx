@@ -2,7 +2,11 @@ import { redirect, type MetaFunction } from "@remix-run/node";
 import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
 
 import { requireUser } from "~/services/session.server";
-import { confirmBasicDetailsPath, dashboardPath } from "~/utils/pathBuilder";
+import {
+  confirmBasicDetailsPath,
+  dashboardPath,
+  onboardingPath,
+} from "~/utils/pathBuilder";
 
 export const meta: MetaFunction = () => {
   return [
@@ -17,6 +21,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   //you have to confirm basic details before you can do anything
   if (!user.confirmedBasicDetails) {
     return redirect(confirmBasicDetailsPath());
+  } else if (!user.onboardingComplete) {
+    return redirect(onboardingPath());
   } else {
     return redirect(dashboardPath());
   }

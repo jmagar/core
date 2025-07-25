@@ -10,8 +10,6 @@ export interface CommandOptions {
 
 export function executeCommandInteractive(command: string, options: CommandOptions): Promise<void> {
   return new Promise((resolve, reject) => {
-    console.log(process.env);
-
     const s = spinner();
     s.start(options.message);
 

@@ -285,6 +285,13 @@ async function handleMessageResponse(
       messageTypes: messages.map((m) => m.type),
     });
 
+    const responses = {
+      activities: [],
+      state: undefined,
+      account: undefined,
+      unhandled: [],
+    } as any;
+
     // Group messages by type
     const grouped: Record<string, Message[]> = {};
     for (const message of messages) {
@@ -296,48 +303,55 @@ async function handleMessageResponse(
 
     // Handle "activity" messages
     if (grouped["activity"]) {
-      await handleActivityMessage(
+      const activities = await handleActivityMessage(
         grouped["activity"],
         integrationAccountId as string,
         userId,
       );
+
+      responses.activities = activities;
     }
 
     // Handle "state" messages
     if (grouped["state"]) {
-      await handleStateMessage(
+      const state = await handleStateMessage(
         grouped["state"],
         integrationAccountId as string,
       );
+
+      responses.state = state;
     }
 
     // Handle "identifier" messages
     if (grouped["identifier"]) {
-      await handleIdentifierMessage(grouped["identifier"][0]);
+      const identifier = await handleIdentifierMessage(
+        grouped["identifier"][0],
+      );
+      return identifier;
     }
 
     // Handle "account" messages (these may involve Prisma writes)
     if (grouped["account"]) {
-      await handleAccountMessage(
+      const account = await handleAccountMessage(
         grouped["account"],
         integrationDefinition,
         workspaceId,
         userId,
         integrationAccountId as string,
       );
+
+      responses.account = account;
     }
 
+    const unhandled: Message[] = [];
     // Warn for unknown message types
     for (const type of Object.keys(grouped)) {
       if (!["activity", "state", "identifier", "account"].includes(type)) {
-        for (const message of grouped[type]) {
-          logger.warn("Unknown message type", {
-            messageType: type,
-            message,
-          });
-        }
+        responses.unhandled.push(grouped[type]);
       }
     }
+
+    return responses;
   } catch (error) {
     logger.error("Failed to handle CLI message response", {
       error: error instanceof Error ? error.message : "Unknown error",

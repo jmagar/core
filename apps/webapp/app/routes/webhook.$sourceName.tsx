@@ -34,19 +34,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
       eventBody: typeof eventBody === 'object' ? JSON.stringify(eventBody).substring(0, 200) : eventBody,
     });
 
-    const result = await webhookService.handleEvents(
+    // Check if the event is a URL verification challenge (Slack)
+    if (eventBody.type === "url_verification") {
+      logger.log("Responding to Slack URL verification challenge");
+      return json({ challenge: eventBody.challenge });
+    }
+
+    await webhookService.handleEvents(
       sourceName,
       integrationAccountId,
       eventHeaders,
       eventBody
     );
 
-    // Handle URL verification challenge (returns different response)
-    if (result.challenge) {
-      return json({ challenge: result.challenge });
-    }
-
-    return json({ status: result.status });
+    return json({ status: 'acknowledged' }, { status: 200 });
   } catch (error) {
     logger.error('Webhook processing failed', { error, params });
     
@@ -77,19 +78,20 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       eventBody: JSON.stringify(eventBody).substring(0, 200),
     });
 
-    const result = await webhookService.handleEvents(
+    // Check if the event is a URL verification challenge (Slack)
+    if (eventBody.type === "url_verification") {
+      logger.log("Responding to Slack URL verification challenge");
+      return json({ challenge: eventBody.challenge });
+    }
+
+    await webhookService.handleEvents(
       sourceName,
       integrationAccountId,
       eventHeaders,
       eventBody
     );
 
-    // Handle URL verification challenge (returns different response)
-    if (result.challenge) {
-      return json({ challenge: result.challenge });
-    }
-
-    return json({ status: result.status });
+    return json({ status: 'acknowledged' }, { status: 200 });
   } catch (error) {
     logger.error('Webhook GET processing failed', { error, params });
     

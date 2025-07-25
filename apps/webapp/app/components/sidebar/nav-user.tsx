@@ -39,7 +39,7 @@ export function NavUser({ user }: { user: ExtendedUser }) {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">
-                    Harshith Mullapudi
+                    {user.displayName}
                   </span>
                   <span className="text-muted-foreground truncate text-xs">
                     {user.email}

@@ -13,14 +13,13 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Form, useNavigation } from "@remix-run/react";
-import { Inbox, Loader, LoaderCircle, Mail } from "lucide-react";
+import { LoaderCircle, Mail } from "lucide-react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { z } from "zod";
 import { LoginPageLayout } from "~/components/layout/login-page-layout";
 import { Button } from "~/components/ui";
 import { Fieldset } from "~/components/ui/Fieldset";
 import { FormButtons } from "~/components/ui/FormButtons";
-import { Header1 } from "~/components/ui/Headers";
 import { Input } from "~/components/ui/input";
 import { Paragraph } from "~/components/ui/Paragraph";
 import { Cookie } from "@mjackson/headers";
@@ -145,12 +144,12 @@ export default function LoginMagicLinkPage() {
       <Form method="post">
         <div className="flex flex-col items-center justify-center">
           {data.magicLinkSent ? (
-            <Card className="min-w-[400px] rounded-md p-3">
+            <Card className="min-w-[400px] rounded-md bg-transparent p-3">
               <CardHeader className="flex flex-col items-start">
-                <CardTitle className="mb-0 text-lg">
+                <CardTitle className="mb-0 text-xl">
                   Check your magic link
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-md">
                   The magic link is printed in the container logs if you are
                   using Docker, otherwise check your server logs.
                 </CardDescription>
@@ -164,6 +163,7 @@ export default function LoginMagicLinkPage() {
                       type="submit"
                       name="action"
                       value="reset"
+                      size="lg"
                       variant="secondary"
                       data-action="re-enter email"
                     >
@@ -174,14 +174,14 @@ export default function LoginMagicLinkPage() {
               </Fieldset>
             </Card>
           ) : (
-            <Card className="min-w-[400px] rounded-md p-3">
+            <Card className="w-full max-w-[350px] rounded-md bg-transparent p-3">
               <CardHeader className="flex flex-col items-start">
-                <CardTitle className="mb-0 text-lg">Welcome</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xl">Welcome back</CardTitle>
+                <CardDescription className="text-md">
                   Create an account or login using email
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-2">
+              <CardContent className="pt-2 pl-2">
                 <Fieldset className="flex w-full flex-col items-center gap-y-2">
                   <Input
                     type="email"
@@ -193,28 +193,32 @@ export default function LoginMagicLinkPage() {
                     autoFocus
                   />
 
-                  <Button
-                    name="action"
-                    value="send"
-                    type="submit"
-                    variant="secondary"
-                    size="lg"
-                    disabled={isLoading}
-                    data-action="send a magic link"
-                  >
-                    {isLoading ? (
-                      <LoaderCircle className="text-primary h-4 w-4 animate-spin" />
-                    ) : (
-                      <Mail className="text-text-bright mr-2 size-5" />
-                    )}
-                    {isLoading ? (
-                      <span className="text-text-bright">Sending…</span>
-                    ) : (
-                      <span className="text-text-bright">
-                        Send a magic link
-                      </span>
-                    )}
-                  </Button>
+                  <div className="flex w-full">
+                    <Button
+                      name="action"
+                      value="send"
+                      type="submit"
+                      variant="secondary"
+                      full
+                      size="xl"
+                      className="w-full"
+                      disabled={isLoading}
+                      data-action="send a magic link"
+                    >
+                      {isLoading ? (
+                        <LoaderCircle className="text-primary h-4 w-4 animate-spin" />
+                      ) : (
+                        <Mail className="text-text-bright mr-2 size-5" />
+                      )}
+                      {isLoading ? (
+                        <span className="text-text-bright">Sending…</span>
+                      ) : (
+                        <span className="text-text-bright">
+                          Send a magic link
+                        </span>
+                      )}
+                    </Button>
+                  </div>
                   {data.magicLinkError && <>{data.magicLinkError}</>}
                 </Fieldset>
               </CardContent>

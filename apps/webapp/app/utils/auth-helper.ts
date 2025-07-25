@@ -14,6 +14,7 @@ export type AuthenticatedUser = {
   createdAt: Date;
   updatedAt: Date;
   confirmedBasicDetails: boolean;
+  onboardingComplete: boolean;
   authMethod: 'session' | 'pat' | 'oauth2';
   oauth2?: {
     clientId: string;
@@ -47,6 +48,7 @@ export async function requireAuth(request: Request): Promise<AuthenticatedUser> 
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
           confirmedBasicDetails: user.confirmedBasicDetails,
+          onboardingComplete: user.onboardingComplete,
           authMethod: 'pat',
         };
       }
@@ -65,6 +67,7 @@ export async function requireAuth(request: Request): Promise<AuthenticatedUser> 
         createdAt: accessToken.user.createdAt,
         updatedAt: accessToken.user.updatedAt,
         confirmedBasicDetails: accessToken.user.confirmedBasicDetails,
+        onboardingComplete: accessToken.user.onboardingComplete,
         authMethod: 'oauth2',
         oauth2: {
           clientId: accessToken.client.clientId,
@@ -89,6 +92,7 @@ export async function requireAuth(request: Request): Promise<AuthenticatedUser> 
       createdAt: sessionUser.createdAt,
       updatedAt: sessionUser.updatedAt,
       confirmedBasicDetails: sessionUser.confirmedBasicDetails,
+      onboardingComplete: sessionUser.onboardingComplete,
       authMethod: 'session',
     };
   }

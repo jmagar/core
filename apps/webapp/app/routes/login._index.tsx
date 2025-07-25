@@ -57,10 +57,12 @@ export default function LoginPage() {
 
   return (
     <LoginPageLayout>
-      <Card className="min-w-[300px] rounded-md p-3">
+      <Card className="w-full max-w-[350px] rounded-md bg-transparent p-3">
         <CardHeader className="flex flex-col items-start">
-          <CardTitle>Login to your account</CardTitle>
-          <CardDescription>Create an account or login</CardDescription>
+          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardDescription className="text-md">
+            Create an account or login
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="pt-2">
@@ -69,7 +71,7 @@ export default function LoginPage() {
               {data.showGoogleAuth && (
                 <Button
                   type="submit"
-                  size="lg"
+                  size="xl"
                   variant="secondary"
                   className="rounded-lg text-base"
                   data-action="continue with google"
@@ -83,7 +85,7 @@ export default function LoginPage() {
               {data.emailLoginEnabled && (
                 <Button
                   variant="secondary"
-                  size="lg"
+                  size="xl"
                   data-action="continue with email"
                   className="text-text-bright"
                   onClick={() => (window.location.href = "/login/magic")}

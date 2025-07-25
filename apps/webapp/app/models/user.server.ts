@@ -200,22 +200,20 @@ export async function getUserByEmail(email: User["email"]) {
 
 export function updateUser({
   id,
-  name,
-  email,
   marketingEmails,
   referralSource,
-}: Pick<User, "id" | "name" | "email"> & {
+  onboardingComplete,
+}: Pick<User, "id" | "onboardingComplete"> & {
   marketingEmails?: boolean;
   referralSource?: string;
 }) {
   return prisma.user.update({
     where: { id },
     data: {
-      name,
-      email,
       marketingEmails,
       referralSource,
       confirmedBasicDetails: true,
+      onboardingComplete,
     },
   });
 }
