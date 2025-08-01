@@ -1135,10 +1135,25 @@ export class KnowledgeGraphService {
         return null;
       }
 
+      const integrationAccount = await prisma.integrationAccount.findFirst({
+        where: {
+          integrationDefinition: {
+            slug: source,
+          },
+          workspaceId: user.Workspace.id,
+          isActive: true,
+          deleted: null,
+        },
+      });
+
+      if (!integrationAccount) {
+        return null;
+      }
+
       // Fetch active rules for this source
       const rules = await prisma.ingestionRule.findMany({
         where: {
-          source,
+          source: integrationAccount.id,
           workspaceId: user.Workspace.id,
           isActive: true,
           deleted: null,

@@ -94,6 +94,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       "openid",
       // Integration scope
       "integration",
+      "integration:read",
+      "integration:credentials", 
+      "integration:manage",
+      "integration:webhook",
+      // MCP scope
+      "mcp",
+      "mcp:read",
+      "mcp:write",
     ];
 
     const requestedScopes = Array.isArray(allowedScopes)

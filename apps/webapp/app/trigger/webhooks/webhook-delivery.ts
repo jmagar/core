@@ -51,9 +51,38 @@ export const webhookDeliveryTask = task({
           workspaceId: payload.workspaceId,
           isActive: true,
         },
+        select: {
+          id: true,
+          url: true,
+          secret: true,
+        },
       });
 
-      if (webhooks.length === 0) {
+      const oauthClients = await prisma.oAuthClientInstallation.findMany({
+        where: {
+          workspaceId: activity.workspaceId,
+          installedById: activity.workspace.userId!,
+          isActive: true,
+          grantedScopes: {
+            contains: "integration",
+          },
+          oauthClient: {
+            clientType: "regular",
+          },
+        },
+        select: {
+          id: true,
+          oauthClient: {
+            select: {
+              clientId: true,
+              webhookUrl: true,
+              webhookSecret: true,
+            },
+          },
+        },
+      });
+
+      if (webhooks.length === 0 && oauthClients.length === 0) {
         logger.log(
           `No active webhooks found for workspace ${payload.workspaceId}`,
         );
@@ -87,7 +116,16 @@ export const webhookDeliveryTask = task({
       };
 
       // Convert webhooks to targets using common utils
-      const targets = prepareWebhookTargets(webhooks);
+      const targets = prepareWebhookTargets(
+        [...webhooks, ...oauthClients].map((webhook) => ({
+          url: "url" in webhook ? webhook.url : webhook.oauthClient.webhookUrl!,
+          secret:
+            "secret" in webhook
+              ? webhook.secret
+              : webhook.oauthClient.webhookSecret,
+          id: webhook.id,
+        })),
+      );
 
       // Use common delivery function
       const result = await deliverWebhook({

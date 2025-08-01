@@ -289,8 +289,17 @@ export class OAuth2Service {
 
     // Google-style auth scopes
     const authScopes = ["profile", "email", "openid"];
-    // Single integration scope
-    const integrationScopes = ["integration"];
+    // Integration-related scopes
+    const integrationScopes = [
+      "integration",
+      "integration:read",
+      "integration:credentials",
+      "integration:manage",
+      "integration:webhook",
+    ];
+
+    // MCP-related scopes
+    const mcpScopes = ["mcp", "mcp:read", "mcp:write"];
 
     const hasAuthScopes = scopes.some((s) => authScopes.includes(s));
     const hasIntegrationScopes = scopes.some((s) =>
@@ -323,6 +332,34 @@ export class OAuth2Service {
       integration: {
         description: "Access your workspace integrations",
         icon: "database",
+      },
+      "integration:read": {
+        description: "Read integration metadata and status",
+        icon: "eye",
+      },
+      "integration:credentials": {
+        description: "Access integration account credentials",
+        icon: "key",
+      },
+      "integration:manage": {
+        description: "Create, update, and delete integrations",
+        icon: "settings",
+      },
+      "integration:webhook": {
+        description: "Manage integration webhooks",
+        icon: "webhook",
+      },
+      mcp: {
+        description: "Access MCP endpoints",
+        icon: "mcp",
+      },
+      "mcp:read": {
+        description: "Read MCP endpoints",
+        icon: "eye",
+      },
+      "mcp:write": {
+        description: "Write to MCP endpoints",
+        icon: "pencil",
       },
     };
 
@@ -560,13 +597,26 @@ export class OAuth2Service {
         expiresAt: { gt: new Date() },
         userId: tokenPayload.user_id,
         workspaceId: tokenPayload.workspace_id,
-        ...(scopes ? { scope: { contains: scopes.join(",") } } : {}),
       },
       include: {
         client: true,
         user: true,
       },
     });
+
+    // Validate scopes separately if requested
+    if (scopes && accessToken) {
+      const tokenScopes =
+        accessToken.scope?.split(",").map((s) => s.trim()) || [];
+
+      const hasAllScopes = scopes.some((requiredScope) =>
+        tokenScopes.some((tokenScope) => tokenScope === requiredScope),
+      );
+
+      if (!hasAllScopes) {
+        throw new Error("Insufficient scope");
+      }
+    }
 
     if (!accessToken) {
       throw new Error("Invalid or expired token");

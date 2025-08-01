@@ -5,12 +5,12 @@ import {
   useCallback,
   useImperativeHandle,
   forwardRef,
-  useState,
 } from "react";
 import Sigma from "sigma";
 import GraphologyGraph from "graphology";
 import forceAtlas2 from "graphology-layout-forceatlas2";
-import noverlap from "graphology-layout-noverlap";
+import FA2Layout from "graphology-layout-forceatlas2/worker";
+import { EdgeLineProgram } from "sigma/rendering";
 import colors from "tailwindcss/colors";
 import type { GraphTriplet, IdValue, GraphNode } from "./type";
 import {
@@ -369,6 +369,10 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
         const optimalParams = calculateOptimalParameters(graph);
 
         const settings = forceAtlas2.inferSettings(graph);
+        const fa2Layout = new FA2Layout(graph, {
+          settings: settings,
+        });
+
         forceAtlas2.assign(graph, {
           iterations: optimalParams.iterations,
           settings: {
@@ -381,21 +385,25 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
           },
         });
 
-        noverlap.assign(graph, {
-          maxIterations: 200,
-          settings: {
-            margin: 10,
-            expansion: 1.5,
-            gridSize: 30,
-          },
-        });
+        // noverlap.assign(graph, {
+        //   maxIterations: 200,
+        //   settings: {
+        //     margin: 10,
+        //     expansion: 1.5,
+        //     gridSize: 30,
+        //   },
+        // });
       }
 
       // Create Sigma instance
       const sigma = new Sigma(graph, containerRef.current, {
         renderEdgeLabels: true,
-        defaultEdgeColor: theme.link.stroke,
+        defaultEdgeColor: "#0000001A",
         defaultNodeColor: theme.node.fill,
+        defaultEdgeType: "edges-fast",
+        edgeProgramClasses: {
+          "edges-fast": EdgeLineProgram,
+        },
         enableEdgeEvents: true,
         minCameraRatio: 0.1,
         maxCameraRatio: 2,
@@ -525,28 +533,6 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
         isInitializedRef.current = false;
       };
     }, [nodes, edges]);
-
-    // // Theme update effect
-    // useEffect(() => {
-    //   if (!sigmaRef.current || !graphRef.current || !isInitializedRef.current)
-    //     return;
-    //   const graph = graphRef.current;
-    //   graph.forEachNode((node) => {
-    //     const nodeData = graph.getNodeAttribute(node, "nodeData");
-    //     const isHighlighted = graph.getNodeAttribute(node, "highlighted");
-    //     if (!isHighlighted) {
-    //       graph.setNodeAttribute(node, "color", getNodeColor(nodeData));
-    //     }
-    //   });
-    //   graph.forEachEdge((edge) => {
-    //     const isHighlighted = graph.getEdgeAttribute(edge, "highlighted");
-    //     if (!isHighlighted) {
-    //       graph.setEdgeAttribute(edge, "color", theme.link.stroke);
-    //     }
-    //   });
-    //   sigmaRef.current.setSetting("defaultEdgeColor", theme.link.stroke);
-    //   sigmaRef.current.setSetting("defaultNodeColor", "red");
-    // }, [theme, getNodeColor]);
 
     return (
       <div

@@ -28,7 +28,7 @@ const data = {
       icon: Network,
     },
     {
-      title: "Logs",
+      title: "Activity",
       url: "/home/logs",
       icon: Activity,
     },

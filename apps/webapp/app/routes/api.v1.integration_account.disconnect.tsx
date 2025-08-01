@@ -22,11 +22,9 @@ export async function action({ request }: ActionFunctionArgs) {
       );
     }
 
-    // Soft delete the integration account by setting deletedAt
     const updatedAccount = await prisma.integrationAccount.delete({
       where: {
         id: integrationAccountId,
-        deleted: null,
       },
     });
 
@@ -34,6 +32,7 @@ export async function action({ request }: ActionFunctionArgs) {
       integrationAccountId,
       userId,
       "integration.disconnected",
+      updatedAccount.workspaceId,
     );
 
     logger.info("Integration account disconnected (soft deleted)", {

@@ -328,7 +328,6 @@
     @apply bg-background-2 text-foreground text-base;
   }
 
-
   @supports (scrollbar-width: auto) {
     .overflow-y-auto,
     .overflow-x-auto,

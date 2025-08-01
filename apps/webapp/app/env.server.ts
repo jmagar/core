@@ -75,6 +75,7 @@ const EnvironmentSchema = z.object({
   TRIGGER_PROJECT_ID: z.string(),
   TRIGGER_SECRET_KEY: z.string(),
   TRIGGER_API_URL: z.string(),
+  TRIGGER_DB: z.string().default("trigger"),
 
   // Model envs
   MODEL: z.string().default(LLMModelEnum.GPT41),

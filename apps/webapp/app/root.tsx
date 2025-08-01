@@ -122,7 +122,7 @@ function App() {
           <Links />
           <PreventFlashOnWrongTheme ssrTheme={Boolean(theme)} />
         </head>
-        <body className="bg-background-2 h-full overflow-hidden font-sans">
+        <body className="bg-background-2 h-[100vh] h-full w-[100vw] overflow-hidden font-sans">
           <Outlet />
           <ScrollRestoration />
 

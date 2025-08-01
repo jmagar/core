@@ -26,7 +26,8 @@ export default function Dashboard() {
       setLoading(true);
       try {
         const res = await fetch(
-          "/node-links?userId=" + encodeURIComponent(userId),
+          "/node-links?userId=" +
+            encodeURIComponent("cmc0x85jv0000nu1wiu1yla73"),
         );
         if (!res.ok) throw new Error("Failed to fetch node links");
         const data = await res.json();

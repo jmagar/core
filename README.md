@@ -1,4 +1,3 @@
-
 <div align="right">
   <details>
     <summary >🌐 Language</summary>
@@ -63,7 +62,7 @@ C.O.R.E is a portable memory graph built from your llm interactions and personal
 
 <img width="7480" height="4672" alt="core-memory-graph" src="https://github.com/user-attachments/assets/2b159e87-38ce-4cc6-ac16-047f645c3a4b" />
 
-## 🧩  Key Features
+## 🧩 Key Features
 
 - **Memory Graph**: Visualise how your facts and preferences link together
 - **Chat with Memory**: Ask questions about memory for instant insights and understanding
@@ -85,14 +84,19 @@ Check out our [docs](https://docs.heysol.ai/self-hosting/docker) for modular dep
 ## Documentation
 
 Explore our documentation to get the most out of CORE
+
 - [Basic Concepts](https://docs.heysol.ai/concepts/memory_graph)
 - [Self Hosting](https://docs.heysol.ai/self-hosting/overview)
 - [Connect Core MCP with Claude](https://docs.heysol.ai/providers/claude)
 - [Connect Core MCP with Cursor](https://docs.heysol.ai/providers/cursor)
 
+- [Basic Concepts](https://docs.heysol.ai/overview)
+- [API Reference](https://docs.heysol.ai/local-setup)
 
 ## 🧑‍💻 Support
+
 Have questions or feedback? We're here to help:
+
 - Discord: [Join core-support channel](https://discord.gg/YGUZcvDjUa)
 - Documentation: [docs.heysol.ai](https://docs.heysol.ai)
 - Email: manik@poozle.dev

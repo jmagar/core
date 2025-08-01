@@ -28,23 +28,7 @@ export default function LogsAll() {
 
   return (
     <>
-      <PageHeader
-        title="Logs"
-        tabs={[
-          {
-            label: "All",
-            value: "all",
-            isActive: true,
-            onClick: () => navigate("/home/logs/all"),
-          },
-          {
-            label: "Activity",
-            value: "activity",
-            isActive: false,
-            onClick: () => navigate("/home/logs/activity"),
-          },
-        ]}
-      />
+      <PageHeader title="Logs" />
       <div className="flex h-[calc(100vh_-_56px)] w-full flex-col items-center space-y-6 p-4 px-5">
         {isInitialLoad ? (
           <>

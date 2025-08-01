@@ -21,7 +21,7 @@ interface BatchResult {
 
 export const entity = queue({
   name: "entity-queue",
-  concurrencyLimit: 10,
+  concurrencyLimit: 5,
 });
 
 /**
@@ -31,19 +31,30 @@ export const updateAllEntityEmbeddings = task({
   id: "update-all-entity-embeddings",
   machine: "large-1x",
 
-  run: async (payload: { userId?: string; batchSize?: number } = {}) => {
-    const { userId, batchSize = 100 } = payload;
+  run: async (
+    payload: {
+      userId?: string;
+      batchSize?: number;
+      forceUpdate?: boolean;
+    } = {},
+  ) => {
+    const { userId, batchSize = 50, forceUpdate = false } = payload;
 
     logger.info("Starting entity embeddings update with fan-out approach", {
       userId,
       batchSize,
+      forceUpdate,
       targetScope: userId ? `user ${userId}` : "all users",
     });
 
     try {
-      // Step 1: Fetch all entities
-      const entities = await getAllEntities(userId);
-      logger.info(`Found ${entities.length} entities to update`);
+      // Step 1: Fetch entities (either all or only those needing updates)
+      const entities = forceUpdate
+        ? await getAllEntitiesForceRefresh(userId)
+        : await getAllEntities(userId);
+      logger.info(`Found ${entities.length} entities to update`, {
+        strategy: forceUpdate ? "force-refresh-all" : "missing-embeddings-only",
+      });
 
       if (entities.length === 0) {
         return {
@@ -192,9 +203,56 @@ export const updateEntityBatch = task({
 });
 
 /**
- * Fetch all entities from Neo4j database
+ * Fetch all entities from Neo4j database that need embedding updates
  */
 async function getAllEntities(userId?: string): Promise<EntityNode[]> {
+  try {
+    // Only fetch entities that either:
+    // 1. Have null/empty embeddings, OR
+    // 2. Have embeddings but might need updates (optional: add timestamp check)
+    const query = userId
+      ? `MATCH (entity:Entity {userId: $userId}) 
+         WHERE entity.nameEmbedding IS NULL 
+            OR entity.typeEmbedding IS NULL 
+            OR size(entity.nameEmbedding) = 0 
+            OR size(entity.typeEmbedding) = 0
+         RETURN entity ORDER BY entity.createdAt`
+      : `MATCH (entity:Entity) 
+         WHERE entity.nameEmbedding IS NULL 
+            OR entity.typeEmbedding IS NULL 
+            OR size(entity.nameEmbedding) = 0 
+            OR size(entity.typeEmbedding) = 0
+         RETURN entity ORDER BY entity.createdAt`;
+
+    const params = userId ? { userId } : {};
+    const records = await runQuery(query, params);
+
+    return records.map((record) => {
+      const entityProps = record.get("entity").properties;
+      return {
+        uuid: entityProps.uuid,
+        name: entityProps.name,
+        type: entityProps.type,
+        attributes: JSON.parse(entityProps.attributes || "{}"),
+        nameEmbedding: entityProps.nameEmbedding || [],
+        typeEmbedding: entityProps.typeEmbedding || [],
+        createdAt: new Date(entityProps.createdAt),
+        userId: entityProps.userId,
+        space: entityProps.space,
+      };
+    });
+  } catch (error) {
+    logger.error("Error fetching entities:", { error });
+    throw new Error(`Failed to fetch entities: ${error}`);
+  }
+}
+
+/**
+ * Fetch ALL entities from Neo4j database (for force refresh)
+ */
+async function getAllEntitiesForceRefresh(
+  userId?: string,
+): Promise<EntityNode[]> {
   try {
     const query = userId
       ? `MATCH (entity:Entity {userId: $userId}) RETURN entity ORDER BY entity.createdAt`
@@ -287,6 +345,7 @@ export async function triggerEntityEmbeddingsUpdate(
   options: {
     userId?: string;
     batchSize?: number;
+    forceUpdate?: boolean;
   } = {},
 ) {
   try {

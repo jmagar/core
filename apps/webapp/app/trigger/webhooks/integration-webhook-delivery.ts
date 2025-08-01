@@ -17,6 +17,7 @@ interface OAuthIntegrationWebhookPayload {
   integrationAccountId: string;
   eventType: WebhookEventType;
   userId: string;
+  workspaceId: string;
 }
 
 export const integrationWebhookTask = task({
@@ -36,11 +37,51 @@ export const integrationWebhookTask = task({
         },
       });
 
-      if (!integrationAccount) {
+      let webhookPayload: any = {};
+
+      if (
+        !integrationAccount &&
+        payload.eventType === "integration.disconnected"
+      ) {
+        webhookPayload = {
+          event: payload.eventType,
+          user_id: payload.userId,
+          integration: {
+            id: payload.integrationAccountId,
+          },
+        };
+      } else if (!integrationAccount) {
         logger.error(
           `Integration account ${payload.integrationAccountId} not found`,
         );
         return { success: false, error: "Integration account not found" };
+      } else {
+        const integrationConfig =
+          integrationAccount.integrationConfiguration as any;
+
+        const integrationSpec = integrationAccount.integrationDefinition
+          .spec as any;
+        let mcpEndpoint = undefined;
+
+        if (integrationSpec.mcp) {
+          mcpEndpoint = `${process.env.API_BASE_URL}/api/v1/mcp/${integrationAccount.integrationDefinition.slug}`;
+        } else if (integrationSpec.mcp.type === "stdio") {
+          mcpEndpoint = `${process.env.API_BASE_URL}/api/v1/mcp/${integrationAccount.integrationDefinition.slug}`;
+        }
+
+        // Prepare webhook payload
+        webhookPayload = {
+          event: payload.eventType,
+          user_id: payload.userId,
+          integration: {
+            id: integrationAccount.id,
+            provider: integrationAccount.integrationDefinition.slug,
+            mcpEndpoint: mcpEndpoint,
+            name: integrationAccount.integrationDefinition.name,
+            icon: integrationAccount.integrationDefinition.icon,
+          },
+          timestamp: new Date().toISOString(),
+        };
       }
 
       // Get all OAuth clients that:
@@ -48,12 +89,14 @@ export const integrationWebhookTask = task({
       // 2. Have webhook URLs configured
       const oauthClients = await prisma.oAuthClientInstallation.findMany({
         where: {
-          workspaceId: integrationAccount.workspaceId,
+          workspaceId: payload.workspaceId,
           installedById: payload.userId,
           isActive: true,
-          // Check if client has integration scope in allowedScopes
           grantedScopes: {
             contains: "integration",
+          },
+          oauthClient: {
+            clientType: "regular",
           },
         },
         select: {
@@ -77,24 +120,6 @@ export const integrationWebhookTask = task({
         return { success: true, message: "No OAuth clients to notify" };
       }
 
-      const integrationConfig =
-        integrationAccount.integrationConfiguration as any;
-      // Prepare webhook payload
-      const webhookPayload = {
-        event: payload.eventType,
-        user_id: payload.userId,
-        integration: {
-          id: integrationAccount.id,
-          provider: integrationAccount.integrationDefinition.slug,
-          mcp_endpoint: integrationConfig.mcp
-            ? `${process.env.API_BASE_URL}/api/v1/mcp/${integrationAccount.integrationDefinition.slug}`
-            : undefined,
-          name: integrationAccount.integrationDefinition.name,
-          icon: integrationAccount.integrationDefinition.icon,
-        },
-        timestamp: new Date().toISOString(),
-      };
-
       // Convert OAuth clients to targets
       const targets: WebhookTarget[] = oauthClients
         .filter((client) => client.oauthClient?.webhookUrl)
@@ -116,11 +141,6 @@ export const integrationWebhookTask = task({
 
       logger.log(
         `OAuth integration webhook delivery completed: ${successfulDeliveries}/${totalDeliveries} successful`,
-        {
-          integrationId: integrationAccount.id,
-          integrationProvider: integrationAccount.integrationDefinition.slug,
-          userId: payload.userId,
-        },
       );
 
       return {
@@ -151,12 +171,14 @@ export async function triggerIntegrationWebhook(
   integrationAccountId: string,
   userId: string,
   eventType: WebhookEventType,
+  workspaceId: string,
 ) {
   try {
     await integrationWebhookTask.trigger({
       integrationAccountId,
       userId,
       eventType,
+      workspaceId,
     });
     logger.log(
       `Triggered OAuth integration webhook delivery for integration account ${integrationAccountId}`,

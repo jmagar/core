@@ -232,6 +232,7 @@ async function handleAccountMessage(
       integrationAccountId,
       userId,
       "mcp.connected",
+      workspaceId,
     );
     return config;
   }
@@ -255,6 +256,7 @@ async function handleAccountMessage(
       integrationAccount.id,
       userId,
       "integration.connected",
+      workspaceId,
     );
   } catch (error) {
     logger.error("Failed to trigger OAuth integration webhook", {

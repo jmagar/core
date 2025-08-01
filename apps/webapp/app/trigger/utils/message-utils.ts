@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { type Message } from "@core/types";
 import { addToQueue } from "./queue";
+import { triggerWebhookDelivery } from "../webhooks/webhook-delivery";
+import { logger } from "@trigger.dev/sdk";
 
 const prisma = new PrismaClient();
 
@@ -156,6 +158,23 @@ export const createActivities = async ({
         integrationAccount?.integratedById,
         activity.id,
       );
+
+      if (integrationAccount?.workspaceId) {
+        try {
+          await triggerWebhookDelivery(
+            activity.id,
+            integrationAccount?.workspaceId,
+          );
+          logger.log("Webhook delivery triggered for activity", {
+            activityId: activity.id,
+          });
+        } catch (error) {
+          logger.error("Failed to trigger webhook delivery", {
+            activityId: activity.id,
+            error,
+          });
+        }
+      }
 
       return {
         activityId: activity.id,
