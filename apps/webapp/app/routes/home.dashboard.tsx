@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useFetcher } from "@remix-run/react";
 import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { requireUserId } from "~/services/session.server";
 import { useTypedLoaderData } from "remix-typedjson";
 
-import { GraphVisualizationClient } from "~/components/graph/graph-client";
 import { LoaderCircle } from "lucide-react";
 import { PageHeader } from "~/components/common/page-header";
+import { GraphVisualizationClient } from "~/components/graph/graph-client";
+import { GraphNode } from "~/components/graph/type";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // Only return userId, not the heavy nodeLinks
@@ -15,38 +17,31 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Dashboard() {
   const { userId } = useTypedLoaderData<typeof loader>();
+  const fetcher = useFetcher<any>();
+  const [selectedClusterId, setSelectedClusterId] = useState<string | null>(
+    null,
+  );
 
-  // State for nodeLinks and loading
-  const [nodeLinks, setNodeLinks] = useState<any[] | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchNodeLinks() {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          "/node-links?userId=" +
-            encodeURIComponent("cmc0x85jv0000nu1wiu1yla73"),
-        );
-        if (!res.ok) throw new Error("Failed to fetch node links");
-        const data = await res.json();
-        if (!cancelled) {
-          setNodeLinks(data);
-          setLoading(false);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setNodeLinks([]);
-          setLoading(false);
-        }
-      }
+  // Kick off the fetcher on mount if not already done
+  React.useEffect(() => {
+    if (userId && fetcher.state === "idle" && !fetcher.data) {
+      fetcher.load("/api/v1/graph/clustered");
     }
-    fetchNodeLinks();
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
+  }, [userId, fetcher]);
+
+  // Determine loading state
+  const loading =
+    fetcher.state === "loading" ||
+    fetcher.state === "submitting" ||
+    !fetcher.data;
+
+  // Get graph data from fetcher
+  let graphData: any = null;
+  if (fetcher.data && fetcher.data.success) {
+    graphData = fetcher.data.data;
+  } else if (fetcher.data && !fetcher.data.success) {
+    graphData = { triplets: [], clusters: [] };
+  }
 
   return (
     <>
@@ -60,7 +55,15 @@ export default function Dashboard() {
             </div>
           ) : (
             typeof window !== "undefined" &&
-            nodeLinks && <GraphVisualizationClient triplets={nodeLinks} />
+            graphData && (
+              <GraphVisualizationClient
+                triplets={graphData.triplets || []}
+                clusters={graphData.clusters || []}
+                selectedClusterId={selectedClusterId}
+                onClusterSelect={setSelectedClusterId}
+                className="h-full w-full"
+              />
+            )
           )}
         </div>
       </div>

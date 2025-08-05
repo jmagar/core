@@ -9,7 +9,6 @@ import {
 } from "react-virtualized";
 import { type LogItem } from "~/hooks/use-logs";
 import { Badge } from "~/components/ui/badge";
-import { Card, CardContent } from "~/components/ui/card";
 import { cn } from "~/lib/utils";
 import { ScrollManagedList } from "../virtualized-list";
 import { LogTextCollapse } from "./log-text-collapse";
@@ -46,23 +45,6 @@ function LogItemRenderer(
     );
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "PROCESSING":
-        return "bg-blue-100 text-blue-800 hover:bg-blue-100 hover:text-blue-800";
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100 hover:text-yellow-800";
-      case "COMPLETED":
-        return "bg-green-100 text-green-800 hover:bg-green-100 hover:text-green-800";
-      case "FAILED":
-        return "bg-red-100 text-red-800 hover:bg-red-100 hover:text-red-800";
-      case "CANCELLED":
-        return "bg-gray-100 text-gray-800 hover:bg-gray-100 hover:text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800 hover:bg-gray-100 hover:text-gray-800";
-    }
-  };
-
   return (
     <CellMeasurer
       key={key}
@@ -71,40 +53,17 @@ function LogItemRenderer(
       parent={parent}
       rowIndex={index}
     >
-      <div key={key} style={style} className="pb-2">
-        <Card className="h-full">
-          <CardContent className="p-4">
-            <div className="mb-2 flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="rounded text-xs">
-                  {log.source}
-                </Badge>
-                <div className="flex items-center gap-1">
-                  <Badge
-                    className={cn(
-                      "rounded text-xs",
-                      getStatusColor(log.status),
-                    )}
-                  >
-                    {log.status.charAt(0).toUpperCase() +
-                      log.status.slice(1).toLowerCase()}
-                  </Badge>
-                </div>
-              </div>
-              <div className="text-muted-foreground text-xs">
-                {new Date(log.time).toLocaleString()}
-              </div>
-            </div>
-
-            <LogTextCollapse
-              text={log.ingestText}
-              error={log.error}
-              logData={log.data}
-              id={log.id}
-              episodeUUID={log.episodeUUID}
-            />
-          </CardContent>
-        </Card>
+      <div key={key} style={style}>
+        <div className="group mx-2 flex cursor-default gap-2">
+          <LogTextCollapse
+            text={log.ingestText}
+            error={log.error}
+            logData={log.data}
+            log={log}
+            id={log.id}
+            episodeUUID={log.episodeUUID}
+          />
+        </div>
       </div>
     </CellMeasurer>
   );

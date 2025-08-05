@@ -8,6 +8,7 @@ import { getIntegrationAccounts } from "~/services/integrationAccount.server";
 import { IntegrationGrid } from "~/components/integrations/integration-grid";
 import { PageHeader } from "~/components/common/page-header";
 import { Plus } from "lucide-react";
+import { FIXED_INTEGRATIONS } from "~/components/integrations/utils";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await requireUserId(request);
@@ -18,8 +19,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     getIntegrationAccounts(userId),
   ]);
 
+  // Combine fixed integrations with dynamic ones
+  const allIntegrations = [...FIXED_INTEGRATIONS, ...integrationDefinitions];
+
   return json({
-    integrationDefinitions,
+    integrationDefinitions: allIntegrations,
     integrationAccounts,
     userId,
   });

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "@remix-run/react";
+import { useState, useEffect } from "react";
+import { useNavigate, useFetcher } from "@remix-run/react";
 import { useLogs } from "~/hooks/use-logs";
 import { LogsFilters } from "~/components/logs/logs-filters";
 import { VirtualLogsList } from "~/components/logs/virtual-logs-list";
@@ -7,11 +7,13 @@ import { AppContainer, PageContainer } from "~/components/layout/app-layout";
 import { Card, CardContent } from "~/components/ui/card";
 import { Database, LoaderCircle } from "lucide-react";
 import { PageHeader } from "~/components/common/page-header";
+import { ContributionGraph } from "~/components/activity/contribution-graph";
 
 export default function LogsAll() {
   const navigate = useNavigate();
   const [selectedSource, setSelectedSource] = useState<string | undefined>();
   const [selectedStatus, setSelectedStatus] = useState<string | undefined>();
+  const contributionFetcher = useFetcher<any>();
 
   const {
     logs,
@@ -26,17 +28,41 @@ export default function LogsAll() {
     status: selectedStatus,
   });
 
+  // Fetch contribution data on mount
+  useEffect(() => {
+    if (contributionFetcher.state === "idle" && !contributionFetcher.data) {
+      contributionFetcher.load("/api/v1/activity/contribution");
+    }
+  }, [contributionFetcher]);
+
+  // Get contribution data from fetcher
+  const contributionData = contributionFetcher.data?.success
+    ? contributionFetcher.data.data.contributionData
+    : [];
+  const totalActivities = contributionFetcher.data?.success
+    ? contributionFetcher.data.data.totalActivities
+    : 0;
+  const isContributionLoading =
+    contributionFetcher.state === "loading" || !contributionFetcher.data;
+
   return (
     <>
       <PageHeader title="Logs" />
-      <div className="flex h-[calc(100vh_-_56px)] w-full flex-col items-center space-y-6 p-4 px-5">
+      <div className="flex h-[calc(100vh_-_56px)] w-full flex-col items-center space-y-6 py-4">
+        {/* Contribution Graph */}
+        <div className="mb-0 w-full max-w-5xl px-4">
+          {isContributionLoading ? (
+            <LoaderCircle className="text-primary h-4 w-4 animate-spin" />
+          ) : (
+            <ContributionGraph data={contributionData} />
+          )}
+        </div>
         {isInitialLoad ? (
           <>
-            <LoaderCircle className="text-primary h-4 w-4 animate-spin" />{" "}
+            <LoaderCircle className="text-primary h-4 w-4 animate-spin" />
           </>
         ) : (
           <>
-            {" "}
             {/* Filters */}
             {logs.length > 0 && (
               <LogsFilters

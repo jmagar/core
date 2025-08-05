@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const EnvironmentSchema = z.object({
   // Version
-  VERSION: z.string().default("0.1.13"),
+  VERSION: z.string().default("0.1.14"),
 
   // Database
   DB_HOST: z.string().default("localhost"),

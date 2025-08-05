@@ -4,6 +4,7 @@ import { AlertCircle, Info, Trash } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,14 +16,34 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
+import { Badge } from "../ui/badge";
+import { type LogItem } from "~/hooks/use-logs";
 
 interface LogTextCollapseProps {
   text?: string;
   error?: string;
   logData: any;
+  log: LogItem;
   id: string;
   episodeUUID?: string;
 }
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "PROCESSING":
+      return "bg-blue-100 text-blue-800 hover:bg-blue-100 hover:text-blue-800";
+    case "PENDING":
+      return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100 hover:text-yellow-800";
+    case "COMPLETED":
+      return "bg-success/10 text-success hover:bg-success/10 hover:text-success";
+    case "FAILED":
+      return "bg-destructive/10 text-destructive hover:bg-destructive/10 hover:text-destructive";
+    case "CANCELLED":
+      return "bg-gray-100 text-gray-800 hover:bg-gray-100 hover:text-gray-800";
+    default:
+      return "bg-gray-100 text-gray-800 hover:bg-gray-100 hover:text-gray-800";
+  }
+};
 
 export function LogTextCollapse({
   episodeUUID,
@@ -30,6 +51,7 @@ export function LogTextCollapse({
   error,
   id,
   logData,
+  log,
 }: LogTextCollapseProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -75,19 +97,28 @@ export function LogTextCollapse({
   }
 
   return (
-    <>
-      <div className="mb-2">
-        <p
+    <div className="flex w-full items-center">
+      <div
+        className={cn(
+          "group-hover:bg-grayAlpha-100 flex min-w-[0px] shrink grow items-start gap-2 rounded-md px-4",
+        )}
+      >
+        <div
           className={cn(
-            "whitespace-p-wrap pt-2 text-sm break-words",
-            isLong ? "max-h-16 overflow-hidden" : "",
+            "border-border flex w-full min-w-[0px] shrink flex-col border-b py-2",
           )}
-          style={{ lineHeight: "1.5" }}
-          dangerouslySetInnerHTML={{ __html: text }}
-        />
+        >
+          <div className="flex w-full items-center justify-between gap-4">
+            <div
+              className="inline-flex min-h-[24px] min-w-[0px] shrink cursor-pointer items-center justify-start"
+              onClick={() => setDialogOpen(true)}
+            >
+              <div
+                className={cn("truncate text-left")}
+                dangerouslySetInnerHTML={{ __html: text }}
+              ></div>
+            </div>
 
-        {isLong && (
-          <>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogContent className="max-w-2xl p-4">
                 <DialogHeader>
@@ -101,66 +132,84 @@ export function LogTextCollapse({
                     style={{ lineHeight: "1.5" }}
                     dangerouslySetInnerHTML={{ __html: text }}
                   />
+                  {error && (
+                    <div className="mt-4 border-t px-3 py-2">
+                      <div className="flex items-start gap-2 text-red-600">
+                        <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                        <div>
+                          <p className="mb-1 text-sm font-medium">
+                            Error Details
+                          </p>
+                          <p className="text-sm break-words whitespace-pre-wrap">
+                            {error}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>
-          </>
-        )}
-      </div>
-      <div
-        className={cn(
-          "text-muted-foreground flex items-center justify-end text-xs",
-          isLong && "justify-between",
-        )}
-      >
-        {isLong && (
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="-ml-2 rounded px-2"
-              onClick={() => setDialogOpen(true)}
-            >
-              <Info size={15} />
-            </Button>
-            {episodeUUID && (
-              <AlertDialog
-                open={deleteDialogOpen}
-                onOpenChange={setDeleteDialogOpen}
-              >
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="rounded px-2">
-                    <Trash size={15} />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Episode</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this episode? This action
-                      cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>
-                      Continue
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+            <div className="text-muted-foreground flex items-center justify-end text-xs">
+              <div className="flex items-center">
+                <Badge
+                  className={cn(
+                    "mr-3 rounded text-xs",
+                    getStatusColor(log.status),
+                  )}
+                >
+                  {log.status.charAt(0).toUpperCase() +
+                    log.status.slice(1).toLowerCase()}
+                </Badge>
+
+                <div className="text-muted-foreground mr-3">
+                  {new Date(log.time).toLocaleString()}
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="-ml-2 rounded px-2"
+                  onClick={() => setDialogOpen(true)}
+                >
+                  <Info size={15} />
+                </Button>
+                {episodeUUID && (
+                  <AlertDialog
+                    open={deleteDialogOpen}
+                    onOpenChange={setDeleteDialogOpen}
+                  >
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded px-2"
+                      >
+                        <Trash size={15} />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Episode</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this episode? This
+                          action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>
+                          Continue
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+            </div>
           </div>
-        )}
-        {error && (
-          <div className="flex items-center gap-1 text-red-600">
-            <AlertCircle className="h-3 w-3" />
-            <span className="max-w-[200px] truncate" title={error}>
-              {error}
-            </span>
-          </div>
-        )}
+        </div>
       </div>
-    </>
+    </div>
   );
 }

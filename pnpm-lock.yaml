@@ -463,6 +463,9 @@ importers:
       '@trigger.dev/sdk':
         specifier: ^4.0.0-v4-beta.22
         version: 4.0.0-v4-beta.22(ai@4.3.14(react@18.3.1)(zod@3.23.8))(zod@3.23.8)
+      '@types/react-calendar-heatmap':
+        specifier: ^1.9.0
+        version: 1.9.0
       ai:
         specifier: 4.3.14
         version: 4.3.14(react@18.3.1)(zod@3.23.8)
@@ -571,6 +574,9 @@ importers:
       react:
         specifier: ^18.2.0
         version: 18.3.1
+      react-calendar-heatmap:
+        specifier: ^1.10.0
+        version: 1.10.0(react@18.3.1)
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
@@ -746,253 +752,6 @@ importers:
       vite-tsconfig-paths:
         specifier: ^4.2.1
         version: 4.3.2(typescript@5.8.3)(vite@6.3.5(@types/node@20.19.7)(jiti@2.4.2)(less@4.4.0)(lightningcss@1.30.1)(sass@1.89.2)(terser@5.42.0)(tsx@4.17.0)(yaml@2.8.0))
-
-  packages/core-cli:
-    dependencies:
-      '@clack/prompts':
-        specifier: ^0.10.0
-        version: 0.10.1
-      '@depot/cli':
-        specifier: 0.0.1-cli.2.80.0
-        version: 0.0.1-cli.2.80.0
-      '@opentelemetry/api':
-        specifier: 1.9.0
-        version: 1.9.0
-      '@opentelemetry/api-logs':
-        specifier: 0.52.1
-        version: 0.52.1
-      '@opentelemetry/exporter-logs-otlp-http':
-        specifier: 0.52.1
-        version: 0.52.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/exporter-trace-otlp-http':
-        specifier: 0.52.1
-        version: 0.52.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/instrumentation':
-        specifier: 0.52.1
-        version: 0.52.1(@opentelemetry/api@1.9.0)(supports-color@10.0.0)
-      '@opentelemetry/instrumentation-fetch':
-        specifier: 0.52.1
-        version: 0.52.1(@opentelemetry/api@1.9.0)(supports-color@10.0.0)
-      '@opentelemetry/resources':
-        specifier: 1.25.1
-        version: 1.25.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-logs':
-        specifier: 0.52.1
-        version: 0.52.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-node':
-        specifier: 0.52.1
-        version: 0.52.1(@opentelemetry/api@1.9.0)(supports-color@10.0.0)
-      '@opentelemetry/sdk-trace-base':
-        specifier: 1.25.1
-        version: 1.25.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-trace-node':
-        specifier: 1.25.1
-        version: 1.25.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/semantic-conventions':
-        specifier: 1.25.1
-        version: 1.25.1
-      ansi-escapes:
-        specifier: ^7.0.0
-        version: 7.0.0
-      braces:
-        specifier: ^3.0.3
-        version: 3.0.3
-      c12:
-        specifier: ^1.11.1
-        version: 1.11.2(magicast@0.3.5)
-      chalk:
-        specifier: ^5.2.0
-        version: 5.4.1
-      chokidar:
-        specifier: ^3.6.0
-        version: 3.6.0
-      cli-table3:
-        specifier: ^0.6.3
-        version: 0.6.5
-      commander:
-        specifier: ^9.4.1
-        version: 9.5.0
-      defu:
-        specifier: ^6.1.4
-        version: 6.1.4
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.5.0
-      dotenv-expand:
-        specifier: ^12.0.2
-        version: 12.0.2
-      esbuild:
-        specifier: ^0.23.0
-        version: 0.23.1
-      eventsource:
-        specifier: ^3.0.2
-        version: 3.0.7
-      evt:
-        specifier: ^2.4.13
-        version: 2.5.9
-      fast-npm-meta:
-        specifier: ^0.2.2
-        version: 0.2.2
-      git-last-commit:
-        specifier: ^1.0.1
-        version: 1.0.1
-      gradient-string:
-        specifier: ^2.0.2
-        version: 2.0.2
-      has-flag:
-        specifier: ^5.0.1
-        version: 5.0.1
-      import-in-the-middle:
-        specifier: 1.11.0
-        version: 1.11.0
-      import-meta-resolve:
-        specifier: ^4.1.0
-        version: 4.1.0
-      ini:
-        specifier: ^5.0.0
-        version: 5.0.0
-      jsonc-parser:
-        specifier: 3.2.1
-        version: 3.2.1
-      knex:
-        specifier: 3.1.0
-        version: 3.1.0(pg@8.16.3)(supports-color@10.0.0)
-      magicast:
-        specifier: ^0.3.4
-        version: 0.3.5
-      minimatch:
-        specifier: ^10.0.1
-        version: 10.0.2
-      mlly:
-        specifier: ^1.7.1
-        version: 1.7.4
-      nanoid:
-        specifier: 3.3.8
-        version: 3.3.8
-      nypm:
-        specifier: ^0.5.4
-        version: 0.5.4
-      object-hash:
-        specifier: ^3.0.0
-        version: 3.0.0
-      open:
-        specifier: ^10.0.3
-        version: 10.2.0
-      p-limit:
-        specifier: ^6.2.0
-        version: 6.2.0
-      p-retry:
-        specifier: ^6.1.0
-        version: 6.2.1
-      partysocket:
-        specifier: ^1.0.2
-        version: 1.1.4
-      pg:
-        specifier: 8.16.3
-        version: 8.16.3
-      pkg-types:
-        specifier: ^1.1.3
-        version: 1.3.1
-      polka:
-        specifier: ^0.5.2
-        version: 0.5.2
-      resolve:
-        specifier: ^1.22.8
-        version: 1.22.10
-      semver:
-        specifier: ^7.5.0
-        version: 7.7.2
-      signal-exit:
-        specifier: ^4.1.0
-        version: 4.1.0
-      source-map-support:
-        specifier: 0.5.21
-        version: 0.5.21
-      std-env:
-        specifier: ^3.7.0
-        version: 3.9.0
-      supports-color:
-        specifier: ^10.0.0
-        version: 10.0.0
-      tiny-invariant:
-        specifier: ^1.2.0
-        version: 1.3.3
-      tinyexec:
-        specifier: ^0.3.1
-        version: 0.3.2
-      tinyglobby:
-        specifier: ^0.2.10
-        version: 0.2.14
-      uuid:
-        specifier: 11.1.0
-        version: 11.1.0
-      ws:
-        specifier: ^8.18.0
-        version: 8.18.3
-      xdg-app-paths:
-        specifier: ^8.3.0
-        version: 8.3.0
-      zod:
-        specifier: 3.23.8
-        version: 3.23.8
-      zod-validation-error:
-        specifier: ^1.5.0
-        version: 1.5.0(zod@3.23.8)
-    devDependencies:
-      '@epic-web/test-server':
-        specifier: ^0.1.0
-        version: 0.1.6
-      '@types/gradient-string':
-        specifier: ^1.1.2
-        version: 1.1.6
-      '@types/ini':
-        specifier: ^4.1.1
-        version: 4.1.1
-      '@types/object-hash':
-        specifier: 3.0.6
-        version: 3.0.6
-      '@types/polka':
-        specifier: ^0.5.7
-        version: 0.5.7
-      '@types/react':
-        specifier: ^18.2.48
-        version: 18.2.69
-      '@types/resolve':
-        specifier: ^1.20.6
-        version: 1.20.6
-      '@types/rimraf':
-        specifier: ^4.0.5
-        version: 4.0.5
-      '@types/semver':
-        specifier: ^7.5.0
-        version: 7.7.0
-      '@types/source-map-support':
-        specifier: 0.5.10
-        version: 0.5.10
-      '@types/ws':
-        specifier: ^8.5.3
-        version: 8.18.1
-      cpy-cli:
-        specifier: ^5.0.0
-        version: 5.0.0
-      execa:
-        specifier: ^8.0.1
-        version: 8.0.1
-      find-up:
-        specifier: ^7.0.0
-        version: 7.0.0
-      rimraf:
-        specifier: ^5.0.7
-        version: 5.0.10
-      ts-essentials:
-        specifier: 10.0.1
-        version: 10.0.1(typescript@5.8.3)
-      tshy:
-        specifier: ^3.0.2
-        version: 3.0.2
-      tsx:
-        specifier: 4.17.0
-        version: 4.17.0
 
   packages/database:
     dependencies:
@@ -5218,6 +4977,9 @@ packages:
   '@types/range-parser@1.2.7':
     resolution: {integrity: sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==}
 
+  '@types/react-calendar-heatmap@1.9.0':
+    resolution: {integrity: sha512-BH8M/nsXoLGa3hxWbrq3guPwlK0cV+w1i4c/ktrTxTzN5fBths6WbeUZ4dK0+tE76qiGoVSo9Tse8WVVuMIV+w==}
+
   '@types/react-dom@18.2.18':
     resolution: {integrity: sha512-TJxDm6OfAX2KJWJdMEVTwWke5Sc/E/RlnPGvGfS0W7+6ocy2xhDVQVh/KvC2Uf7kACs+gDytdusDSdWfWkaNzw==}
 
@@ -8519,6 +8281,9 @@ packages:
     resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
     engines: {node: '>= 0.8'}
 
+  memoize-one@5.2.1:
+    resolution: {integrity: sha512-zYiwtZUcYyXKo/np96AGZAckk+FWWsUdJ3cHGGmld7+AhvcWmQyGCYUh1hc4Q/pkOhb65dQR/pqCyK0cOaHz4Q==}
+
   memorystream@0.3.1:
     resolution: {integrity: sha512-S3UwM3yj5mtUSEfP41UZmt/0SCoVYUcU1rkXv+BQ5Ig8ndL4sPoJNBUJERafdPb5jjHJGuMgytgKvKIf58XNBw==}
     engines: {node: '>= 0.10.0'}
@@ -9901,6 +9666,11 @@ packages:
 
   rc9@2.1.2:
     resolution: {integrity: sha512-btXCnMmRIBINM2LDZoEmOogIZU7Qe7zn4BpomSKZ/ykbLObuBdvG+mFq11DL6fjH1DRwHhrlgtYWG96bJiC7Cg==}
+
+  react-calendar-heatmap@1.10.0:
+    resolution: {integrity: sha512-e5vcrzMWzKIF710egr1FpjWyuDEFeZm39nvV25muc8Wtqqi8iDOfqREELeQ9Wouqf9hhj939gq0i+iAxo7KdSw==}
+    peerDependencies:
+      react: '>=0.14.0'
 
   react-css-styled@1.1.9:
     resolution: {integrity: sha512-M7fJZ3IWFaIHcZEkoFOnkjdiUFmwd8d+gTh2bpqMOcnxy/0Gsykw4dsL4QBiKsxcGow6tETUa4NAUcmJF+/nfw==}
@@ -16153,6 +15923,10 @@ snapshots:
 
   '@types/range-parser@1.2.7': {}
 
+  '@types/react-calendar-heatmap@1.9.0':
+    dependencies:
+      '@types/react': 18.2.69
+
   '@types/react-dom@18.2.18':
     dependencies:
       '@types/react': 18.2.69
@@ -20145,6 +19919,8 @@ snapshots:
 
   media-typer@1.1.0: {}
 
+  memoize-one@5.2.1: {}
+
   memorystream@0.3.1: {}
 
   meow@12.1.1: {}
@@ -21734,6 +21510,12 @@ snapshots:
     dependencies:
       defu: 6.1.4
       destr: 2.0.5
+
+  react-calendar-heatmap@1.10.0(react@18.3.1):
+    dependencies:
+      memoize-one: 5.2.1
+      prop-types: 15.8.1
+      react: 18.3.1
 
   react-css-styled@1.1.9:
     dependencies:

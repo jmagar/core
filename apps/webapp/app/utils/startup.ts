@@ -108,7 +108,7 @@ const Keys = [
 export async function addEnvVariablesInTrigger() {
   const {
     APP_ORIGIN,
-    TRIGGER_DB,
+    POSTGRES_DB,
     EMBEDDING_MODEL,
     MODEL,
     ENCRYPTION_KEY,
@@ -121,7 +121,7 @@ export async function addEnvVariablesInTrigger() {
     TRIGGER_SECRET_KEY,
   } = env;
 
-  const DATABASE_URL = getDatabaseUrl(TRIGGER_DB);
+  const DATABASE_URL = getDatabaseUrl(POSTGRES_DB);
 
   // Helper to replace 'localhost' with 'host.docker.internal'
   function replaceLocalhost(val: string | undefined): string | undefined {

@@ -5,6 +5,7 @@ export interface Node {
   labels?: string[];
   attributes?: Record<string, any>;
   createdAt: string;
+  clusterId?: string;
 }
 
 export interface Edge {
@@ -25,6 +26,7 @@ export interface GraphNode extends Node {
   id: string;
   value: string;
   primaryLabel?: string;
+  clusterId?: string; // Add cluster information
 }
 
 export interface GraphEdge extends Edge {

@@ -36,9 +36,7 @@ interface GraphPopoversProps {
 
 export function GraphPopovers({
   showNodePopup,
-  showEdgePopup,
   nodePopupContent,
-  edgePopupContent,
   onOpenChange,
   labelColorMap,
 }: GraphPopoversProps) {
@@ -52,8 +50,12 @@ export function GraphPopovers({
 
     // Check if node has primaryLabel property (GraphNode)
     const nodeAny = nodePopupContent.node as any;
-    if (nodeAny.primaryLabel && typeof nodeAny.primaryLabel === "string") {
-      return nodeAny.primaryLabel;
+
+    if (
+      nodeAny.attributes.nodeType &&
+      typeof nodeAny.attributes.nodeType === "string"
+    ) {
+      return nodeAny.attributes.nodeType;
     }
 
     // Fall back to original logic with labels
@@ -93,7 +95,7 @@ export function GraphPopovers({
           <div className="pointer-events-none h-4 w-4" />
         </PopoverTrigger>
         <PopoverContent
-          className="h-60 max-w-80 overflow-auto"
+          className="h-35 max-w-80 overflow-auto"
           side="bottom"
           align="end"
           sideOffset={5}
@@ -104,7 +106,7 @@ export function GraphPopovers({
               <h4 className="leading-none font-medium">Node Details</h4>
               {primaryNodeLabel && (
                 <span
-                  className="rounded-full px-2 py-1 text-xs font-medium text-white"
+                  className="rounded-md px-2 py-1 text-xs font-medium text-white"
                   style={{ backgroundColor: labelColor }}
                 >
                   {primaryNodeLabel}
@@ -118,7 +120,9 @@ export function GraphPopovers({
                     {attributesToDisplay.map(({ key, value }) => (
                       <p key={key} className="text-sm">
                         <span className="font-medium text-black dark:text-white">
-                          {key}:
+                          {key.charAt(0).toUpperCase() +
+                            key.slice(1).toLowerCase()}
+                          :
                         </span>{" "}
                         <span className="text-muted-foreground break-words">
                           {typeof value === "object"
@@ -130,48 +134,6 @@ export function GraphPopovers({
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
-
-      <Popover open={showEdgePopup} onOpenChange={onOpenChange}>
-        <PopoverTrigger asChild>
-          <div className="pointer-events-none h-4 w-4" />
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-80 overflow-hidden"
-          side="bottom"
-          align="end"
-          sideOffset={5}
-          onOpenAutoFocus={(e) => e.preventDefault()}
-        >
-          <div className="bg-grayAlpha-100 mb-4 rounded-md p-2">
-            <p className="text-sm break-all">
-              Episode → {edgePopupContent?.target.name || "Unknown"}
-            </p>
-          </div>
-          <div className="space-y-2">
-            <h4 className="leading-none font-medium">Relationship</h4>
-            <div className="grid gap-2">
-              <p className="text-muted-foreground text-sm break-all">
-                <span className="mr-2 text-sm font-medium text-black dark:text-white">
-                  UUID:
-                </span>
-                {edgePopupContent?.relation.uuid || "Unknown"}
-              </p>
-              <p className="text-muted-foreground text-sm break-all">
-                <span className="mr-2 text-sm font-medium text-black dark:text-white">
-                  Type:
-                </span>
-                {edgePopupContent?.relation.type || "Unknown"}
-              </p>
-              <p className="text-muted-foreground text-sm break-all">
-                <span className="mr-2 text-sm font-medium text-black dark:text-white">
-                  Created:
-                </span>
-                {formatDate(edgePopupContent?.relation.createdAt)}
-              </p>
             </div>
           </div>
         </PopoverContent>

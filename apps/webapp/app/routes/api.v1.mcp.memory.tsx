@@ -17,22 +17,6 @@ const transports: {
   };
 } = {};
 
-// Cleanup old sessions every 5 minutes
-setInterval(
-  () => {
-    const now = Date.now();
-    const maxAge = 30 * 60 * 1000; // 30 minutes
-
-    Object.keys(transports).forEach((sessionId) => {
-      if (now - transports[sessionId].createdAt > maxAge) {
-        transports[sessionId].transport.close();
-        delete transports[sessionId];
-      }
-    });
-  },
-  5 * 60 * 1000,
-);
-
 // MCP request body schema
 const MCPRequestSchema = z.object({}).passthrough();
 const SourceParams = z.object({

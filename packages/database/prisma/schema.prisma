@@ -64,6 +64,7 @@ model Conversation {
   status String @default("pending") // Can be "pending", "running", "completed", "failed", "need_attention"
 
   ConversationHistory ConversationHistory[]
+  RecallLog           RecallLog[]
 }
 
 model ConversationExecutionStep {
@@ -423,6 +424,51 @@ model PersonalAccessToken {
   authorizationCodes AuthorizationCode[]
 }
 
+model RecallLog {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deleted   DateTime?
+
+  // Access details
+  accessType String // "search", "recall", "direct_access"
+  query      String? // Search query (null for direct access)
+
+  // Target information
+  targetType String? // "episode", "statement", "entity", "mixed_results"
+  targetId   String? // UUID of specific target (null for search with multiple results)
+
+  // Search/access parameters
+  searchMethod  String? // "semantic", "keyword", "hybrid", "contextual", "graph_traversal"
+  minSimilarity Float? // Minimum similarity threshold used
+  maxResults    Int? // Maximum results requested
+
+  // Results and interaction
+  resultCount     Int    @default(0) // Number of results returned
+  similarityScore Float? // Similarity score (for single result access)
+
+  // Context and source
+  context   String? // Additional context
+  source    String? // Source of the access (e.g., "chat", "api", "integration")
+  sessionId String? // Session identifier
+
+  // Performance metrics
+  responseTimeMs Int? // Response time in milliseconds
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  workspaceId String?
+
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  conversationId String?
+
+  // Metadata for additional tracking data
+  metadata Json? @default("{}")
+}
+
 model Space {
   id          String  @id @default(cuid())
   name        String
@@ -505,6 +551,7 @@ model User {
   oauthIntegrationGrants  OAuthIntegrationGrant[]
   oAuthClientInstallation OAuthClientInstallation[]
   UserUsage               UserUsage?
+  RecallLog               RecallLog[]
 }
 
 model UserUsage {
@@ -579,6 +626,7 @@ model Workspace {
   OAuthAuthorizationCode  OAuthAuthorizationCode[]
   OAuthAccessToken        OAuthAccessToken[]
   OAuthRefreshToken       OAuthRefreshToken[]
+  RecallLog               RecallLog[]
 }
 
 enum AuthenticationMethod {

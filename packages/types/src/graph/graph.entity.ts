@@ -20,6 +20,7 @@ export interface EpisodicNode {
   userId: string;
   space?: string;
   sessionId?: string;
+  recallCount?: number;
 }
 
 /**
@@ -52,6 +53,7 @@ export interface StatementNode {
   attributes: Record<string, any>;
   userId: string;
   space?: string;
+  recallCount?: number;
 }
 
 /**

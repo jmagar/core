@@ -51,7 +51,7 @@ export function LogsFilters({
   const handleBack = () => setStep("main");
 
   return (
-    <div className="mb-4 flex w-full items-center justify-start gap-2">
+    <div className="mb-4 flex w-full items-center justify-start gap-2 px-5">
       <Popover
         open={popoverOpen}
         onOpenChange={(open) => {

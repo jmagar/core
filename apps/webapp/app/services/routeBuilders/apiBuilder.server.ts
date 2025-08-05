@@ -957,3 +957,291 @@ export function createHybridActionApiRoute<
 
   return { loader, action };
 }
+
+// Hybrid Loader API Route types and builder
+type HybridLoaderRouteBuilderOptions<
+  TParamsSchema extends AnyZodSchema | undefined = undefined,
+  TSearchParamsSchema extends AnyZodSchema | undefined = undefined,
+  THeadersSchema extends AnyZodSchema | undefined = undefined,
+  TResource = never,
+> = {
+  params?: TParamsSchema;
+  searchParams?: TSearchParamsSchema;
+  headers?: THeadersSchema;
+  allowJWT?: boolean;
+  corsStrategy?: "all" | "none";
+  findResource: (
+    params: TParamsSchema extends
+      | z.ZodFirstPartySchemaTypes
+      | z.ZodDiscriminatedUnion<any, any>
+      ? z.infer<TParamsSchema>
+      : undefined,
+    authentication: HybridAuthenticationResult,
+    searchParams: TSearchParamsSchema extends
+      | z.ZodFirstPartySchemaTypes
+      | z.ZodDiscriminatedUnion<any, any>
+      ? z.infer<TSearchParamsSchema>
+      : undefined,
+  ) => Promise<TResource | undefined>;
+  shouldRetryNotFound?: boolean;
+  authorization?: {
+    action: AuthorizationAction;
+    resource: (
+      resource: NonNullable<TResource>,
+      params: TParamsSchema extends
+        | z.ZodFirstPartySchemaTypes
+        | z.ZodDiscriminatedUnion<any, any>
+        ? z.infer<TParamsSchema>
+        : undefined,
+      searchParams: TSearchParamsSchema extends
+        | z.ZodFirstPartySchemaTypes
+        | z.ZodDiscriminatedUnion<any, any>
+        ? z.infer<TSearchParamsSchema>
+        : undefined,
+      headers: THeadersSchema extends
+        | z.ZodFirstPartySchemaTypes
+        | z.ZodDiscriminatedUnion<any, any>
+        ? z.infer<THeadersSchema>
+        : undefined,
+    ) => AuthorizationResources;
+    superScopes?: string[];
+  };
+};
+
+type HybridLoaderHandlerFunction<
+  TParamsSchema extends AnyZodSchema | undefined,
+  TSearchParamsSchema extends AnyZodSchema | undefined,
+  THeadersSchema extends AnyZodSchema | undefined = undefined,
+  TResource = never,
+> = (args: {
+  params: TParamsSchema extends
+    | z.ZodFirstPartySchemaTypes
+    | z.ZodDiscriminatedUnion<any, any>
+    ? z.infer<TParamsSchema>
+    : undefined;
+  searchParams: TSearchParamsSchema extends
+    | z.ZodFirstPartySchemaTypes
+    | z.ZodDiscriminatedUnion<any, any>
+    ? z.infer<TSearchParamsSchema>
+    : undefined;
+  headers: THeadersSchema extends
+    | z.ZodFirstPartySchemaTypes
+    | z.ZodDiscriminatedUnion<any, any>
+    ? z.infer<THeadersSchema>
+    : undefined;
+  authentication: HybridAuthenticationResult;
+  request: Request;
+  resource: NonNullable<TResource>;
+}) => Promise<Response>;
+
+export function createHybridLoaderApiRoute<
+  TParamsSchema extends AnyZodSchema | undefined = undefined,
+  TSearchParamsSchema extends AnyZodSchema | undefined = undefined,
+  THeadersSchema extends AnyZodSchema | undefined = undefined,
+  TResource = never,
+>(
+  options: HybridLoaderRouteBuilderOptions<
+    TParamsSchema,
+    TSearchParamsSchema,
+    THeadersSchema,
+    TResource
+  >,
+  handler: HybridLoaderHandlerFunction<
+    TParamsSchema,
+    TSearchParamsSchema,
+    THeadersSchema,
+    TResource
+  >,
+) {
+  return async function loader({ request, params }: LoaderFunctionArgs) {
+    const {
+      params: paramsSchema,
+      searchParams: searchParamsSchema,
+      headers: headersSchema,
+      allowJWT = false,
+      corsStrategy = "none",
+      authorization,
+      findResource,
+      shouldRetryNotFound,
+    } = options;
+
+    if (corsStrategy !== "none" && request.method.toUpperCase() === "OPTIONS") {
+      return apiCors(request, json({}));
+    }
+
+    try {
+      const authenticationResult = await authenticateHybridRequest(request, {
+        allowJWT,
+      });
+
+      if (!authenticationResult) {
+        return await wrapResponse(
+          request,
+          json({ error: "Authentication required" }, { status: 401 }),
+          corsStrategy !== "none",
+        );
+      }
+
+      let parsedParams: any = undefined;
+      if (paramsSchema) {
+        const parsed = paramsSchema.safeParse(params);
+        if (!parsed.success) {
+          return await wrapResponse(
+            request,
+            json(
+              {
+                error: "Params Error",
+                details: fromZodError(parsed.error).details,
+              },
+              { status: 400 },
+            ),
+            corsStrategy !== "none",
+          );
+        }
+        parsedParams = parsed.data;
+      }
+
+      let parsedSearchParams: any = undefined;
+      if (searchParamsSchema) {
+        const searchParams = Object.fromEntries(
+          new URL(request.url).searchParams,
+        );
+        const parsed = searchParamsSchema.safeParse(searchParams);
+        if (!parsed.success) {
+          return await wrapResponse(
+            request,
+            json(
+              {
+                error: "Query Error",
+                details: fromZodError(parsed.error).details,
+              },
+              { status: 400 },
+            ),
+            corsStrategy !== "none",
+          );
+        }
+        parsedSearchParams = parsed.data;
+      }
+
+      let parsedHeaders: any = undefined;
+      if (headersSchema) {
+        const rawHeaders = Object.fromEntries(request.headers);
+        const headers = headersSchema.safeParse(rawHeaders);
+        if (!headers.success) {
+          return await wrapResponse(
+            request,
+            json(
+              {
+                error: "Headers Error",
+                details: fromZodError(headers.error).details,
+              },
+              { status: 400 },
+            ),
+            corsStrategy !== "none",
+          );
+        }
+        parsedHeaders = headers.data;
+      }
+
+      // Find the resource
+      const resource = await findResource(
+        parsedParams,
+        authenticationResult,
+        parsedSearchParams,
+      );
+
+      if (!resource) {
+        return await wrapResponse(
+          request,
+          json(
+            { error: "Not found" },
+            {
+              status: 404,
+              headers: {
+                "x-should-retry": shouldRetryNotFound ? "true" : "false",
+              },
+            },
+          ),
+          corsStrategy !== "none",
+        );
+      }
+
+      // Authorization check - only applies to API key authentication
+      if (authorization && authenticationResult.type === "PRIVATE") {
+        const { action, resource: authResource, superScopes } = authorization;
+        const $authResource = authResource(
+          resource,
+          parsedParams,
+          parsedSearchParams,
+          parsedHeaders,
+        );
+
+        logger.debug("Checking authorization", {
+          action,
+          resource: $authResource,
+          superScopes,
+          scopes: authenticationResult.scopes,
+        });
+
+        const authorizationResult = checkAuthorization(authenticationResult);
+
+        if (!authorizationResult.authorized) {
+          return await wrapResponse(
+            request,
+            json(
+              {
+                error: `Unauthorized: ${authorizationResult.reason}`,
+                code: "unauthorized",
+                param: "access_token",
+                type: "authorization",
+              },
+              { status: 403 },
+            ),
+            corsStrategy !== "none",
+          );
+        }
+      }
+
+      const result = await handler({
+        params: parsedParams,
+        searchParams: parsedSearchParams,
+        headers: parsedHeaders,
+        authentication: authenticationResult,
+        request,
+        resource,
+      });
+      return await wrapResponse(request, result, corsStrategy !== "none");
+    } catch (error) {
+      try {
+        if (error instanceof Response) {
+          return await wrapResponse(request, error, corsStrategy !== "none");
+        }
+
+        logger.error("Error in hybrid loader", {
+          error:
+            error instanceof Error
+              ? {
+                  name: error.name,
+                  message: error.message,
+                  stack: error.stack,
+                }
+              : String(error),
+          url: request.url,
+        });
+
+        return await wrapResponse(
+          request,
+          json({ error: "Internal Server Error" }, { status: 500 }),
+          corsStrategy !== "none",
+        );
+      } catch (innerError) {
+        logger.error("[apiBuilder] Failed to handle error", {
+          error,
+          innerError,
+        });
+
+        return json({ error: "Internal Server Error" }, { status: 500 });
+      }
+    }
+  };
+}

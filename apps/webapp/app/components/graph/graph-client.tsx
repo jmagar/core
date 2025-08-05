@@ -1,15 +1,21 @@
+import { GraphClusteringProps } from "./graph-clustering";
+import { type GraphClusteringVisualizationProps } from "./graph-clustering-visualization";
 import { type GraphVisualizationProps } from "./graph-visualization";
 import { useState, useEffect } from "react";
 
-export function GraphVisualizationClient(props: GraphVisualizationProps) {
+export function GraphVisualizationClient(
+  props: GraphClusteringVisualizationProps,
+) {
   const [Component, setComponent] = useState<any>(undefined);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    import("./graph-visualization").then(({ GraphVisualization }) => {
-      setComponent(GraphVisualization);
-    });
+    import("./graph-clustering-visualization").then(
+      ({ GraphClusteringVisualization }) => {
+        setComponent(GraphClusteringVisualization);
+      },
+    );
   }, []);
 
   if (!Component) {

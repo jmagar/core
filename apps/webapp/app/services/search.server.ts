@@ -1,4 +1,4 @@
-import type { StatementNode } from "@core/types";
+import type { EpisodicNode, StatementNode } from "@core/types";
 import { logger } from "./logger.service";
 import { applyCrossEncoderReranking, applyWeightedRRF } from "./search/rerank";
 import {
@@ -8,6 +8,8 @@ import {
   performVectorSearch,
 } from "./search/utils";
 import { getEmbedding } from "~/lib/model.server";
+import { prisma } from "~/db.server";
+import { runQuery } from "~/lib/neo4j.server";
 
 /**
  * SearchService provides methods to search the reified + temporal knowledge graph
@@ -30,6 +32,7 @@ export class SearchService {
     userId: string,
     options: SearchOptions = {},
   ): Promise<{ episodes: string[]; facts: string[] }> {
+    const startTime = Date.now();
     // Default options
 
     const opts: Required<SearchOptions> = {
@@ -70,6 +73,21 @@ export class SearchService {
 
     // 3. Return top results
     const episodes = await getEpisodesByStatements(filteredResults);
+
+    // Log recall asynchronously (don't await to avoid blocking response)
+    const responseTime = Date.now() - startTime;
+    this.logRecallAsync(
+      query,
+      userId,
+      filteredResults,
+      opts,
+      responseTime,
+    ).catch((error) => {
+      logger.error("Failed to log recall event:", error);
+    });
+
+    this.updateRecallCount(userId, episodes, filteredResults);
+
     return {
       episodes: episodes.map((episode) => episode.content),
       facts: filteredResults.map((statement) => statement.fact),
@@ -200,6 +218,100 @@ export class SearchService {
 
     // Otherwise use weighted RRF for multiple sources
     return applyWeightedRRF(results);
+  }
+
+  private async logRecallAsync(
+    query: string,
+    userId: string,
+    results: StatementNode[],
+    options: Required<SearchOptions>,
+    responseTime: number,
+  ): Promise<void> {
+    try {
+      // Determine target type based on results
+      let targetType = "mixed_results";
+      if (results.length === 1) {
+        targetType = "statement";
+      } else if (results.length === 0) {
+        targetType = "no_results";
+      }
+
+      // Calculate average similarity score if available
+      let averageSimilarityScore: number | null = null;
+      const scoresWithValues = results
+        .map((result) => {
+          // Try to extract score from various possible score fields
+          const score =
+            (result as any).rrfScore ||
+            (result as any).mmrScore ||
+            (result as any).crossEncoderScore ||
+            (result as any).finalScore ||
+            (result as any).score;
+          return score && typeof score === "number" ? score : null;
+        })
+        .filter((score): score is number => score !== null);
+
+      if (scoresWithValues.length > 0) {
+        averageSimilarityScore =
+          scoresWithValues.reduce((sum, score) => sum + score, 0) /
+          scoresWithValues.length;
+      }
+
+      await prisma.recallLog.create({
+        data: {
+          accessType: "search",
+          query,
+          targetType,
+          searchMethod: "hybrid", // BM25 + Vector + BFS
+          minSimilarity: options.scoreThreshold,
+          maxResults: options.limit,
+          resultCount: results.length,
+          similarityScore: averageSimilarityScore,
+          context: JSON.stringify({
+            entityTypes: options.entityTypes,
+            predicateTypes: options.predicateTypes,
+            maxBfsDepth: options.maxBfsDepth,
+            includeInvalidated: options.includeInvalidated,
+            validAt: options.validAt.toISOString(),
+            startTime: options.startTime?.toISOString() || null,
+            endTime: options.endTime.toISOString(),
+          }),
+          source: "search_api",
+          responseTimeMs: responseTime,
+          userId,
+        },
+      });
+
+      logger.debug(
+        `Logged recall event for user ${userId}: ${results.length} results in ${responseTime}ms`,
+      );
+    } catch (error) {
+      logger.error("Error creating recall log entry:", { error });
+      // Don't throw - we don't want logging failures to affect the search response
+    }
+  }
+
+  private async updateRecallCount(
+    userId: string,
+    episodes: EpisodicNode[],
+    statements: StatementNode[],
+  ) {
+    const episodeIds = episodes.map((episode) => episode.uuid);
+    const statementIds = statements.map((statement) => statement.uuid);
+
+    const cypher = `
+      MATCH (e:Episode)
+      WHERE e.uuid IN $episodeUuids and e.userId = $userId
+      SET e.recallCount = coalesce(e.recallCount, 0) + 1
+    `;
+    await runQuery(cypher, { episodeUuids: episodeIds, userId });
+
+    const cypher2 = `
+      MATCH (s:Statement)
+      WHERE s.uuid IN $statementUuids and s.userId = $userId
+      SET s.recallCount = coalesce(s.recallCount, 0) + 1
+    `;
+    await runQuery(cypher2, { statementUuids: statementIds, userId });
   }
 }
 

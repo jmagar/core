@@ -1,5 +1,3 @@
-import colors from "tailwindcss/colors";
-
 // Define a color palette for node coloring using hex values directly
 export const nodeColorPalette = {
   light: [

@@ -1,10 +1,7 @@
-import React from "react";
 import { Link } from "@remix-run/react";
 import {
   Card,
-  CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
@@ -35,23 +32,24 @@ export function IntegrationCard({
     >
       <Card className="transition-all">
         <CardHeader className="p-4">
-          <div className="bg-background-2 mb-2 flex h-6 w-6 items-center justify-center rounded">
-            <Component size={18} />
+          <div className="flex items-center justify-between">
+            <div className="bg-background-2 mb-2 flex h-6 w-6 items-center justify-center rounded">
+              <Component size={18} />
+            </div>
+
+            {isConnected && (
+              <div className="flex w-full items-center justify-end">
+                <Badge className="h-6 rounded bg-green-100 p-2 text-xs text-green-800">
+                  Connected
+                </Badge>
+              </div>
+            )}
           </div>
           <CardTitle className="text-base">{integration.name}</CardTitle>
           <CardDescription className="line-clamp-2 text-xs">
             {integration.description || `Connect to ${integration.name}`}
           </CardDescription>
         </CardHeader>
-        {isConnected && (
-          <CardFooter className="p-3">
-            <div className="flex w-full items-center justify-end">
-              <Badge className="h-6 rounded bg-green-100 p-2 text-xs text-green-800">
-                Connected
-              </Badge>
-            </div>
-          </CardFooter>
-        )}
       </Card>
     </Link>
   );

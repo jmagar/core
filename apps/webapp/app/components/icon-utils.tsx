@@ -6,6 +6,10 @@ import {
 } from "@remixicon/react";
 import { LayoutGrid } from "lucide-react";
 import { LinearIcon, SlackIcon } from "./icons";
+import { Cursor } from "./icons/cursor";
+import { Claude } from "./icons/claude";
+import { Cline } from "./icons/cline";
+import { VSCode } from "./icons/vscode";
 
 export const ICON_MAPPING = {
   slack: SlackIcon,
@@ -15,6 +19,10 @@ export const ICON_MAPPING = {
 
   gmail: RiMailFill,
   linear: LinearIcon,
+  cursor: Cursor,
+  claude: Claude,
+  cline: Cline,
+  vscode: VSCode,
 
   // Default icon
   integration: LayoutGrid,

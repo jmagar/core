@@ -25,6 +25,7 @@ import { requireUserId } from "~/services/session.server";
 import { updateUser } from "~/models/user.server";
 import { Copy, Check } from "lucide-react";
 import { addToQueue } from "~/lib/ingest.server";
+import { cn } from "~/lib/utils";
 
 const ONBOARDING_STEP_COOKIE = "onboardingStep";
 const onboardingStepCookie = createCookie(ONBOARDING_STEP_COOKIE, {
@@ -108,6 +109,9 @@ export default function Onboarding() {
 
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [selectedSource, setSelectedSource] = useState<
+    "Claude" | "Cursor" | "Other"
+  >("Claude");
 
   const [form, fields] = useForm({
     lastSubmission: lastSubmission as any,
@@ -117,7 +121,12 @@ export default function Onboarding() {
     },
   });
 
-  const memoryUrl = "https://core.heysol.ai/api/v1/mcp/memory";
+  const getMemoryUrl = (source: "Claude" | "Cursor" | "Other") => {
+    const baseUrl = "https://core.heysol.ai/api/v1/mcp/memory";
+    return `${baseUrl}?Source=${source}`;
+  };
+
+  const memoryUrl = getMemoryUrl(selectedSource);
 
   const copyToClipboard = async () => {
     try {
@@ -144,7 +153,25 @@ export default function Onboarding() {
 
           <CardContent className="pt-2 text-base">
             <div className="space-y-4">
-              <div>
+              <div className="space-y-3">
+                <div className="bg-grayAlpha-100 flex space-x-1 rounded-lg p-1">
+                  {(["Claude", "Cursor", "Other"] as const).map((source) => (
+                    <Button
+                      key={source}
+                      onClick={() => setSelectedSource(source)}
+                      variant="ghost"
+                      className={cn(
+                        "flex-1 rounded-md px-3 py-1.5 transition-all",
+                        selectedSource === source
+                          ? "bg-accent text-accent-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {source}
+                    </Button>
+                  ))}
+                </div>
+
                 <div className="bg-background-3 flex items-center rounded">
                   <Input
                     type="text"

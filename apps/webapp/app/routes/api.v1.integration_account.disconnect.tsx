@@ -4,6 +4,8 @@ import { requireUserId } from "~/services/session.server";
 import { logger } from "~/services/logger.service";
 import { prisma } from "~/db.server";
 import { triggerIntegrationWebhook } from "~/trigger/webhooks/integration-webhook-delivery";
+import { scheduler } from "~/trigger/integrations/scheduler";
+import { schedules } from "@trigger.dev/sdk";
 
 export async function action({ request }: ActionFunctionArgs) {
   if (request.method !== "POST") {
@@ -27,6 +29,10 @@ export async function action({ request }: ActionFunctionArgs) {
         id: integrationAccountId,
       },
     });
+
+    const integrationAccountSettings = updatedAccount.settings as any;
+
+    await schedules.del(integrationAccountSettings.scheduleId);
 
     await triggerIntegrationWebhook(
       integrationAccountId,

@@ -1,6 +1,6 @@
 export type AuthorizationAction = "read" | "write" | string; // Add more actions as needed
 
-const ResourceTypes = ["spaces"] as const;
+const ResourceTypes = ["clusters"] as const;
 
 export type AuthorizationResources = {
   [key in (typeof ResourceTypes)[number]]?: string | string[];

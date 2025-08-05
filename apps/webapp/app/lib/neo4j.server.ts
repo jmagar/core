@@ -102,6 +102,153 @@ export const getNodeLinks = async (userId: string) => {
   return triplets;
 };
 
+// Get graph data with cluster information for reified graph
+export const getClusteredGraphData = async (userId: string) => {
+  const session = driver.session();
+  try {
+    // Get the proper reified graph structure: Entity -> Statement -> Entity
+    const result = await session.run(
+      `// Get all statements and their entity connections for reified graph
+       MATCH (s:Statement)
+       WHERE s.userId = $userId AND s.invalidAt IS NULL
+       
+       // Get all entities connected to each statement
+       MATCH (s)-[:HAS_SUBJECT]->(subj:Entity)
+       MATCH (s)-[:HAS_PREDICATE]->(pred:Entity)  
+       MATCH (s)-[:HAS_OBJECT]->(obj:Entity)
+       
+       // Return both Entity->Statement and Statement->Entity relationships
+       WITH s, subj, pred, obj
+       UNWIND [
+         // Subject Entity -> Statement
+         {source: subj, target: s, type: 'HAS_SUBJECT', isEntityToStatement: true},
+         // Statement -> Predicate Entity  
+         {source: s, target: pred, type: 'HAS_PREDICATE', isStatementToEntity: true},
+         // Statement -> Object Entity
+         {source: s, target: obj, type: 'HAS_OBJECT', isStatementToEntity: true}
+       ] AS rel
+       
+       RETURN DISTINCT 
+         rel.source.uuid as sourceUuid,
+         rel.source.name as sourceName,
+         rel.source.labels as sourceLabels,
+         rel.source.type as sourceType,
+         rel.source.properties as sourceProperties,
+         rel.target.uuid as targetUuid,
+         rel.target.name as targetName,
+         rel.target.type as targetType,
+         rel.target.labels as targetLabels,
+         rel.target.properties as targetProperties,
+         rel.type as relationshipType,
+         s.uuid as statementUuid,
+         s.clusterId as clusterId,
+         s.fact as fact, 
+         s.createdAt as createdAt,
+         rel.isEntityToStatement as isEntityToStatement,
+         rel.isStatementToEntity as isStatementToEntity`,
+      { userId },
+    );
+
+    const triplets: RawTriplet[] = [];
+    const processedEdges = new Set<string>();
+
+    result.records.forEach((record) => {
+      const sourceUuid = record.get("sourceUuid");
+      const sourceName = record.get("sourceName");
+      const sourceType = record.get("sourceType");
+      const sourceLabels = record.get("sourceLabels") || [];
+      const sourceProperties = record.get("sourceProperties") || {};
+
+      const targetUuid = record.get("targetUuid");
+      const targetName = record.get("targetName");
+      const targetLabels = record.get("targetLabels") || [];
+      const targetProperties = record.get("targetProperties") || {};
+      const targetType = record.get("targetType");
+
+      const relationshipType = record.get("relationshipType");
+      const statementUuid = record.get("statementUuid");
+      const clusterId = record.get("clusterId");
+      const fact = record.get("fact");
+      const createdAt = record.get("createdAt");
+
+      // Create unique edge identifier to avoid duplicates
+      const edgeKey = `${sourceUuid}-${targetUuid}-${relationshipType}`;
+      if (processedEdges.has(edgeKey)) return;
+      processedEdges.add(edgeKey);
+
+      // Determine node types and add appropriate cluster information
+      const isSourceStatement =
+        sourceLabels.includes("Statement") || sourceUuid === statementUuid;
+      const isTargetStatement =
+        targetLabels.includes("Statement") || targetUuid === statementUuid;
+
+      // Statement nodes get cluster info, Entity nodes get default attributes
+      const sourceAttributes = isSourceStatement
+        ? {
+            ...sourceProperties,
+            clusterId,
+            nodeType: "Statement",
+            fact,
+          }
+        : {
+            ...sourceProperties,
+            nodeType: "Entity",
+            type: sourceType,
+            name: sourceName,
+          };
+
+      const targetAttributes = isTargetStatement
+        ? {
+            ...targetProperties,
+            clusterId,
+            nodeType: "Statement",
+            fact,
+          }
+        : {
+            ...targetProperties,
+            nodeType: "Entity",
+            type: targetType,
+            name: targetName,
+          };
+
+      triplets.push({
+        sourceNode: {
+          uuid: sourceUuid,
+          labels: sourceLabels,
+          attributes: sourceAttributes,
+          name: isSourceStatement ? fact : sourceName || sourceUuid,
+          clusterId,
+          createdAt: createdAt || "",
+        },
+        edge: {
+          uuid: `${sourceUuid}-${targetUuid}-${relationshipType}`,
+          type: relationshipType,
+          source_node_uuid: sourceUuid,
+          target_node_uuid: targetUuid,
+          createdAt: createdAt || "",
+        },
+        targetNode: {
+          uuid: targetUuid,
+          labels: targetLabels,
+          attributes: targetAttributes,
+          clusterId,
+          name: isTargetStatement ? fact : targetName || targetUuid,
+          createdAt: createdAt || "",
+        },
+      });
+    });
+
+    return triplets;
+  } catch (error) {
+    logger.error(
+      `Error getting clustered graph data for user ${userId}: ${error}`,
+    );
+    throw error;
+  } finally {
+    await session.close();
+  }
+};
+
 export async function initNeo4jSchemaOnce() {
   if (schemaInitialized) return;
 
@@ -141,6 +288,9 @@ const initializeSchema = async () => {
     await runQuery(
       "CREATE CONSTRAINT statement_uuid IF NOT EXISTS FOR (n:Statement) REQUIRE n.uuid IS UNIQUE",
     );
+    await runQuery(
+      "CREATE CONSTRAINT cluster_uuid IF NOT EXISTS FOR (n:Cluster) REQUIRE n.uuid IS UNIQUE",
+    );
 
     // Create indexes for better query performance
     await runQuery(
@@ -153,7 +303,16 @@ const initializeSchema = async () => {
       "CREATE INDEX statement_invalid_at IF NOT EXISTS FOR (n:Statement) ON (n.invalidAt)",
     );
     await runQuery(
+      "CREATE INDEX statement_cluster_id IF NOT EXISTS FOR (n:Statement) ON (n.clusterId)",
+    );
+    await runQuery(
       "CREATE INDEX entity_name IF NOT EXISTS FOR (n:Entity) ON (n.name)",
+    );
+    await runQuery(
+      "CREATE INDEX cluster_user_id IF NOT EXISTS FOR (n:Cluster) ON (n.userId)",
+    );
+    await runQuery(
+      "CREATE INDEX cluster_aspect_type IF NOT EXISTS FOR (n:Cluster) ON (n.aspectType)",
     );
 
     // Create vector indexes for semantic search (if using Neo4j 5.0+)

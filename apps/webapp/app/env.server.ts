@@ -9,6 +9,7 @@ const EnvironmentSchema = z.object({
     z.literal("production"),
     z.literal("test"),
   ]),
+  POSTGRES_DB: z.string(),
   DATABASE_URL: z
     .string()
     .refine(
