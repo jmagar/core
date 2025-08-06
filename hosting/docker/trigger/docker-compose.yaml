@@ -39,6 +39,7 @@ services:
     networks:
       - webapp
       - supervisor
+      - core-network
     volumes:
       - shared:/home/node/shared
     # Only needed for bootstrap
