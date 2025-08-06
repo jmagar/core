@@ -20,7 +20,7 @@ services:
       - TRIGGER_TASKS_IMAGE=${TRIGGER_TASKS_IMAGE}
       - NODE_ENV=production
     networks:
-      - webapp
+      - trigger-webapp
       - core-network
 
   webapp:
@@ -37,7 +37,7 @@ services:
         condition: service_started
 
     networks:
-      - webapp
+      - trigger-webapp
       - supervisor
       - core-network
     volumes:
@@ -108,7 +108,7 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     logging: *logging-config
     networks:
-      - webapp
+      - trigger-webapp
       - core-network
     environment:
       DATABASE_URL: ${ELECTRIC_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/main?schema=public&sslmode=disable}
@@ -136,7 +136,7 @@ services:
       - clickhouse:/bitnami/clickhouse
       - ../clickhouse/override.xml:/bitnami/clickhouse/etc/config.d/override.xml:ro
     networks:
-      - webapp
+      - trigger-webapp
     healthcheck:
       test:
         [
@@ -169,7 +169,7 @@ services:
     networks:
       - supervisor
       - docker-proxy
-      - webapp
+      - trigger-webapp
       - core-network
     volumes:
       - shared:/home/node/shared
@@ -244,6 +244,6 @@ networks:
   supervisor:
     name: supervisor
   webapp:
-    name: webapp
+    name: trigger-webapp
   core-network:
     external: true
