@@ -29,11 +29,10 @@ services:
       - TRIGGER_PROJECT_ID=${TRIGGER_PROJECT_ID}
       - TRIGGER_SECRET_KEY=${TRIGGER_SECRET_KEY}
       - TRIGGER_API_URL=${TRIGGER_API_URL}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "3033:3000"
     depends_on:
-      init:
-        condition: service_started
       postgres:
         condition: service_healthy
       redis:
@@ -45,7 +44,7 @@ services:
 
   postgres:
     container_name: core-postgres
-    image: redplanethq/postgres:0.1.0
+    image: tegonhq/tegon-postgres:0.1.0-alpha
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -57,7 +56,7 @@ services:
     networks:
       - core
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -99,6 +98,7 @@ services:
 
 networks:
   core:
+    name: core-network
     driver: bridge
 
 volumes:

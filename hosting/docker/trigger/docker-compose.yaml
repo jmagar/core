@@ -21,6 +21,7 @@ services:
       - NODE_ENV=production
     networks:
       - webapp
+      - core-network
 
   webapp:
     container_name: trigger-webapp
@@ -107,6 +108,7 @@ services:
     logging: *logging-config
     networks:
       - webapp
+      - core-network
     environment:
       DATABASE_URL: ${ELECTRIC_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/main?schema=public&sslmode=disable}
       ELECTRIC_INSECURE: true
@@ -167,6 +169,7 @@ services:
       - supervisor
       - docker-proxy
       - webapp
+      - core-network
     volumes:
       - shared:/home/node/shared
     # Only needed for bootstrap
@@ -241,3 +244,5 @@ networks:
     name: supervisor
   webapp:
     name: webapp
+  core-network:
+    external: true
