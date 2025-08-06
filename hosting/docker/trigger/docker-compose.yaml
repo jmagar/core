@@ -20,7 +20,7 @@ services:
       - TRIGGER_TASKS_IMAGE=${TRIGGER_TASKS_IMAGE}
       - NODE_ENV=production
     networks:
-      - trigger-webapp
+      - webapp
       - core-network
 
   webapp:
@@ -37,7 +37,7 @@ services:
         condition: service_started
 
     networks:
-      - trigger-webapp
+      - webapp
       - supervisor
       - core-network
     volumes:
@@ -69,7 +69,7 @@ services:
       MAGIC_LINK_SECRET: ${MAGIC_LINK_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       MANAGED_WORKER_SECRET: ${MANAGED_WORKER_SECRET}
-      REDIS_HOST: host.docker.internal
+      REDIS_HOST: core-redis
       REDIS_PORT: 6379
       REDIS_TLS_DISABLED: true
       APP_LOG_LEVEL: info
@@ -108,7 +108,7 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     logging: *logging-config
     networks:
-      - trigger-webapp
+      - webapp
       - core-network
     environment:
       DATABASE_URL: ${ELECTRIC_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/main?schema=public&sslmode=disable}
@@ -136,7 +136,7 @@ services:
       - clickhouse:/bitnami/clickhouse
       - ../clickhouse/override.xml:/bitnami/clickhouse/etc/config.d/override.xml:ro
     networks:
-      - trigger-webapp
+      - webapp
     healthcheck:
       test:
         [
@@ -169,7 +169,7 @@ services:
     networks:
       - supervisor
       - docker-proxy
-      - trigger-webapp
+      - webapp
       - core-network
     volumes:
       - shared:/home/node/shared
@@ -244,6 +244,7 @@ networks:
   supervisor:
     name: supervisor
   webapp:
-    name: trigger-webapp
+    name: webapp
+    driver: bridge
   core-network:
     external: true

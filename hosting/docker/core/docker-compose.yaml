@@ -41,7 +41,6 @@ services:
         condition: service_healthy
     networks:
       - core
-      - trigger-webapp
 
   postgres:
     container_name: core-postgres
@@ -101,8 +100,6 @@ networks:
   core:
     name: core-network
     driver: bridge
-  trigger-webapp:
-    external: true
 
 volumes:
   postgres_data:
