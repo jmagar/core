@@ -205,24 +205,24 @@ export async function updateStatementsWithNewEntity(
   const queries = [
     // Update statements where old entity is the subject
     `
-      MATCH (oldEntity:Entity {uuid: $oldEntityUUID})-[:SUBJECT]->(statement:Statement)
+      MATCH (oldEntity:Entity {uuid: $oldEntityUUID})-[r:SUBJECT]->(statement:Statement)
       MATCH (newEntity:Entity {uuid: $newEntityUUID})
-      DELETE oldEntity-[:SUBJECT]->statement
-      CREATE newEntity-[:SUBJECT]->statement
+      DELETE r
+      CREATE (newEntity)-[:SUBJECT]->(statement)
     `,
     // Update statements where old entity is the predicate
     `
-      MATCH (oldEntity:Entity {uuid: $oldEntityUUID})-[:PREDICATE]->(statement:Statement)
+      MATCH (oldEntity:Entity {uuid: $oldEntityUUID})-[r:PREDICATE]->(statement:Statement)
       MATCH (newEntity:Entity {uuid: $newEntityUUID})
-      DELETE oldEntity-[:PREDICATE]->statement
-      CREATE newEntity-[:PREDICATE]->statement
+      DELETE r
+      CREATE (newEntity)-[:PREDICATE]->(statement)
     `,
     // Update statements where old entity is the object
     `
-      MATCH (oldEntity:Entity {uuid: $oldEntityUUID})-[:OBJECT]->(statement:Statement)
+      MATCH (oldEntity:Entity {uuid: $oldEntityUUID})-[r:OBJECT]->(statement:Statement)
       MATCH (newEntity:Entity {uuid: $newEntityUUID})
-      DELETE oldEntity-[:OBJECT]->statement
-      CREATE newEntity-[:OBJECT]->statement
+      DELETE r
+      CREATE (newEntity)-[:OBJECT]->(statement)
     `,
   ];
 

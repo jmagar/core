@@ -54,6 +54,7 @@ export interface StatementNode {
   userId: string;
   space?: string;
   recallCount?: number;
+  provenanceCount?: number;
 }
 
 /**

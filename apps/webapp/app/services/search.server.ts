@@ -1,6 +1,11 @@
 import type { EpisodicNode, StatementNode } from "@core/types";
 import { logger } from "./logger.service";
-import { applyCrossEncoderReranking, applyWeightedRRF } from "./search/rerank";
+import {
+  applyCrossEncoderReranking,
+  applyMultiFactorReranking,
+  applyMultiFactorMMRReranking,
+  applyWeightedRRF,
+} from "./search/rerank";
 import {
   getEpisodesByStatements,
   performBfsSearch,
@@ -118,6 +123,12 @@ export class SearchService {
         score = (result as any).crossEncoderScore;
       } else if ((result as any).finalScore !== undefined) {
         score = (result as any).finalScore;
+      } else if ((result as any).multifactorScore !== undefined) {
+        score = (result as any).multifactorScore;
+      } else if ((result as any).combinedScore !== undefined) {
+        score = (result as any).combinedScore;
+      } else if ((result as any).mmrScore !== undefined) {
+        score = (result as any).mmrScore;
       }
 
       return { result, score };
@@ -141,19 +152,27 @@ export class SearchService {
 
     let threshold = 0;
     if (isRRF || scoreRange < 0.01) {
-      // For RRF or other compressed score ranges, use a percentile-based approach
-      // Keep top 70% (or whatever is specified in options) of results
-      const keepPercentage = 1 - (options.scoreThreshold || 0.3);
-      const keepCount = Math.max(
-        1,
-        Math.ceil(scoredResults.length * keepPercentage),
-      );
+      // For RRF scores, use a more lenient adaptive approach
+      // Calculate median score and use a dynamic threshold based on score distribution
+      const sortedScores = [...scores].sort((a, b) => b - a);
+      const medianIndex = Math.floor(sortedScores.length / 2);
+      const medianScore = sortedScores[medianIndex];
 
-      // Set threshold to the score of the last item we want to keep
-      threshold =
-        keepCount < scoredResults.length
-          ? scoredResults[keepCount - 1].score
-          : 0;
+      // Use the smaller of: 20% of max score or 50% of median score
+      // This is more lenient for broad queries while still filtering noise
+      const maxBasedThreshold = maxScore * 0.2;
+      const medianBasedThreshold = medianScore * 0.5;
+      threshold = Math.min(maxBasedThreshold, medianBasedThreshold);
+
+      // Ensure we keep at least minResults if available
+      const minResultsCount = Math.min(
+        options.minResults,
+        scoredResults.length,
+      );
+      if (scoredResults.length >= minResultsCount) {
+        const minResultsThreshold = scoredResults[minResultsCount - 1].score;
+        threshold = Math.min(threshold, minResultsThreshold);
+      }
     } else {
       // For normal score distributions, use the relative threshold approach
       const relativeThreshold = options.scoreThreshold || 0.3;
@@ -216,8 +235,11 @@ export class SearchService {
       return applyCrossEncoderReranking(query, results);
     }
 
-    // Otherwise use weighted RRF for multiple sources
-    return applyWeightedRRF(results);
+    // Otherwise use combined MultiFactorReranking + MMR for multiple sources
+    return applyMultiFactorMMRReranking(results, {
+      lambda: 0.7, // Balance relevance (0.7) vs diversity (0.3)
+      maxResults: options.limit > 0 ? options.limit * 2 : 100, // Get more results for filtering
+    });
   }
 
   private async logRecallAsync(

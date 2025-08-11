@@ -31,14 +31,16 @@ export async function performBM25Search(
       `;
     }
 
-    // Use Neo4j's built-in fulltext search capabilities
+    // Use Neo4j's built-in fulltext search capabilities with provenance count
     const cypher = `
         CALL db.index.fulltext.queryNodes("statement_fact_index", $query) 
         YIELD node AS s, score
         WHERE 
           (s.userId = $userId)
           ${timeframeCondition}
-        RETURN s, score
+        OPTIONAL MATCH (episode:Episode)-[:HAS_PROVENANCE]->(s)
+        WITH s, score, count(episode) as provenanceCount
+        RETURN s, score, provenanceCount
         ORDER BY score DESC
       `;
 
@@ -50,7 +52,15 @@ export async function performBM25Search(
     };
 
     const records = await runQuery(cypher, params);
-    return records.map((record) => record.get("s").properties as StatementNode);
+    return records.map((record) => {
+      const statement = record.get("s").properties as StatementNode;
+      const provenanceCountValue = record.get("provenanceCount");
+      statement.provenanceCount =
+        typeof provenanceCountValue === "bigint"
+          ? Number(provenanceCountValue)
+          : (provenanceCountValue?.toNumber?.() ?? provenanceCountValue ?? 0);
+      return statement;
+    });
   } catch (error) {
     logger.error("BM25 search error:", { error });
     return [];
@@ -101,7 +111,7 @@ export async function performVectorSearch(
       `;
     }
 
-    // 1. Search for similar statements using Neo4j vector search
+    // 1. Search for similar statements using Neo4j vector search with provenance count
     const cypher = `
       MATCH (s:Statement)
       WHERE 
@@ -109,7 +119,9 @@ export async function performVectorSearch(
       ${timeframeCondition}
       WITH s, vector.similarity.cosine(s.factEmbedding, $embedding) AS score
       WHERE score > 0.7
-      RETURN s, score
+      OPTIONAL MATCH (episode:Episode)-[:HAS_PROVENANCE]->(s)
+      WITH s, score, count(episode) as provenanceCount
+      RETURN s, score, provenanceCount
       ORDER BY score DESC
     `;
 
@@ -121,7 +133,15 @@ export async function performVectorSearch(
     };
 
     const records = await runQuery(cypher, params);
-    return records.map((record) => record.get("s").properties as StatementNode);
+    return records.map((record) => {
+      const statement = record.get("s").properties as StatementNode;
+      const provenanceCountValue = record.get("provenanceCount");
+      statement.provenanceCount =
+        typeof provenanceCountValue === "bigint"
+          ? Number(provenanceCountValue)
+          : (provenanceCountValue?.toNumber?.() ?? provenanceCountValue ?? 0);
+      return statement;
+    });
   } catch (error) {
     logger.error("Vector search error:", { error });
     return [];
