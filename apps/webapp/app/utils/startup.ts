@@ -35,7 +35,7 @@ export async function initializeStartupServices() {
     }
     // If we get here, the service is still not available
     console.error(
-      `TRIGGER_API_URL/login is not available after ${timeoutMs / 1000} seconds. Exiting process.`,
+      `${url}/login is not available after ${timeoutMs / 1000} seconds. Exiting process.`,
     );
     process.exit(1);
   }
@@ -123,23 +123,19 @@ export async function addEnvVariablesInTrigger() {
 
   const DATABASE_URL = getDatabaseUrl(POSTGRES_DB);
 
-  // Helper to replace 'localhost' with 'host.docker.internal'
-  function replaceLocalhost(val: string | undefined): string | undefined {
-    if (typeof val !== "string") return val;
-    return val.replace(/localhost/g, "host.docker.internal");
-  }
-
   // Map of key to value from env, replacing 'localhost' as needed
   const envVars: Record<string, string> = {
-    API_BASE_URL: replaceLocalhost(APP_ORIGIN) ?? "",
-    DATABASE_URL: replaceLocalhost(DATABASE_URL) ?? "",
-    EMBEDDING_MODEL: replaceLocalhost(EMBEDDING_MODEL) ?? "",
-    MODEL: replaceLocalhost(MODEL) ?? "",
-    ENCRYPTION_KEY: replaceLocalhost(ENCRYPTION_KEY) ?? "",
-    NEO4J_PASSWORD: replaceLocalhost(NEO4J_PASSWORD) ?? "",
-    NEO4J_URI: replaceLocalhost(NEO4J_URI) ?? "",
-    NEO4J_USERNAME: replaceLocalhost(NEO4J_USERNAME) ?? "",
-    OPENAI_API_KEY: replaceLocalhost(OPENAI_API_KEY) ?? "",
+    API_BASE_URL: APP_ORIGIN.includes("localhost")
+      ? APP_ORIGIN.replace("localhost", "core-app")
+      : APP_ORIGIN,
+    DATABASE_URL: DATABASE_URL ?? "",
+    EMBEDDING_MODEL: EMBEDDING_MODEL ?? "",
+    MODEL: MODEL ?? "",
+    ENCRYPTION_KEY: ENCRYPTION_KEY ?? "",
+    NEO4J_PASSWORD: NEO4J_PASSWORD ?? "",
+    NEO4J_URI: NEO4J_URI ?? "",
+    NEO4J_USERNAME: NEO4J_USERNAME ?? "",
+    OPENAI_API_KEY: OPENAI_API_KEY ?? "",
   };
 
   const envName = "prod";

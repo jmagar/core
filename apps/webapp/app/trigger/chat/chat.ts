@@ -37,8 +37,6 @@ export const chat = task({
     await updateConversationStatus("running", payload.conversationId);
 
     try {
-      let creditForChat = 0;
-
       const { previousHistory, ...otherData } = payload.context;
 
       const { agents = [] } = payload.context;

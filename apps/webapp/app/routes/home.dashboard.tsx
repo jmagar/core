@@ -7,7 +7,6 @@ import { useTypedLoaderData } from "remix-typedjson";
 import { LoaderCircle } from "lucide-react";
 import { PageHeader } from "~/components/common/page-header";
 import { GraphVisualizationClient } from "~/components/graph/graph-client";
-import { GraphNode } from "~/components/graph/type";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // Only return userId, not the heavy nodeLinks

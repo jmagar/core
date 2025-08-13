@@ -6,9 +6,13 @@ export const useTriggerStream = (
   token: string,
   apiURL?: string,
 ) => {
+  // Need to fix this later
+  const adjustedApiURL = apiURL?.includes("trigger-webapp")
+    ? "http://localhost:8030"
+    : apiURL;
   const { error, streams, run } = useRealtimeRunWithStreams(runId, {
     accessToken: token,
-    baseURL: apiURL ?? "https://trigger.heysol.ai", // Optional if you are using a self-hosted Trigger.dev instance
+    baseURL: adjustedApiURL ?? "https://trigger.heysol.ai", // Optional if you are using a self-hosted Trigger.dev instance
   });
 
   const isEnd = React.useMemo(() => {

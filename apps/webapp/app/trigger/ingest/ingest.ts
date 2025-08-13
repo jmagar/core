@@ -19,12 +19,14 @@ export const IngestBodyRequest = z.object({
 
 const ingestionQueue = queue({
   name: "ingestion-queue",
+  concurrencyLimit: 1,
 });
 
 // Register the Trigger.dev task
 export const ingestTask = task({
   id: "ingest-episode",
   queue: ingestionQueue,
+  machine: "medium-2x",
   run: async (payload: {
     body: z.infer<typeof IngestBodyRequest>;
     userId: string;

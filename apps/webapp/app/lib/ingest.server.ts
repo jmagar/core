@@ -46,3 +46,5 @@ export const addToQueue = async (
 
   return { id: handler.id, token: handler.publicAccessToken };
 };
+
+export { IngestBodyRequest };

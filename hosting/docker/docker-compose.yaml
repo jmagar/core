@@ -5,27 +5,107 @@ x-logging: &logging-config
     max-file: ${LOGGING_MAX_FILES:-5}
     compress: ${LOGGING_COMPRESS:-true}
 
+version: "3.8"
+
 services:
-  init:
-    container_name: trigger-init
-    image: redplanethq/init:${CORE_VERSION}
-    restart: "no" # prevent retries
+  core:
+    container_name: core-app
+    image: redplanethq/core:${VERSION}
     environment:
-      - VERSION=${CORE_VERSION}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - TRIGGER_DB=${TRIGGER_DB}
+      - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - MAGIC_LINK_SECRET=${MAGIC_LINK_SECRET}
+      - LOGIN_ORIGIN=${CORE_LOGIN_ORIGIN}
+      - APP_ORIGIN=${CORE_APP_ORIGIN}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_TLS_DISABLED=${REDIS_TLS_DISABLED}
+      - NEO4J_URI=${NEO4J_URI}
+      - NEO4J_USERNAME=${NEO4J_USERNAME}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AUTH_GOOGLE_CLIENT_ID=${AUTH_GOOGLE_CLIENT_ID}
+      - AUTH_GOOGLE_CLIENT_SECRET=${AUTH_GOOGLE_CLIENT_SECRET}
+      - ENABLE_EMAIL_LOGIN=${ENABLE_EMAIL_LOGIN}
+      - OLLAMA_URL=${OLLAMA_URL}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      - MODEL=${MODEL}
+      - TRIGGER_PROJECT_ID=${TRIGGER_PROJECT_ID}
+      - TRIGGER_SECRET_KEY=${TRIGGER_SECRET_KEY}
+      - TRIGGER_API_URL=${API_ORIGIN}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "3033:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      neo4j:
+        condition: service_healthy
+    networks:
+      - core
+
+  postgres:
+    container_name: core-postgres
+    image: tegonhq/tegon-postgres:0.1.0-alpha
+    environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - TRIGGER_TASKS_IMAGE=${TRIGGER_TASKS_IMAGE}
-      - NODE_ENV=production
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
-      - webapp
-      - core-network
+      - core
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    container_name: core-redis
+    image: redis:7
+    ports:
+      - "6379:6379"
+    networks:
+      - core
+
+  neo4j:
+    container_name: core-neo4j
+    image: neo4j:5
+    environment:
+      - NEO4J_AUTH=${NEO4J_AUTH}
+      - NEO4J_dbms_security_procedures_unrestricted=gds.*,apoc.*
+      - NEO4J_dbms_security_procedures_allowlist=gds.*,apoc.*
+      - NEO4J_apoc_export_file_enabled=true # Enable file export
+      - NEO4J_apoc_import_file_enabled=true # Enable file import
+      - NEO4J_apoc_import_file_use_neo4j_config=true
+      - NEO4J_dbms_memory_heap_initial__size=1G
+      - NEO4J_dbms_memory_heap_max__size=2G
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+    networks:
+      - core
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u $NEO4J_USERNAME -p $NEO4J_PASSWORD 'RETURN 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   webapp:
     container_name: trigger-webapp
-    image: ghcr.io/triggerdotdev/trigger.dev:${TRIGGER_IMAGE_TAG:-v4-beta}
+    image: ghcr.io/triggerdotdev/trigger.dev@sha256:a19c438f348ac05c939f39ed455ed27b4f189f720b4c9810aef8e71fdc731211
     restart: ${RESTART_POLICY:-unless-stopped}
     logging: *logging-config
     ports:
@@ -35,17 +115,16 @@ services:
         condition: service_started
       init:
         condition: service_started
-
     networks:
       - webapp
       - supervisor
-      - core-network
+      - core
     volumes:
       - shared:/home/node/shared
     # Only needed for bootstrap
     user: root
     # Only needed for bootstrap
-    command: sh -c "chown -R node:node /home/node/shared && exec ./scripts/entrypoint.sh"
+    command: sh -c "chown -R node:node /home/node/shared && sleep 5 && exec ./scripts/entrypoint.sh"
     healthcheck:
       test:
         [
@@ -63,8 +142,8 @@ services:
       LOGIN_ORIGIN: ${LOGIN_ORIGIN:-http://localhost:8030}
       API_ORIGIN: ${API_ORIGIN:-http://localhost:8030}
       ELECTRIC_ORIGIN: http://electric:3000
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/main?schema=public&sslmode=disable}
-      DIRECT_URL: ${DIRECT_URL:-postgresql://postgres:postgres@postgres:5432/main?schema=public&sslmode=disable}
+      DATABASE_URL: ${TRIGGER_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/main?schema=public&sslmode=disable}
+      DIRECT_URL: ${TRIGGER_DIRECT_URL:-postgresql://postgres:postgres@postgres:5432/main?schema=public&sslmode=disable}
       SESSION_SECRET: ${SESSION_SECRET}
       MAGIC_LINK_SECRET: ${MAGIC_LINK_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
@@ -109,7 +188,7 @@ services:
     logging: *logging-config
     networks:
       - webapp
-      - core-network
+      - core
     environment:
       DATABASE_URL: ${ELECTRIC_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/main?schema=public&sslmode=disable}
       ELECTRIC_INSECURE: true
@@ -170,7 +249,7 @@ services:
       - supervisor
       - docker-proxy
       - webapp
-      - core-network
+      - core
     volumes:
       - shared:/home/node/shared
     # Only needed for bootstrap
@@ -183,8 +262,8 @@ services:
       # Use the bootstrap token created by the webapp
       # TRIGGER_WORKER_TOKEN: file:///home/node/shared/worker_token
       MANAGED_WORKER_SECRET: ${MANAGED_WORKER_SECRET}
-      TRIGGER_API_URL: ${TRIGGER_API_URL:-http://webapp:3000}
-      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://webapp:3000/otel}
+      TRIGGER_API_URL: ${TRIGGER_API_URL:-http://trigger-webapp:3000}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://trigger-webapp:3000/otel}
       TRIGGER_WORKLOAD_API_DOMAIN: supervisor
       TRIGGER_WORKLOAD_API_PORT_EXTERNAL: 8020
       # Optional settings
@@ -192,7 +271,7 @@ services:
       ENFORCE_MACHINE_PRESETS: 1
       TRIGGER_DEQUEUE_INTERVAL_MS: 1000
       DOCKER_HOST: tcp://docker-proxy:2375
-      DOCKER_RUNNER_NETWORKS: webapp,supervisor
+      DOCKER_RUNNER_NETWORKS: webapp,supervisor,core
       DOCKER_REGISTRY_URL: ${DOCKER_REGISTRY_URL:-localhost:5000}
       DOCKER_REGISTRY_USERNAME: ${DOCKER_REGISTRY_USERNAME:-}
       DOCKER_REGISTRY_PASSWORD: ${DOCKER_REGISTRY_PASSWORD:-}
@@ -209,6 +288,25 @@ services:
       timeout: 10s
       retries: 5
       start_period: 10s
+
+  init:
+    container_name: trigger-init
+    image: redplanethq/init:${VERSION}
+    restart: "no" # prevent retries
+    environment:
+      - VERSION=${VERSION}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - TRIGGER_DB=${TRIGGER_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - TRIGGER_TASKS_IMAGE=${TRIGGER_TASKS_IMAGE}
+      - NODE_ENV=production
+    networks:
+      - webapp
+      - core
+    depends_on:
+      - postgres
 
   docker-proxy:
     container_name: trigger-docker-proxy
@@ -233,12 +331,10 @@ services:
       retries: 5
       start_period: 5s
 
-volumes:
-  shared:
-  clickhouse:
-  minio:
-
 networks:
+  core:
+    name: core
+    driver: bridge
   docker-proxy:
     name: docker-proxy
   supervisor:
@@ -246,5 +342,10 @@ networks:
   webapp:
     name: webapp
     driver: bridge
-  core-network:
-    external: true
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  shared:
+  clickhouse:
+  minio:
