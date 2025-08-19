@@ -86,8 +86,14 @@ https://github.com/user-attachments/assets/d18e3caa-72ea-4596-bbf7-cc9e32bd772f
 
 ### 🌐 **Browser Extension**: 
 
-Capture conversations from ChatGPT, Grok, Gemini, Twitter, YouTube, blog posts, and any webpage directly into your CORE memory
+Save conversations and content from ChatGPT, Grok, Gemini, Twitter, YouTube, blog posts, and any webpage directly into your CORE memory.
 
+**How to Use Extension**
+1. [Download the Extension](https://chromewebstore.google.com/detail/core-extension/cglndoindnhdbfcbijikibfjoholdjcc) from the Chrome Web Store.
+2. Login to [CORE dashboard](https://core.heysol.ai)
+   - Navigate to Settings (bottom left)
+   - Go to API Key → Generate new key → Name it “extension.”
+3. Open the extension, paste your API key, and save.
 
 https://github.com/user-attachments/assets/6e629834-1b9d-4fe6-ae58-a9068986036a
 
@@ -153,4 +159,5 @@ Have questions or feedback? We're here to help:
 <a href="https://github.com/RedPlanetHQ/core/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=RedPlanetHQ/core" />
 </a>
+
 
