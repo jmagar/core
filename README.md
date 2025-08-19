@@ -69,7 +69,7 @@ CORE is an open-source unified, persistent memory layer for all your AI tools. Y
 5. **Test it out** - ask "What do you know about me?" in conversatio section
 6. Connect to your tools:
    - [Claude](https://docs.heysol.ai/providers/claude) & [Cursor](https://docs.heysol.ai/providers/cursor) - coding with context
-   - [CLaude Code CLI](https://docs.heysol.ai/providers/claude) & [Gemini CLI](https://docs.heysol.ai/providers/cursor) - terminal-based coding with memory
+   - [CLaude Code CLI](https://docs.heysol.ai/providers/claude-code) & [Gemini CLI](https://docs.heysol.ai/providers/cursor) - terminal-based coding with memory
    - [Add Browser Extension](https://docs.heysol.ai/providers/cursor) - bring your memory to any website
    - [Linear](https://docs.heysol.ai/providers/claude), [Slack](https://docs.heysol.ai/providers/cursor), [Github](https://docs.heysol.ai/providers/cursor) - add project context automatically
 
@@ -159,5 +159,6 @@ Have questions or feedback? We're here to help:
 <a href="https://github.com/RedPlanetHQ/core/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=RedPlanetHQ/core" />
 </a>
+
 
 
