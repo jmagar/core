@@ -1,13 +1,10 @@
 import { json } from "@remix-run/node";
 import { logger } from "~/services/logger.service";
-import {
-  createHybridLoaderApiRoute,
-  createLoaderApiRoute,
-} from "~/services/routeBuilders/apiBuilder.server";
+import { createHybridLoaderApiRoute } from "~/services/routeBuilders/apiBuilder.server";
 import { getClusteredGraphData } from "~/lib/neo4j.server";
-import { ClusteringService } from "~/services/clustering.server";
+import { SpaceService } from "~/services/space.server";
 
-const clusteringService = new ClusteringService();
+const spaceService = new SpaceService();
 
 const loader = createHybridLoaderApiRoute(
   {
@@ -20,7 +17,7 @@ const loader = createHybridLoaderApiRoute(
       // Get clustered graph data and cluster metadata in parallel
       const [graphData, clusters] = await Promise.all([
         getClusteredGraphData(authentication.userId),
-        clusteringService.getClusters(authentication.userId),
+        spaceService.getUserSpaces(authentication.userId),
       ]);
 
       return json({

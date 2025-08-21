@@ -110,18 +110,6 @@ model ConversationHistory {
   ConversationExecutionStep ConversationExecutionStep[]
 }
 
-model Entity {
-  id       String @id @default(cuid())
-  name     String @unique // e.g., "User", "Issue", "Task", "Automation"
-  metadata Json // Store field definitions and their types
-
-  // Relations
-  spaceEntities SpaceEntity[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model IngestionQueue {
   id String @id @default(cuid())
 
@@ -470,40 +458,51 @@ model RecallLog {
 }
 
 model Space {
-  id          String  @id @default(cuid())
-  name        String
-  description String?
-  autoMode    Boolean @default(false)
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  autoMode       Boolean  @default(false)
+  summary        String?
+  themes         String[]
+  statementCount Int?
+
+  status String?
+
+  icon String?
+
+  lastPatternTrigger          DateTime?
+  statementCountAtLastTrigger Int?
 
   // Relations
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
-
-  // Space's enabled entities
-  enabledEntities SpaceEntity[]
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String
 
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   IngestionQueue IngestionQueue[]
+  SpacePattern   SpacePattern[]
 }
 
-model SpaceEntity {
-  id String @id @default(cuid())
+model SpacePattern {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deleted   DateTime?
+
+  name          String
+  source        String
+  type          String
+  summary       String
+  editedSummary String?
+  evidence      String[]
+  confidence    Float
+  userConfirmed String   @default("pending")
 
   // Relations
-  space   Space  @relation(fields: [spaceId], references: [id])
+  space   Space  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   spaceId String
 
-  entity   Entity @relation(fields: [entityId], references: [id])
-  entityId String
-
-  // Custom settings for this entity in this space
-  settings Json?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([spaceId, entityId])
+  @@index([spaceId, source])
 }
 
 model User {
@@ -535,7 +534,6 @@ model User {
   personalAccessTokens PersonalAccessToken[]
   InvitationCode       InvitationCode?        @relation(fields: [invitationCodeId], references: [id])
   invitationCodeId     String?
-  Space                Space[]
   Workspace            Workspace?
   IntegrationAccount   IntegrationAccount[]
   WebhookConfiguration WebhookConfiguration[]
@@ -627,6 +625,7 @@ model Workspace {
   OAuthAccessToken        OAuthAccessToken[]
   OAuthRefreshToken       OAuthRefreshToken[]
   RecallLog               RecallLog[]
+  Space                   Space[]
 }
 
 enum AuthenticationMethod {
