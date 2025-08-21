@@ -1,13 +1,11 @@
 import { queue, task } from "@trigger.dev/sdk";
-import { PrismaClient } from "@prisma/client";
 import { logger } from "~/services/logger.service";
 import { WebhookDeliveryStatus } from "@core/database";
 import {
   deliverWebhook,
   prepareWebhookTargets,
 } from "./webhook-delivery-utils";
-
-const prisma = new PrismaClient();
+import { prisma } from "../utils/prisma";
 
 const webhookQueue = queue({
   name: "webhook-delivery-queue",

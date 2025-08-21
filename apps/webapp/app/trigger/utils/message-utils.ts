@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client";
 import { type Message } from "@core/types";
 import { addToQueue } from "./queue";
 import { triggerWebhookDelivery } from "../webhooks/webhook-delivery";
 import { logger } from "@trigger.dev/sdk";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma";
 
 export const createIntegrationAccount = async ({
   integrationDefinitionId,

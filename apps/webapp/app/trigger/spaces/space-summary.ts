@@ -6,8 +6,8 @@ import { runQuery } from "~/lib/neo4j.server";
 import { updateSpaceStatus, SPACE_STATUS } from "../utils/space-status";
 import type { CoreMessage } from "ai";
 import { z } from "zod";
-import { prisma } from "~/db.server";
-import { spacePatternTask, triggerSpacePattern } from "./space-pattern";
+import { triggerSpacePattern } from "./space-pattern";
+import { getSpace, updateSpace } from "../utils/space-utils";
 
 interface SpaceSummaryPayload {
   userId: string;
@@ -90,8 +90,8 @@ export const spaceSummaryTask = task({
         await updateSpaceStatus(spaceId, SPACE_STATUS.READY, {
           userId,
           operation: "space-summary",
-          metadata: { 
-            triggerSource, 
+          metadata: {
+            triggerSource,
             phase: "completed_summary",
             statementCount: summaryResult.statementCount,
             confidence: summaryResult.confidence,
@@ -129,7 +129,11 @@ export const spaceSummaryTask = task({
         await updateSpaceStatus(spaceId, SPACE_STATUS.ERROR, {
           userId,
           operation: "space-summary",
-          metadata: { triggerSource, phase: "failed_summary", error: "Failed to generate summary" },
+          metadata: {
+            triggerSource,
+            phase: "failed_summary",
+            error: "Failed to generate summary",
+          },
         });
 
         logger.warn(`Failed to generate summary for space ${spaceId}`);
@@ -146,10 +150,10 @@ export const spaceSummaryTask = task({
         await updateSpaceStatus(spaceId, SPACE_STATUS.ERROR, {
           userId,
           operation: "space-summary",
-          metadata: { 
-            triggerSource, 
-            phase: "exception", 
-            error: error instanceof Error ? error.message : "Unknown error"
+          metadata: {
+            triggerSource,
+            phase: "exception",
+            error: error instanceof Error ? error.message : "Unknown error",
           },
         });
       } catch (statusError) {
@@ -483,9 +487,7 @@ async function getExistingSummary(spaceId: string): Promise<{
   lastUpdated: Date;
 } | null> {
   try {
-    const existingSummary = await prisma.space.findUnique({
-      where: { id: spaceId },
-    });
+    const existingSummary = await getSpace(spaceId);
 
     if (existingSummary?.summary) {
       return {
@@ -616,16 +618,7 @@ function parseSummaryResponse(response: string): {
 async function storeSummary(summaryData: SpaceSummaryData): Promise<void> {
   try {
     // Store in PostgreSQL for API access and persistence
-    await prisma.space.update({
-      where: {
-        id: summaryData.spaceId,
-      },
-      data: {
-        summary: summaryData.summary,
-        themes: summaryData.themes,
-        statementCount: summaryData.statementCount,
-      },
-    });
+    await updateSpace(summaryData);
 
     // Also store in Neo4j for graph-based queries
     const query = `

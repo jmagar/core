@@ -1,8 +1,7 @@
 import { IngestionStatus, PrismaClient } from "@prisma/client";
 import { type z } from "zod";
 import { type IngestBodyRequest, ingestTask } from "../ingest/ingest";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma";
 
 export const addToQueue = async (
   body: z.infer<typeof IngestBodyRequest>,

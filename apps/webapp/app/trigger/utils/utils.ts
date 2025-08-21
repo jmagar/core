@@ -4,7 +4,6 @@ import {
   type ConversationHistory,
   type IntegrationDefinitionV2,
   type Prisma,
-  PrismaClient,
   UserType,
   type UserUsage,
   type Workspace,
@@ -22,8 +21,7 @@ import axios from "axios";
 import nodeCrypto from "node:crypto";
 import { customAlphabet, nanoid } from "nanoid";
 import { Exa } from "exa-js";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma";
 
 // Token generation utilities
 const tokenValueLength = 40;

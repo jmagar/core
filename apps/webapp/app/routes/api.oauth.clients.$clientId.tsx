@@ -1,9 +1,11 @@
-import { type ActionFunctionArgs, type LoaderFunctionArgs, json } from "@remix-run/node";
-import { PrismaClient } from "@prisma/client";
+import {
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  json,
+} from "@remix-run/node";
 import { requireAuth } from "~/utils/auth-helper";
 import crypto from "crypto";
-
-const prisma = new PrismaClient();
+import { prisma } from "~/db.server";
 
 // GET /api/oauth/clients/:clientId - Get specific OAuth client
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -27,7 +29,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }
 
     const client = await prisma.oAuthClient.findFirst({
-      where: { 
+      where: {
         id: clientId,
         workspaceId: userRecord.Workspace.id,
       },
@@ -88,7 +90,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
     // Verify client exists and belongs to user's workspace
     const existingClient = await prisma.oAuthClient.findFirst({
-      where: { 
+      where: {
         id: clientId,
         workspaceId: userRecord.Workspace.id,
       },
@@ -101,16 +103,29 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     // PATCH - Update OAuth client
     if (method === "PATCH") {
       const body = await request.json();
-      const { name, description, redirectUris, allowedScopes, requirePkce, logoUrl, homepageUrl, isActive } = body;
+      const {
+        name,
+        description,
+        redirectUris,
+        allowedScopes,
+        requirePkce,
+        logoUrl,
+        homepageUrl,
+        isActive,
+      } = body;
 
       const updateData: any = {};
       if (name !== undefined) updateData.name = name;
       if (description !== undefined) updateData.description = description;
       if (redirectUris !== undefined) {
-        updateData.redirectUris = Array.isArray(redirectUris) ? redirectUris.join(',') : redirectUris;
+        updateData.redirectUris = Array.isArray(redirectUris)
+          ? redirectUris.join(",")
+          : redirectUris;
       }
       if (allowedScopes !== undefined) {
-        updateData.allowedScopes = Array.isArray(allowedScopes) ? allowedScopes.join(',') : allowedScopes;
+        updateData.allowedScopes = Array.isArray(allowedScopes)
+          ? allowedScopes.join(",")
+          : allowedScopes;
       }
       if (requirePkce !== undefined) updateData.requirePkce = requirePkce;
       if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
@@ -145,7 +160,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       const { action } = body;
 
       if (action === "regenerate_secret") {
-        const newClientSecret = crypto.randomBytes(32).toString('hex');
+        const newClientSecret = crypto.randomBytes(32).toString("hex");
 
         const updatedClient = await prisma.oAuthClient.update({
           where: { id: clientId },
@@ -158,10 +173,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           },
         });
 
-        return json({ 
-          success: true, 
+        return json({
+          success: true,
           client: updatedClient,
-          message: "Client secret regenerated successfully. Save it securely - it won't be shown again."
+          message:
+            "Client secret regenerated successfully. Save it securely - it won't be shown again.",
         });
       }
 
@@ -174,11 +190,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         where: { id: clientId },
       });
 
-      return json({ success: true, message: "OAuth client deleted successfully" });
+      return json({
+        success: true,
+        message: "OAuth client deleted successfully",
+      });
     }
 
     return json({ error: "Method not allowed" }, { status: 405 });
-
   } catch (error) {
     console.error("Error managing OAuth client:", error);
     return json({ error: "Internal server error" }, { status: 500 });

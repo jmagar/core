@@ -12,7 +12,10 @@ import {
 } from "~/services/graphModels/space";
 import { triggerSpaceSummary } from "./space-summary";
 import { triggerSpacePattern } from "./space-pattern";
-import { updateMultipleSpaceStatuses, SPACE_STATUS } from "../utils/space-status";
+import {
+  updateMultipleSpaceStatuses,
+  SPACE_STATUS,
+} from "../utils/space-status";
 import type { CoreMessage } from "ai";
 import { z } from "zod";
 import { type Space } from "@prisma/client";
@@ -321,7 +324,7 @@ export const spaceAssignmentTask = task({
               userId,
               operation: "space-assignment",
               metadata: { mode, phase: "start_processing" },
-            }
+            },
           );
         } catch (statusError) {
           logger.warn(`Failed to update space statuses to processing:`, {
@@ -332,7 +335,7 @@ export const spaceAssignmentTask = task({
         }
       }
 
-      // 5. Trigger space summaries for affected spaces (fan-out pattern)  
+      // 5. Trigger space summaries for affected spaces (fan-out pattern)
       if (affectedSpaces.size > 0) {
         try {
           logger.info(
@@ -415,7 +418,7 @@ export const spaceAssignmentTask = task({
               userId,
               operation: "space-assignment",
               metadata: { mode, phase: "completed_processing" },
-            }
+            },
           );
         } catch (finalStatusError) {
           logger.warn(`Failed to update space statuses to ready:`, {

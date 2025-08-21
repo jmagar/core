@@ -4,20 +4,25 @@ import { makeModelCall } from "~/lib/model.server";
 import { runQuery } from "~/lib/neo4j.server";
 import type { CoreMessage } from "ai";
 import { z } from "zod";
-import { prisma } from "~/db.server";
 import {
   EXPLICIT_PATTERN_TYPES,
   IMPLICIT_PATTERN_TYPES,
   type SpacePattern,
   type PatternDetectionResult,
-  type UserConfirmationStatus,
 } from "@core/types";
+import { createSpacePattern, getSpace } from "../utils/space-utils";
 
 interface SpacePatternPayload {
   userId: string;
   workspaceId: string;
   spaceId: string;
-  triggerSource?: "summary_complete" | "manual" | "scheduled" | "new_space" | "growth_threshold" | "ingestion_complete";
+  triggerSource?:
+    | "summary_complete"
+    | "manual"
+    | "scheduled"
+    | "new_space"
+    | "growth_threshold"
+    | "ingestion_complete";
 }
 
 interface SpaceStatementData {
@@ -78,7 +83,7 @@ export const spacePatternTask = task({
 
     try {
       // Get space data and check if it has enough content
-      const space = await getSpaceForPatternAnalysis(spaceId, userId);
+      const space = await getSpaceForPatternAnalysis(spaceId);
       if (!space) {
         return {
           success: false,
@@ -155,17 +160,9 @@ export const spacePatternTask = task({
 
 async function getSpaceForPatternAnalysis(
   spaceId: string,
-  userId: string,
 ): Promise<SpaceThemeData | null> {
   try {
-    const space = await prisma.space.findFirst({
-      where: {
-        id: spaceId,
-        workspace: {
-          userId: userId,
-        },
-      },
-    });
+    const space = await getSpace(spaceId);
 
     if (!space || !space.themes || space.themes.length === 0) {
       logger.warn(
@@ -536,13 +533,7 @@ async function storePatterns(
     if (allPatterns.length === 0) return;
 
     // Store in PostgreSQL
-    await prisma.spacePattern.createMany({
-      data: allPatterns.map((pattern) => ({
-        ...pattern,
-        spaceId,
-        userConfirmed: pattern.userConfirmed as any, // Temporary cast until Prisma client is regenerated
-      })),
-    });
+    await createSpacePattern(spaceId, allPatterns);
 
     logger.info(`Stored ${allPatterns.length} patterns`, {
       explicit: explicitPatterns.length,

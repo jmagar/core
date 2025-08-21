@@ -3,11 +3,9 @@ import {
   type LoaderFunctionArgs,
   json,
 } from "@remix-run/node";
-import { PrismaClient } from "@prisma/client";
 import { requireAuth } from "~/utils/auth-helper";
 import crypto from "crypto";
-
-const prisma = new PrismaClient();
+import { prisma } from "~/db.server";
 
 // GET /api/oauth/clients - List OAuth clients for user's workspace
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -95,7 +93,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       // Integration scope
       "integration",
       "integration:read",
-      "integration:credentials", 
+      "integration:credentials",
       "integration:manage",
       "integration:webhook",
       // MCP scope

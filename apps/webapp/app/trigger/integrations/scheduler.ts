@@ -1,9 +1,7 @@
-import { PrismaClient } from "@prisma/client";
 import { logger, schedules, task } from "@trigger.dev/sdk/v3";
 
 import { integrationRunSchedule } from "./integration-run-schedule";
-
-const prisma = new PrismaClient();
+import { prisma } from "../utils/prisma";
 
 export const scheduler = task({
   id: "scheduler",

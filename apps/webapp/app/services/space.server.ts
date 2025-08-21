@@ -5,7 +5,7 @@ import {
   type UpdateSpaceParams,
   type SpaceAssignmentResult,
 } from "@core/types";
-import { prisma } from "~/db.server";
+import { type Space } from "@prisma/client";
 
 import { triggerSpaceAssignment } from "~/trigger/spaces/space-assignment";
 import {
@@ -18,7 +18,7 @@ import {
   removeStatementsFromSpace,
   updateSpace,
 } from "./graphModels/space";
-import { type Space } from "@prisma/client";
+import { prisma } from "~/trigger/utils/prisma";
 
 export class SpaceService {
   /**

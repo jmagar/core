@@ -1,9 +1,7 @@
-import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
 import { env } from "~/env.server";
 import { type JWTPayload, jwtVerify, SignJWT } from "jose";
-
-const prisma = new PrismaClient();
+import { prisma } from "~/db.server";
 
 export interface OAuth2AuthorizeRequest {
   client_id: string;

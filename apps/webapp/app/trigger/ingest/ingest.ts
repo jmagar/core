@@ -1,13 +1,11 @@
 import { queue, task } from "@trigger.dev/sdk";
 import { z } from "zod";
 import { KnowledgeGraphService } from "~/services/knowledgeGraph.server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
 
 import { IngestionStatus } from "@core/database";
 import { logger } from "~/services/logger.service";
 import { triggerSpaceAssignment } from "../spaces/space-assignment";
+import { prisma } from "../utils/prisma";
 
 export const IngestBodyRequest = z.object({
   episodeBody: z.string(),

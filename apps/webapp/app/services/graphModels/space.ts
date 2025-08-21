@@ -4,9 +4,8 @@ import {
   type SpaceDeletionResult,
   type SpaceAssignmentResult,
 } from "@core/types";
-import { prisma } from "~/db.server";
-import { type Space } from "@prisma/client";
 import { logger } from "~/services/logger.service";
+import { prisma } from "~/trigger/utils/prisma";
 
 /**
  * Create a new space for a user

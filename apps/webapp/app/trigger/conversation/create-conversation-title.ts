@@ -1,10 +1,9 @@
-import { PrismaClient } from "@prisma/client";
 import { LLMMappings } from "@core/types";
 import { logger, task } from "@trigger.dev/sdk/v3";
 import { generate } from "../chat/stream-utils";
 import { conversationTitlePrompt } from "./prompt";
+import { prisma } from "../utils/prisma";
 
-const prisma = new PrismaClient();
 export const createConversationTitle = task({
   id: "create-conversation-title",
   run: async (payload: { conversationId: string; message: string }) => {

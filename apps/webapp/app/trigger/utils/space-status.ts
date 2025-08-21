@@ -1,5 +1,5 @@
-import { prisma } from "~/db.server";
 import { logger } from "~/services/logger.service";
+import { prisma } from "./prisma";
 
 /**
  * Update space status with proper error handling and logging
@@ -11,14 +11,14 @@ export async function updateSpaceStatus(
     userId?: string;
     operation?: string;
     metadata?: Record<string, unknown>;
-  }
+  },
 ): Promise<void> {
   try {
     await prisma.space.update({
       where: { id: spaceId },
       data: { status },
     });
-    
+
     logger.info(`Updated space status`, {
       spaceId,
       status,
@@ -48,7 +48,7 @@ export async function updateMultipleSpaceStatuses(
     userId?: string;
     operation?: string;
     metadata?: Record<string, unknown>;
-  }
+  },
 ): Promise<void> {
   if (spaceIds.length === 0) return;
 
@@ -80,7 +80,7 @@ export async function updateMultipleSpaceStatuses(
     });
 
     await Promise.allSettled(updatePromises);
-    
+
     logger.info(`Completed batch status update`, {
       status,
       totalSpaces: spaceIds.length,
@@ -109,4 +109,4 @@ export const SPACE_STATUS = {
   PENDING: "pending",
 } as const;
 
-export type SpaceStatus = typeof SPACE_STATUS[keyof typeof SPACE_STATUS];
+export type SpaceStatus = (typeof SPACE_STATUS)[keyof typeof SPACE_STATUS];
