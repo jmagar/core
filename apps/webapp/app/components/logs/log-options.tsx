@@ -21,10 +21,9 @@ import { redirect, useFetcher } from "@remix-run/react";
 
 interface LogOptionsProps {
   id: string;
-  reset?: () => void;
 }
 
-export const LogOptions = ({ id, reset }: LogOptionsProps) => {
+export const LogOptions = ({ id }: LogOptionsProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const deleteFetcher = useFetcher<{ success: boolean }>();
 

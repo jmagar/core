@@ -24,7 +24,6 @@ function LogItemRenderer(
   props: ListRowProps,
   logs: LogItem[],
   cache: CellMeasurerCache,
-  reset?: () => void,
 ) {
   const { index, key, style, parent } = props;
   const log = logs[index];
@@ -61,7 +60,6 @@ function LogItemRenderer(
             logData={log.data}
             log={log}
             id={log.id}
-            reset={reset}
           />
         </div>
       </div>
@@ -74,7 +72,6 @@ export function VirtualLogsList({
   hasMore,
   loadMore,
   isLoading,
-  reset,
 }: VirtualLogsListProps) {
   // Create a CellMeasurerCache instance using useRef to prevent recreation
   const cacheRef = useRef<CellMeasurerCache | null>(null);
@@ -103,7 +100,7 @@ export function VirtualLogsList({
   };
 
   const rowRenderer = (props: ListRowProps) => {
-    return LogItemRenderer(props, logs, cache, reset);
+    return LogItemRenderer(props, logs, cache);
   };
 
   const rowHeight = ({ index }: Index) => {

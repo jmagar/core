@@ -36,7 +36,6 @@ export function LogTextCollapse({
   error,
   id,
   log,
-  reset,
 }: LogTextCollapseProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
