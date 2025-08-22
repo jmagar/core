@@ -20,6 +20,7 @@ export default function LogsAll() {
     availableSources,
     isLoading,
     isInitialLoad,
+    reset,
   } = useLogs({
     endpoint: "/api/v1/logs",
     source: selectedSource,
@@ -96,6 +97,7 @@ export default function LogsAll() {
                   loadMore={loadMore}
                   isLoading={isLoading}
                   height={600}
+                  reset={reset}
                 />
               )}
             </div>
