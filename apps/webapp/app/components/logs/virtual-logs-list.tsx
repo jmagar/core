@@ -17,6 +17,7 @@ interface VirtualLogsListProps {
   loadMore: () => void;
   isLoading: boolean;
   height?: number;
+  reset?: () => void;
 }
 
 function LogItemRenderer(

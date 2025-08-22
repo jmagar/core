@@ -19,6 +19,9 @@ export function SpaceFactCard({ fact }: SpaceFactCardProps) {
 
   const displayText = fact.fact;
 
+  const recallCount =
+    (fact.recallCount?.high ?? 0) + (fact.recallCount?.low ?? 0);
+
   return (
     <>
       <div className="flex w-full items-center px-5 pr-2">
@@ -37,9 +40,7 @@ export function SpaceFactCard({ fact }: SpaceFactCardProps) {
                 <div className={cn("truncate text-left")}>{displayText}</div>
               </div>
               <div className="text-muted-foreground flex shrink-0 items-center justify-end text-xs">
-                {fact.recallCount !== undefined && (
-                  <span>Recalled: {fact.recallCount} times</span>
-                )}
+                {!!recallCount && <span>Recalled: {recallCount} times</span>}
                 <Badge variant="secondary" className="rounded text-xs">
                   <Calendar className="h-3 w-3" />
                   {formatDate(fact.validAt)}

@@ -5,7 +5,13 @@ import {
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
 import { Button } from "~/components/ui";
-import { Activity, AlertCircle, ChevronDown, Clock } from "lucide-react";
+import {
+  Activity,
+  AlertCircle,
+  ChevronDown,
+  Clock,
+  LoaderCircle,
+} from "lucide-react";
 import React from "react";
 import {
   Popover,
@@ -14,12 +20,17 @@ import {
 } from "~/components/ui/popover";
 import { getIcon, IconPicker } from "~/components/icon-picker";
 import { SpaceSummary } from "~/components/spaces/space-summary.client";
-import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
+import {
+  type ActionFunctionArgs,
+  redirect,
+  type LoaderFunctionArgs,
+} from "@remix-run/server-runtime";
 import { requireUserId } from "~/services/session.server";
 import { SpaceService } from "~/services/space.server";
 import { useTypedLoaderData } from "remix-typedjson";
 import { useFetcher } from "@remix-run/react";
 import { Badge } from "~/components/ui/badge";
+import { ClientOnly } from "remix-utils/client-only";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const userId = await requireUserId(request);
@@ -30,6 +41,27 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const space = await spaceService.getSpace(spaceId as string, userId);
 
   return space;
+}
+
+export async function action({ request, params }: ActionFunctionArgs) {
+  const userId = await requireUserId(request);
+  const spaceService = new SpaceService();
+  const spaceId = params.spaceId;
+
+  if (!spaceId) {
+    throw new Error("Space ID is required");
+  }
+
+  const formData = await request.formData();
+  const icon = formData.get("icon");
+
+  if (typeof icon !== "string") {
+    throw new Error("Invalid icon data");
+  }
+
+  await spaceService.updateSpace(spaceId, { icon }, userId);
+
+  return redirect(`/home/space/${spaceId}/overview`);
 }
 
 // Helper function to get status display info
@@ -126,7 +158,11 @@ export default function Overview() {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="text-md">
-            <SpaceSummary summary={space.summary} />
+            <ClientOnly
+              fallback={<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+            >
+              {() => <SpaceSummary summary={space.summary} />}
+            </ClientOnly>
           </div>
         </CollapsibleContent>
       </Collapsible>

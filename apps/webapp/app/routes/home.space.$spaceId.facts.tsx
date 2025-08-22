@@ -7,6 +7,8 @@ import { SpaceFactsFilters } from "~/components/spaces/space-facts-filters";
 import { SpaceFactsList } from "~/components/spaces/space-facts-list";
 
 import type { StatementNode } from "@core/types";
+import { ClientOnly } from "remix-utils/client-only";
+import { LoaderCircle } from "lucide-react";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const userId = await requireUserId(request);
@@ -88,12 +90,18 @@ export default function Facts() {
       />
 
       <div className="flex h-[calc(100vh_-_140px)] w-full">
-        <SpaceFactsList
-          facts={filteredStatements}
-          hasMore={false} // TODO: Implement real pagination
-          loadMore={loadMore}
-          isLoading={false}
-        />
+        <ClientOnly
+          fallback={<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+        >
+          {() => (
+            <SpaceFactsList
+              facts={filteredStatements}
+              hasMore={false} // TODO: Implement real pagination
+              loadMore={loadMore}
+              isLoading={false}
+            />
+          )}
+        </ClientOnly>
       </div>
     </div>
   );

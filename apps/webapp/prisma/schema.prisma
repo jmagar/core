@@ -64,6 +64,7 @@ model Conversation {
   status String @default("pending") // Can be "pending", "running", "completed", "failed", "need_attention"
 
   ConversationHistory ConversationHistory[]
+  RecallLog           RecallLog[]
 }
 
 model ConversationExecutionStep {
@@ -107,18 +108,6 @@ model ConversationHistory {
   conversation              Conversation                @relation(fields: [conversationId], references: [id])
   conversationId            String
   ConversationExecutionStep ConversationExecutionStep[]
-}
-
-model Entity {
-  id       String @id @default(cuid())
-  name     String @unique // e.g., "User", "Issue", "Task", "Automation"
-  metadata Json // Store field definitions and their types
-
-  // Relations
-  spaceEntities SpaceEntity[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model IngestionQueue {
@@ -287,6 +276,8 @@ model OAuthClient {
   // PKCE support
   requirePkce Boolean @default(false)
 
+  clientType String @default("regular")
+
   // Client metadata
   logoUrl     String?
   homepageUrl String?
@@ -299,12 +290,12 @@ model OAuthClient {
   isActive Boolean @default(true)
 
   // Workspace relationship (like GitHub orgs)
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String?
 
   // Created by user (for audit trail)
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+  createdById String?
 
   // Relations
   oauthAuthorizationCodes OAuthAuthorizationCode[]
@@ -421,41 +412,97 @@ model PersonalAccessToken {
   authorizationCodes AuthorizationCode[]
 }
 
-model Space {
-  id          String  @id @default(cuid())
-  name        String
-  description String?
-  autoMode    Boolean @default(false)
+model RecallLog {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deleted   DateTime?
+
+  // Access details
+  accessType String // "search", "recall", "direct_access"
+  query      String? // Search query (null for direct access)
+
+  // Target information
+  targetType String? // "episode", "statement", "entity", "mixed_results"
+  targetId   String? // UUID of specific target (null for search with multiple results)
+
+  // Search/access parameters
+  searchMethod  String? // "semantic", "keyword", "hybrid", "contextual", "graph_traversal"
+  minSimilarity Float? // Minimum similarity threshold used
+  maxResults    Int? // Maximum results requested
+
+  // Results and interaction
+  resultCount     Int    @default(0) // Number of results returned
+  similarityScore Float? // Similarity score (for single result access)
+
+  // Context and source
+  context   String? // Additional context
+  source    String? // Source of the access (e.g., "chat", "api", "integration")
+  sessionId String? // Session identifier
+
+  // Performance metrics
+  responseTimeMs Int? // Response time in milliseconds
 
   // Relations
   user   User   @relation(fields: [userId], references: [id])
   userId String
 
-  // Space's enabled entities
-  enabledEntities SpaceEntity[]
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  workspaceId String?
+
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  conversationId String?
+
+  // Metadata for additional tracking data
+  metadata Json? @default("{}")
+}
+
+model Space {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  autoMode       Boolean  @default(false)
+  summary        String?
+  themes         String[]
+  statementCount Int?
+
+  status String?
+
+  icon String?
+
+  lastPatternTrigger          DateTime?
+  statementCountAtLastTrigger Int?
+
+  // Relations
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String
 
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   IngestionQueue IngestionQueue[]
+  SpacePattern   SpacePattern[]
 }
 
-model SpaceEntity {
-  id String @id @default(cuid())
+model SpacePattern {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deleted   DateTime?
+
+  name          String
+  source        String
+  type          String
+  summary       String
+  editedSummary String?
+  evidence      String[]
+  confidence    Float
+  userConfirmed String   @default("pending")
 
   // Relations
-  space   Space  @relation(fields: [spaceId], references: [id])
+  space   Space  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   spaceId String
 
-  entity   Entity @relation(fields: [entityId], references: [id])
-  entityId String
-
-  // Custom settings for this entity in this space
-  settings Json?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([spaceId, entityId])
+  @@index([spaceId, source])
 }
 
 model User {
@@ -480,13 +527,13 @@ model User {
 
   marketingEmails       Boolean @default(true)
   confirmedBasicDetails Boolean @default(false)
+  onboardingComplete    Boolean @default(false)
 
   referralSource String?
 
   personalAccessTokens PersonalAccessToken[]
   InvitationCode       InvitationCode?        @relation(fields: [invitationCodeId], references: [id])
   invitationCodeId     String?
-  Space                Space[]
   Workspace            Workspace?
   IntegrationAccount   IntegrationAccount[]
   WebhookConfiguration WebhookConfiguration[]
@@ -502,6 +549,7 @@ model User {
   oauthIntegrationGrants  OAuthIntegrationGrant[]
   oAuthClientInstallation OAuthClientInstallation[]
   UserUsage               UserUsage?
+  RecallLog               RecallLog[]
 }
 
 model UserUsage {
@@ -576,6 +624,8 @@ model Workspace {
   OAuthAuthorizationCode  OAuthAuthorizationCode[]
   OAuthAccessToken        OAuthAccessToken[]
   OAuthRefreshToken       OAuthRefreshToken[]
+  RecallLog               RecallLog[]
+  Space                   Space[]
 }
 
 enum AuthenticationMethod {

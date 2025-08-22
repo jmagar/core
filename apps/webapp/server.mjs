@@ -57,7 +57,7 @@ async function init() {
         "refresh_token",
         "client_credentials",
       ],
-      code_challenge_methods_supported: ["S256"],
+      code_challenge_methods_supported: ["S256", "plain"],
       token_endpoint_auth_methods_supported: [
         "client_secret_basic",
         "none",

@@ -16,8 +16,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-import { useState } from "react";
-import { useFetcher } from "@remix-run/react";
+import { useState, useEffect } from "react";
+import { redirect, useFetcher } from "@remix-run/react";
 
 interface LogOptionsProps {
   id: string;
@@ -25,7 +25,7 @@ interface LogOptionsProps {
 
 export const LogOptions = ({ id }: LogOptionsProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const deleteFetcher = useFetcher();
+  const deleteFetcher = useFetcher<{ success: boolean }>();
 
   const handleDelete = () => {
     deleteFetcher.submit(
@@ -39,10 +39,21 @@ export const LogOptions = ({ id }: LogOptionsProps) => {
     setDeleteDialogOpen(false);
   };
 
+  useEffect(() => {
+    if (deleteFetcher.state === "idle" && deleteFetcher.data?.success) {
+      redirect(`/home/logs`);
+    }
+  }, [deleteFetcher.state, deleteFetcher.data]);
+
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger
+          asChild
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
           <Button
             variant="ghost"
             className="mr-0.5 h-8 shrink items-center justify-between gap-2 px-1.5"
@@ -54,7 +65,11 @@ export const LogOptions = ({ id }: LogOptionsProps) => {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setDeleteDialogOpen(true)}>
+          <DropdownMenuItem
+            onClick={(e) => {
+              setDeleteDialogOpen(true);
+            }}
+          >
             <Button variant="link" size="sm" className="gap-2 rounded">
               <Trash size={15} /> Delete
             </Button>

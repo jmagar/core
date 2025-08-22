@@ -1,15 +1,12 @@
 import { PageHeader } from "~/components/common/page-header";
-import {
-  type LoaderFunctionArgs,
-  type ActionFunctionArgs,
-  redirect,
-} from "@remix-run/server-runtime";
+import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { requireUserId } from "~/services/session.server";
-
+import { ClientOnly } from "remix-utils/client-only";
 import { SpaceService } from "~/services/space.server";
 import { useTypedLoaderData } from "remix-typedjson";
 import { Outlet, useLocation, useNavigate } from "@remix-run/react";
 import { SpaceOptions } from "~/components/spaces/space-options";
+import { LoaderCircle } from "lucide-react";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const userId = await requireUserId(request);
@@ -20,27 +17,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const space = await spaceService.getSpace(spaceId as string, userId);
 
   return space;
-}
-
-export async function action({ request, params }: ActionFunctionArgs) {
-  const userId = await requireUserId(request);
-  const spaceService = new SpaceService();
-  const spaceId = params.spaceId;
-
-  if (!spaceId) {
-    throw new Error("Space ID is required");
-  }
-
-  const formData = await request.formData();
-  const icon = formData.get("icon");
-
-  if (typeof icon !== "string") {
-    throw new Error("Invalid icon data");
-  }
-
-  await spaceService.updateSpace(spaceId, { icon }, userId);
-
-  return redirect(`/home/space/${spaceId}`);
 }
 
 export default function Space() {
@@ -77,11 +53,21 @@ export default function Space() {
           },
         ]}
         actionsNode={
-          <SpaceOptions 
-            id={space.id as string} 
-            name={space.name}
-            description={space.description}
-          />
+          <ClientOnly
+            fallback={
+              <div>
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+              </div>
+            }
+          >
+            {() => (
+              <SpaceOptions
+                id={space.id as string}
+                name={space.name}
+                description={space.description}
+              />
+            )}
+          </ClientOnly>
         }
       />
       <div className="relative flex h-[calc(100vh_-_56px)] w-full flex-col items-center justify-start overflow-auto">

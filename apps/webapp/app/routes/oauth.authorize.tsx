@@ -15,7 +15,6 @@ import { Card, CardContent } from "~/components/ui/card";
 import Logo from "~/components/logo/logo";
 import {
   AlignLeft,
-  LayoutGrid,
   Pen,
   User,
   Mail,
@@ -25,6 +24,7 @@ import {
   ArrowRightLeft,
 } from "lucide-react";
 import { useState } from "react";
+import { getIconForAuthorise } from "~/components/icon-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Check if user is authenticated
@@ -221,6 +221,8 @@ export default function OAuthAuthorize() {
         return "Read access to your account";
       case "write":
         return "Write access to your account";
+      case "mcp":
+        return "Access to memory and integrations";
       default:
         return `Access to ${scope}`;
     }
@@ -231,15 +233,7 @@ export default function OAuthAuthorize() {
       <Card className="bg-background-3 shadow-1 w-full max-w-md rounded-lg p-5">
         <CardContent>
           <div className="flex items-center justify-center gap-4">
-            {client.logoUrl ? (
-              <img
-                src={client.logoUrl}
-                alt={client.name}
-                className="h-[40px] w-[40px] rounded"
-              />
-            ) : (
-              <LayoutGrid size={40} />
-            )}
+            {getIconForAuthorise(client.name, client.logoUrl)}
             <ArrowRightLeft size={16} />
             <Logo width={40} height={40} />
           </div>

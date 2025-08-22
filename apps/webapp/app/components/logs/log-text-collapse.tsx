@@ -11,6 +11,7 @@ interface LogTextCollapseProps {
   logData: any;
   log: LogItem;
   id: string;
+  reset?: () => void;
 }
 
 const getStatusColor = (status: string) => {
@@ -66,12 +67,14 @@ export function LogTextCollapse({
         className={cn(
           "group-hover:bg-grayAlpha-100 flex min-w-[0px] shrink grow items-start gap-2 rounded-md px-4",
         )}
-        onClick={() => setDialogOpen(true)}
       >
         <div
           className={cn(
             "border-border flex w-full min-w-[0px] shrink flex-col border-b py-1",
           )}
+          onClick={() => {
+            setDialogOpen(true);
+          }}
         >
           <div className="flex w-full items-center justify-between gap-4">
             <div className="inline-flex min-h-[24px] min-w-[0px] shrink cursor-pointer items-center justify-start">
@@ -103,7 +106,9 @@ export function LogTextCollapse({
                   {new Date(log.time).toLocaleString()}
                 </div>
 
-                <LogOptions id={id} />
+                <div onClick={(e) => e.stopPropagation()}>
+                  <LogOptions id={id} />
+                </div>
               </div>
             </div>
           </div>

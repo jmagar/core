@@ -90,7 +90,7 @@ export function LogDetails({
           {error && (
             <div className="mb-4">
               <h3 className="mb-2 text-sm font-medium">Error Details</h3>
-              <div className="rounded-md border border-red-200 p-3">
+              <div className="bg-destructive/10 rounded-md p-3">
                 <div className="flex items-start gap-2 text-red-600">
                   <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
                   <p className="text-sm break-words whitespace-pre-wrap">

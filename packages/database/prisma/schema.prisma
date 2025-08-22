@@ -210,6 +210,15 @@ model InvitationCode {
   createdAt DateTime @default(now())
 }
 
+model MCPSession {
+  id           String   @id @default(cuid())
+  source       String
+  integrations String[]
+
+  createdAt DateTime  @default(now())
+  deleted   DateTime?
+}
+
 model OAuthAuthorizationCode {
   id String @id @default(cuid())
 

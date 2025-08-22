@@ -37,3 +37,19 @@ export function getIcon(icon: IconType) {
 
   return ICON_MAPPING["integration"];
 }
+
+export const getIconForAuthorise = (name: string, image?: string) => {
+  if (image) {
+    return <img src={image} alt={name} className="h-[40px] w-[40px] rounded" />;
+  }
+
+  const lowerName = name.toLowerCase();
+
+  if (lowerName in ICON_MAPPING) {
+    const IconComponent = ICON_MAPPING[lowerName as IconType];
+
+    return <IconComponent size={40} />;
+  }
+
+  return <LayoutGrid size={40} />;
+};
