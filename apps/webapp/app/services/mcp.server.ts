@@ -229,13 +229,17 @@ export const handleMCPRequest = async (
 export const handleSessionRequest = async (
   req: Request,
   res: Response,
-  workspaceId: string,
+  userId: string,
 ) => {
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
+  const workspace = await getWorkspaceByUser(userId);
 
   if (
     sessionId &&
-    (await MCPSessionManager.isSessionActive(sessionId, workspaceId))
+    (await MCPSessionManager.isSessionActive(
+      sessionId,
+      workspace?.id as string,
+    ))
   ) {
     const sessionData = TransportManager.getSessionInfo(sessionId);
 

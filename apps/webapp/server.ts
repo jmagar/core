@@ -3,10 +3,7 @@ import compression from "compression";
 import express from "express";
 import morgan from "morgan";
 
-// import {
-//   handleMCPRequest,
-//   handleSessionRequest,
-// } from "~/services/mcp.server";
+// import { handleMCPRequest, handleSessionRequest } from "~/services/mcp.server";
 // import { authenticateHybridRequest } from "~/services/routeBuilders/apiBuilder.server";
 
 let viteDevServer: any;
@@ -65,7 +62,7 @@ async function init() {
       return;
     }
 
-    await module.handleSessionRequest(req, res);
+    await module.handleSessionRequest(req, res, authenticationResult.userId);
   });
 
   app.post("/api/v1/mcp", async (req, res) => {
@@ -116,7 +113,7 @@ async function init() {
       return;
     }
 
-    await module.handleSessionRequest(req, res);
+    await module.handleSessionRequest(req, res, authenticationResult.userId);
   });
 
   app.options("/api/v1/mcp", (_, res) => {
