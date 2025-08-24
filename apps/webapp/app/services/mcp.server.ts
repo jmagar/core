@@ -151,7 +151,7 @@ async function createTransport(
 
   // Load integration transports
   try {
-    if (noIntegrations) {
+    if (!noIntegrations) {
       const result = await IntegrationLoader.loadIntegrationTransports(
         sessionId,
         userId,
