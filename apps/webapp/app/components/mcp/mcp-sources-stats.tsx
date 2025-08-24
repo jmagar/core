@@ -78,7 +78,7 @@ export function McpSourcesStats({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Current Active</CardTitle>
+          <CardTitle className="text-lg">Active</CardTitle>
         </CardHeader>
         <CardContent className="px-3 pb-4">
           {activeSources.length === 0 ? (

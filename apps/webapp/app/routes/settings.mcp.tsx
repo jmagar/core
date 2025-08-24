@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { useMcpSessions } from "~/hooks/use-mcp-sessions";
 import { McpSessionsFilters } from "~/components/mcp/mcp-sessions-filters";
-import {
-  MCPUrlBox,
-  VirtualMcpSessionsList,
-} from "~/components/mcp/virtual-mcp-sessions-list";
+import { VirtualMcpSessionsList } from "~/components/mcp/virtual-mcp-sessions-list";
 import { McpSourcesStats } from "~/components/mcp/mcp-sources-stats";
 import { Card, CardContent } from "~/components/ui/card";
 import { Database, LoaderCircle } from "lucide-react";
@@ -35,7 +32,6 @@ export default function McpSettings() {
         <div className="flex h-[calc(100vh_-_135px)] w-full flex-col items-center space-y-6">
           {/* Top Sources Stats */}
           <div className="flex w-full flex-col gap-4">
-            <MCPUrlBox />
             <McpSourcesStats
               sources={availableSources}
               activeSources={activeSources}

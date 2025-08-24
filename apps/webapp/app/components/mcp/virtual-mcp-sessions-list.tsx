@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   InfiniteLoader,
   AutoSizer,
@@ -10,11 +10,7 @@ import {
 import { type McpSessionItem } from "~/hooks/use-mcp-sessions";
 import { ScrollManagedList } from "../virtualized-list";
 import { Badge } from "../ui/badge";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { Check, Copy } from "lucide-react";
 import { cn } from "~/lib/utils";
-import { Card, CardContent } from "../ui/card";
 import { getIconForAuthorise } from "../icon-utils";
 
 interface VirtualMcpSessionsListProps {
@@ -23,81 +19,6 @@ interface VirtualMcpSessionsListProps {
   loadMore: () => void;
   isLoading: boolean;
   height?: number;
-}
-
-export function MCPUrlBox() {
-  const [copied, setCopied] = useState(false);
-  const [selectedSource, setSelectedSource] = useState<
-    "Claude" | "Cursor" | "Other"
-  >("Claude");
-
-  const getMcpURL = (source: "Claude" | "Cursor" | "Other") => {
-    const baseUrl = "https://core.heysol.ai/api/v1/mcp";
-    return `${baseUrl}?source=${source}`;
-  };
-
-  const mcpURL = getMcpURL(selectedSource);
-
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(mcpURL);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
-  };
-
-  return (
-    <Card className="min-w-[400px] rounded-lg bg-transparent pt-1">
-      <CardContent className="pt-2 text-base">
-        <div className="space-y-4">
-          <div className="space-y-3">
-            <div className="bg-grayAlpha-100 flex space-x-1 rounded-lg p-1">
-              {(["Claude", "Cursor", "Other"] as const).map((source) => (
-                <Button
-                  key={source}
-                  onClick={() => setSelectedSource(source)}
-                  variant="ghost"
-                  className={cn(
-                    "flex-1 rounded-md px-3 py-1.5 transition-all",
-                    selectedSource === source
-                      ? "bg-accent text-accent-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {source}
-                </Button>
-              ))}
-            </div>
-
-            <div className="bg-background-3 flex items-center rounded">
-              <Input
-                type="text"
-                id="mcpURL"
-                value={mcpURL}
-                readOnly
-                className="bg-background-3 block w-full text-base"
-              />
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                onClick={copyToClipboard}
-                className="px-3"
-              >
-                {copied ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 function McpSessionItemRenderer(

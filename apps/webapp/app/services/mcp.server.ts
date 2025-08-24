@@ -13,17 +13,20 @@ import { IntegrationLoader } from "~/utils/mcp/integration-loader";
 import { callMemoryTool, memoryTools } from "~/utils/mcp/memory";
 import { logger } from "~/services/logger.service";
 import { type Response, type Request } from "express";
-import { getUser } from "./session.server";
-import { getUserById } from "~/models/user.server";
 import { getWorkspaceByUser } from "~/models/workspace.server";
 
 const QueryParams = z.object({
   source: z.string().optional(),
   integrations: z.string().optional(), // comma-separated slugs
+  no_integrations: z.boolean().optional(), // comma-separated slugs
 });
 
 // Create MCP server with memory tools + dynamic integration tools
-async function createMcpServer(userId: string, sessionId: string) {
+async function createMcpServer(
+  userId: string,
+  sessionId: string,
+  source: string,
+) {
   const server = new Server(
     {
       name: "core-unified-mcp-server",
@@ -58,7 +61,7 @@ async function createMcpServer(userId: string, sessionId: string) {
 
     // Handle memory tools
     if (name.startsWith("memory_")) {
-      return await callMemoryTool(name, args, userId);
+      return await callMemoryTool(name, args, userId, source);
     }
 
     // Handle integration tools (prefixed with integration slug)
@@ -93,6 +96,7 @@ async function createTransport(
   sessionId: string,
   source: string,
   integrations: string[],
+  noIntegrations: boolean,
   userId: string,
   workspaceId: string,
 ): Promise<StreamableHTTPServerTransport> {
@@ -136,7 +140,7 @@ async function createTransport(
       logger.error("Failed to send keep-alive ping, cleaning up interval." + e);
       clearInterval(keepAlive);
     }
-  }, 60000); // Send ping every 60 seconds
+  }, 30000); // Send ping every 60 seconds
 
   // Setup cleanup on close
   transport.onclose = async () => {
@@ -147,24 +151,26 @@ async function createTransport(
 
   // Load integration transports
   try {
-    const result = await IntegrationLoader.loadIntegrationTransports(
-      sessionId,
-      userId,
-      workspaceId,
-      integrations.length > 0 ? integrations : undefined,
-    );
-    logger.log(
-      `Loaded ${result.loaded} integration transports for session ${sessionId}`,
-    );
-    if (result.failed.length > 0) {
-      logger.warn(`Failed to load some integrations: ${result.failed}`);
+    if (noIntegrations) {
+      const result = await IntegrationLoader.loadIntegrationTransports(
+        sessionId,
+        userId,
+        workspaceId,
+        integrations.length > 0 ? integrations : undefined,
+      );
+      logger.log(
+        `Loaded ${result.loaded} integration transports for session ${sessionId}`,
+      );
+      if (result.failed.length > 0) {
+        logger.warn(`Failed to load some integrations: ${result.failed}`);
+      }
     }
   } catch (error) {
     logger.error(`Error loading integration transports: ${error}`);
   }
 
   // Create and connect MCP server
-  const server = await createMcpServer(userId, sessionId);
+  const server = await createMcpServer(userId, sessionId, source);
   await server.connect(transport);
 
   return transport;
@@ -182,6 +188,8 @@ export const handleMCPRequest = async (
   const integrations = queryParams.integrations
     ? queryParams.integrations.split(",").map((s) => s.trim())
     : [];
+
+  const noIntegrations = queryParams.no_integrations ?? false;
 
   const userId = authentication.userId;
   const workspace = await getWorkspaceByUser(userId);
@@ -206,6 +214,7 @@ export const handleMCPRequest = async (
             sessionId,
             sessionDetails.source,
             sessionDetails.integrations,
+            noIntegrations,
             userId,
             workspaceId,
           );
@@ -222,6 +231,7 @@ export const handleMCPRequest = async (
         currentSessionId,
         source,
         integrations,
+        noIntegrations,
         userId,
         workspaceId,
       );

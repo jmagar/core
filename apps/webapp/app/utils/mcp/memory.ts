@@ -66,13 +66,14 @@ export async function callMemoryTool(
   toolName: string,
   args: any,
   userId: string,
+  source: string,
 ) {
   try {
     switch (toolName) {
       case "memory_ingest":
-        return await handleMemoryIngest({ ...args, userId });
+        return await handleMemoryIngest({ ...args, userId, source });
       case "memory_search":
-        return await handleMemorySearch({ ...args, userId });
+        return await handleMemorySearch({ ...args, userId, source });
       case "memory_get_spaces":
         return await handleMemoryGetSpaces(userId);
       default:
