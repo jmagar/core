@@ -297,7 +297,7 @@ export class OAuth2Service {
     ];
 
     // MCP-related scopes
-    const mcpScopes = ["mcp", "mcp:read", "mcp:write"];
+    const mcpScopes = ["mcp", "mcp:read", "mcp:write", "mcp.read", "mcp.write"];
 
     const hasAuthScopes = scopes.some((s) => authScopes.includes(s));
     const hasIntegrationScopes = scopes.some((s) =>
@@ -356,6 +356,14 @@ export class OAuth2Service {
         icon: "eye",
       },
       "mcp:write": {
+        description: "Write to MCP endpoints",
+        icon: "pencil",
+      },
+      "mcp.read": {
+        description: "Read MCP endpoints",
+        icon: "eye",
+      },
+      "mcp.write": {
         description: "Write to MCP endpoints",
         icon: "pencil",
       },

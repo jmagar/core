@@ -35,7 +35,7 @@ export async function action({ request }: ActionFunctionArgs) {
       responseTypes: response_types || ["code"],
       clientType: "mcp", // Special flag for MCP clients
       requirePkce: true,
-      allowedScopes: "mcp",
+      allowedScopes: "mcp,mcp.read,mcp.write,mcp:read,mcp:write",
     });
 
     return json({

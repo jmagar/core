@@ -100,6 +100,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       "mcp",
       "mcp:read",
       "mcp:write",
+      "mcp.read",
+      "mcp.write",
     ];
 
     const requestedScopes = Array.isArray(allowedScopes)
