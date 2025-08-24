@@ -30,41 +30,6 @@ export function SpaceSearch({
     }
   }, [debouncedSearchQuery, searchQuery, onSearchChange]);
 
-  // Count statement nodes that match the search
-  const matchingStatements = useMemo(() => {
-    if (!debouncedSearchQuery.trim()) return 0;
-
-    const query = debouncedSearchQuery.toLowerCase();
-    let count = 0;
-
-    const isStatementNode = (node: any) => {
-      return (
-        node.attributes?.fact ||
-        (node.labels && node.labels.includes("Statement"))
-      );
-    };
-
-    triplets.forEach((triplet) => {
-      // Check if source node is a statement and matches
-      if (
-        isStatementNode(triplet.sourceNode) &&
-        triplet.sourceNode.attributes?.fact?.toLowerCase().includes(query)
-      ) {
-        count++;
-      }
-
-      // Check if target node is a statement and matches
-      if (
-        isStatementNode(triplet.targetNode) &&
-        triplet.targetNode.attributes?.fact?.toLowerCase().includes(query)
-      ) {
-        count++;
-      }
-    });
-
-    return count;
-  }, [triplets, debouncedSearchQuery]);
-
   // Helper to determine if a node is a statement
   const isStatementNode = useCallback((node: any) => {
     // Check if node has a fact attribute (indicates it's a statement)
@@ -73,6 +38,34 @@ export function SpaceSearch({
       (node.labels && node.labels.includes("Statement"))
     );
   }, []);
+
+  // Count statement nodes that match the search
+  const matchingStatements = useMemo(() => {
+    if (!debouncedSearchQuery.trim()) return 0;
+
+    const query = debouncedSearchQuery.toLowerCase();
+    const statements: Record<string, number> = {};
+
+    triplets.forEach((triplet) => {
+      // Check if source node is a statement and matches
+      if (
+        isStatementNode(triplet.sourceNode) &&
+        triplet.sourceNode.attributes?.fact?.toLowerCase().includes(query)
+      ) {
+        statements[triplet.sourceNode.uuid] = 1;
+      }
+
+      // Check if target node is a statement and matches
+      if (
+        isStatementNode(triplet.targetNode) &&
+        triplet.targetNode.attributes?.fact?.toLowerCase().includes(query)
+      ) {
+        statements[triplet.targetNode.uuid] = 1;
+      }
+    });
+
+    return Object.keys(statements).length;
+  }, [triplets, debouncedSearchQuery]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);

@@ -643,7 +643,7 @@ export type HybridAuthenticationResult =
       userId: string;
     };
 
-async function authenticateHybridRequest(
+export async function authenticateHybridRequest(
   request: Request,
   options: { allowJWT?: boolean } = {},
 ): Promise<HybridAuthenticationResult | null> {

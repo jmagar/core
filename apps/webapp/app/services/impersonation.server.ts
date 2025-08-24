@@ -1,5 +1,6 @@
 import { createCookieSessionStorage, type Session } from "@remix-run/node";
 import { env } from "~/env.server";
+import { type Request as ERequest } from "express";
 
 export const impersonationSessionStorage = createCookieSessionStorage({
   cookie: {
@@ -13,8 +14,13 @@ export const impersonationSessionStorage = createCookieSessionStorage({
   },
 });
 
-export function getImpersonationSession(request: Request) {
-  return impersonationSessionStorage.getSession(request.headers.get("Cookie"));
+export function getImpersonationSession(request: Request | ERequest) {
+  const cookieHeader =
+    request instanceof Request
+      ? request.headers.get("Cookie")
+      : request.headers["cookie"];
+
+  return impersonationSessionStorage.getSession(cookieHeader);
 }
 
 export function commitImpersonationSession(session: Session) {

@@ -1,6 +1,6 @@
 import { findUserByToken } from "~/models/personal-token.server";
 import { oauth2Service } from "~/services/oauth2.server";
-
+import { type Request as ERequest } from "express";
 // See this for more: https://twitter.com/mattpocockuk/status/1653403198885904387?s=20
 export type Prettify<T> = {
   [K in keyof T]: T[K];
@@ -111,8 +111,13 @@ export function isSecretApiKey(key: string) {
   return key.startsWith("rc_");
 }
 
-export function getApiKeyFromRequest(request: Request) {
-  return getApiKeyFromHeader(request.headers.get("Authorization"));
+export function getApiKeyFromRequest(request: Request | ERequest) {
+  const authorizationHeader =
+    request instanceof Request
+      ? request.headers.get("Authorization")
+      : request.headers["authorization"];
+
+  return getApiKeyFromHeader(authorizationHeader);
 }
 
 export function getApiKeyFromHeader(authorization?: string | null) {

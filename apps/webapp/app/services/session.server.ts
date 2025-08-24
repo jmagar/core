@@ -3,13 +3,21 @@ import { getUserById, getUserLeftCredits } from "~/models/user.server";
 import { sessionStorage } from "./sessionStorage.server";
 import { getImpersonationId } from "./impersonation.server";
 import { getWorkspaceByUser } from "~/models/workspace.server";
+import { type Request as ERequest } from "express";
 
-export async function getUserId(request: Request): Promise<string | undefined> {
-  const impersonatedUserId = await getImpersonationId(request);
+export async function getUserId(
+  request: Request | ERequest,
+): Promise<string | undefined> {
+  const impersonatedUserId = await getImpersonationId(request as Request);
 
   if (impersonatedUserId) return impersonatedUserId;
 
-  let session = await sessionStorage.getSession(request.headers.get("cookie"));
+  const cookieHeader =
+    request instanceof Request
+      ? request.headers.get("Cookie")
+      : request.headers["cookie"];
+
+  let session = await sessionStorage.getSession(cookieHeader);
   let user = session.get("user");
 
   return user?.userId;

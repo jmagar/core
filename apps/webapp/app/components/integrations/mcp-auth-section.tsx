@@ -1,8 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { useFetcher } from "@remix-run/react";
 import { Button } from "~/components/ui/button";
-import { Check, Copy } from "lucide-react";
-import { Input } from "../ui/input";
+import { Check } from "lucide-react";
 
 interface MCPAuthSectionProps {
   integration: {
@@ -19,49 +18,6 @@ interface MCPAuthSectionProps {
   hasMCPAuth: boolean;
 }
 
-interface MCPUrlBoxProps {
-  mcpUrl: string;
-}
-
-function MCPUrlBox({ mcpUrl }: MCPUrlBoxProps) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(mcpUrl).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [mcpUrl]);
-
-  return (
-    <div className="mb-3 flex items-center gap-2">
-      <Input
-        type="text"
-        value={mcpUrl}
-        readOnly
-        className="w-full rounded px-2 py-1 font-mono text-sm"
-        style={{ maxWidth: 400 }}
-        onFocus={(e) => e.target.select()}
-      />
-      <Button
-        type="button"
-        variant={copied ? "secondary" : "ghost"}
-        onClick={handleCopy}
-        aria-label={copied ? "Copied" : "Copy MCP URL"}
-        disabled={copied}
-      >
-        {copied ? (
-          <span className="flex items-center gap-1">
-            <Check size={16} /> Copied
-          </span>
-        ) : (
-          <Copy size={16} />
-        )}
-      </Button>
-    </div>
-  );
-}
-
 export function MCPAuthSection({
   integration,
   activeAccount,
@@ -73,8 +29,6 @@ export function MCPAuthSection({
 
   const isMCPConnected = !!activeAccount?.integrationConfiguration?.mcp;
   const isConnected = !!activeAccount;
-
-  const mcpUrl = `https://core.heysol.ai/api/v1/mcp/${integration.slug}`;
 
   const handleMCPConnect = useCallback(() => {
     setIsMCPConnecting(true);
@@ -135,8 +89,8 @@ export function MCPAuthSection({
     <div className="mt-6 space-y-2">
       <h3 className="text-lg font-medium">MCP Authentication</h3>
 
-      {hasMCPAuth ? (
-        isMCPConnected ? (
+      {hasMCPAuth &&
+        (isMCPConnected ? (
           <div className="bg-background-3 rounded-lg p-4">
             <div className="text-sm">
               <p className="inline-flex items-center gap-2 font-medium">
@@ -145,7 +99,6 @@ export function MCPAuthSection({
               <p className="text-muted-foreground mb-3">
                 MCP (Model Context Protocol) authentication is active
               </p>
-              <MCPUrlBox mcpUrl={mcpUrl} />
               <div className="flex w-full justify-end">
                 <Button
                   variant="destructive"
@@ -182,21 +135,7 @@ export function MCPAuthSection({
               </Button>
             </div>
           </div>
-        )
-      ) : (
-        // hasMCPAuth is false, but integration is connected: show just the MCPUrlBox
-        <div className="bg-background-3 rounded-lg p-4">
-          <div className="text-sm">
-            <p className="inline-flex items-center gap-2 font-medium">
-              <Check size={16} /> Integration Connected
-            </p>
-            <p className="text-muted-foreground mb-3">
-              You can use the MCP endpoint for this integration:
-            </p>
-            <MCPUrlBox mcpUrl={mcpUrl} />
-          </div>
-        </div>
-      )}
+        ))}
     </div>
   );
 }

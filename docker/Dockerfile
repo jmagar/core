@@ -64,7 +64,7 @@ ENV NODE_ENV production
 COPY --from=base /usr/bin/dumb-init /usr/bin/dumb-init
 COPY --from=pruner --chown=node:node /core/out/full/ .
 COPY --from=production-deps --chown=node:node /core .
-COPY --from=builder --chown=node:node /core/apps/webapp/server.mjs ./apps/webapp/server.mjs
+COPY --from=builder --chown=node:node /core/apps/webapp/server.js ./apps/webapp/server.js
 COPY --from=builder --chown=node:node /core/apps/webapp/build ./apps/webapp/build
 COPY --from=builder --chown=node:node /core/apps/webapp/public ./apps/webapp/public
 COPY --from=builder --chown=node:node /core/scripts ./scripts

@@ -3,7 +3,13 @@ import compression from "compression";
 import express from "express";
 import morgan from "morgan";
 
-let viteDevServer;
+// import {
+//   handleMCPRequest,
+//   handleSessionRequest,
+// } from "~/services/mcp.server";
+// import { authenticateHybridRequest } from "~/services/routeBuilders/apiBuilder.server";
+
+let viteDevServer: any;
 let remixHandler;
 
 async function init() {
@@ -14,9 +20,12 @@ async function init() {
     });
   }
 
-  const build = viteDevServer
+  const build: any = viteDevServer
     ? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
     : await import("./build/server/index.js");
+
+  const { authenticateHybridRequest, handleMCPRequest, handleSessionRequest } =
+    build.entry.module;
 
   remixHandler = createRequestHandler({ build });
 
@@ -43,6 +52,68 @@ async function init() {
   app.use(express.static("build/client", { maxAge: "1h" }));
 
   app.use(morgan("tiny"));
+
+  app.get("/api/v1/mcp", async (req, res) => {
+    const authenticationResult = await authenticateHybridRequest(req as any, {
+      allowJWT: true,
+    });
+
+    if (!authenticationResult) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    await handleSessionRequest(req, res);
+  });
+
+  app.post("/api/v1/mcp", async (req, res) => {
+    const authenticationResult = await authenticateHybridRequest(req as any, {
+      allowJWT: true,
+    });
+
+    if (!authenticationResult) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+
+    req.on("end", async () => {
+      try {
+        const parsedBody = JSON.parse(body);
+        const queryParams = req.query; // Get query parameters from the request
+        await handleMCPRequest(
+          req,
+          res,
+          parsedBody,
+          authenticationResult,
+          queryParams,
+        );
+      } catch (error) {
+        res.status(400).json({ error: "Invalid JSON" });
+      }
+    });
+  });
+
+  app.delete("/api/v1/mcp", async (req, res) => {
+    const authenticationResult = await authenticateHybridRequest(req as any, {
+      allowJWT: true,
+    });
+
+    if (!authenticationResult) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    await handleSessionRequest(req, res);
+  });
+
+  app.options("/api/v1/mcp", (_, res) => {
+    res.json({});
+  });
 
   app.get("/.well-known/oauth-authorization-server", (req, res) => {
     res.json({

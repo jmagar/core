@@ -15,6 +15,8 @@ import { RemixServer } from "@remix-run/react";
 import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 import { initializeStartupServices } from "./utils/startup";
+import { handleMCPRequest, handleSessionRequest } from "~/services/mcp.server";
+import { authenticateHybridRequest } from "~/services/routeBuilders/apiBuilder.server";
 
 const ABORT_DELAY = 5_000;
 
@@ -149,3 +151,5 @@ function handleBrowserRequest(
     setTimeout(abort, ABORT_DELAY);
   });
 }
+
+export { handleMCPRequest, handleSessionRequest, authenticateHybridRequest };

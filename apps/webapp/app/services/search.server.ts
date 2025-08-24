@@ -2,9 +2,7 @@ import type { EpisodicNode, StatementNode } from "@core/types";
 import { logger } from "./logger.service";
 import {
   applyCrossEncoderReranking,
-  applyMultiFactorReranking,
   applyMultiFactorMMRReranking,
-  applyWeightedRRF,
 } from "./search/rerank";
 import {
   getEpisodesByStatements,

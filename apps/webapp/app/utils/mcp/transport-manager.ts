@@ -1,13 +1,14 @@
 import { type StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { Client as McpClient } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 export interface IntegrationTransport {
   client: McpClient;
-  transport: StreamableHTTPClientTransport;
+  transport: StreamableHTTPClientTransport | StdioClientTransport;
   integrationAccountId: string;
   slug: string;
-  url: string;
+  url?: string;
 }
 
 export interface SessionTransports {
@@ -99,6 +100,47 @@ export class TransportManager {
       integrationAccountId,
       integrationTransport,
     );
+    return integrationTransport;
+  }
+
+  static async addStdioIntegrationTransport(
+    sessionId: string,
+    integrationAccountId: string,
+    slug: string,
+    command: string,
+    args: string[],
+    env?: any,
+  ): Promise<IntegrationTransport> {
+    const session = this.getOrCreateSession(sessionId);
+
+    const transport = new StdioClientTransport({
+      command,
+      args: args || [],
+      env,
+    });
+
+    // Create MCP client
+    const client = new McpClient({
+      name: `core-client-${slug}`,
+      version: "1.0.0",
+    });
+
+    // Connect client to transport
+    await client.connect(transport);
+
+    const integrationTransport: IntegrationTransport = {
+      client,
+      transport,
+      integrationAccountId,
+      slug,
+      url: command,
+    };
+
+    session.integrationTransports.set(
+      integrationAccountId,
+      integrationTransport,
+    );
+
     return integrationTransport;
   }
 

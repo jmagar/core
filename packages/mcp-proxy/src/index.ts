@@ -4,8 +4,7 @@ export * from "./types/index.js";
 // MCP Remote Client exports (new simplified interface)
 export {
   createMCPAuthClient,
-  createMCPProxy,
-  createMCPStdioProxy,
+  getDefaultEnvironment,
   MCPAuthenticationClient,
 } from "./core/mcp-remote-client.js";
 

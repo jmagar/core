@@ -54,7 +54,7 @@ export interface StatementNode {
   userId: string;
   space?: string; // Legacy field - deprecated in favor of spaceIds
   spaceIds?: string[]; // Array of space UUIDs this statement belongs to
-  recallCount?: number;
+  recallCount?: { low: number; high: number };
   provenanceCount?: number;
 }
 

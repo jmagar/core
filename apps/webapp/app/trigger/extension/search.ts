@@ -1,11 +1,16 @@
+import { metadata, task } from "@trigger.dev/sdk";
+import { streamText, type CoreMessage, tool } from "ai";
 import { z } from "zod";
-import { openai } from "@ai-sdk/openai";
-import { type CoreMessage, generateText, tool } from "ai";
-import { logger } from "~/services/logger.service";
-import { SearchService } from "~/services/search.server";
 
-// Input schema for the agent
-export const SearchMemoryAgentInput = z.object({
+import { openai } from "@ai-sdk/openai";
+import { logger } from "~/services/logger.service";
+import {
+  deletePersonalAccessToken,
+  getOrCreatePersonalAccessToken,
+} from "../utils/utils";
+import axios from "axios";
+
+export const ExtensionSearchBodyRequest = z.object({
   userInput: z.string().min(1, "User input is required"),
   userId: z.string().min(1, "User ID is required"),
   context: z
@@ -14,20 +19,18 @@ export const SearchMemoryAgentInput = z.object({
     .describe("Additional context about the user's current work"),
 });
 
-/**
- * Search Memory Agent - Designed to find relevant context from user's memory
- *
- * This agent searches the user's memory using a searchMemory tool, retrieves relevant
- * facts and episodes, then summarizes them into a concise, relevant context summary.
- */
-export class SearchMemoryAgent {
-  private model = openai("gpt-4o");
-  private searchService = new SearchService();
+// Export a singleton instance
+export const extensionSearch = task({
+  id: "extensionSearch",
+  maxDuration: 3000,
+  run: async (body: z.infer<typeof ExtensionSearchBodyRequest>) => {
+    const { userInput, userId, context } =
+      ExtensionSearchBodyRequest.parse(body);
 
-  async generateContextSummary(
-    input: z.infer<typeof SearchMemoryAgentInput>,
-  ): Promise<string> {
-    const { userInput, userId, context } = SearchMemoryAgentInput.parse(input);
+    const pat = await getOrCreatePersonalAccessToken({
+      name: "extensionSearch",
+      userId: userId as string,
+    });
 
     // Define the searchMemory tool that actually calls the search service
     const searchMemoryTool = tool({
@@ -38,7 +41,16 @@ export class SearchMemoryAgent {
       }),
       execute: async ({ query }) => {
         try {
-          const searchResult = await this.searchService.search(query, userId);
+          const response = await axios.post(
+            `${process.env.API_BASE_URL}/api/v1/search`,
+            { query },
+            {
+              headers: {
+                Authorization: `Bearer ${pat.token}`,
+              },
+            },
+          );
+          const searchResult = response.data;
 
           return {
             facts: searchResult.facts || [],
@@ -79,8 +91,8 @@ If no relevant information is found, provide a brief statement indicating that.`
     ];
 
     try {
-      const result = await generateText({
-        model: this.model,
+      const result = streamText({
+        model: openai(process.env.MODEL as string),
         messages,
         tools: {
           searchMemory: searchMemoryTool,
@@ -90,14 +102,21 @@ If no relevant information is found, provide a brief statement indicating that.`
         maxTokens: 600,
       });
 
-      return result.text.trim();
+      const stream = await metadata.stream("messages", result.textStream);
+
+      let finalText: string = "";
+      for await (const chunk of stream) {
+        finalText = finalText + chunk;
+      }
+
+      await deletePersonalAccessToken(pat.id);
+
+      return finalText;
     } catch (error) {
       logger.error(`SearchMemoryAgent error: ${error}`);
+      await deletePersonalAccessToken(pat.id);
 
       return `Context related to: ${userInput}. Looking for relevant background information, previous discussions, and related concepts that would help provide a comprehensive answer.`;
     }
-  }
-}
-
-// Export a singleton instance
-export const searchMemoryAgent = new SearchMemoryAgent();
+  },
+});

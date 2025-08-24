@@ -1,5 +1,7 @@
 import { prisma } from "~/db.server";
 import { TransportManager } from "./transport-manager";
+import { configureStdioMCPEnvironment } from "~/trigger/utils/mcp";
+import { getDefaultEnvironment } from "@core/mcp-proxy";
 
 export interface IntegrationAccountWithDefinition {
   id: string;
@@ -132,11 +134,23 @@ export class IntegrationLoader {
 
           loaded++;
         } else {
-          // Skip non-HTTP transports for now
-          failed.push({
-            slug: account.integrationDefinition.slug,
-            error: `Unsupported transport type: ${mcpConfig.type}`,
-          });
+          const { env, args } = configureStdioMCPEnvironment(spec, account);
+          const slug = account.integrationDefinition.slug;
+
+          // Extract headers from the incoming request and convert to environment variables
+          const extractedEnv = { ...getDefaultEnvironment(), ...env };
+
+          // Use the saved local file instead of command
+          const executablePath = `./integrations/${slug}/main`;
+
+          await TransportManager.addStdioIntegrationTransport(
+            sessionId,
+            account.id,
+            account.integrationDefinition.slug,
+            executablePath,
+            args,
+            extractedEnv,
+          );
         }
       } catch (error) {
         failed.push({

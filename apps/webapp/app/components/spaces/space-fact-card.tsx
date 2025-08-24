@@ -39,7 +39,7 @@ export function SpaceFactCard({ fact }: SpaceFactCardProps) {
               <div className="inline-flex min-h-[24px] min-w-[0px] shrink cursor-pointer items-center justify-start">
                 <div className={cn("truncate text-left")}>{displayText}</div>
               </div>
-              <div className="text-muted-foreground flex shrink-0 items-center justify-end text-xs">
+              <div className="text-muted-foreground flex shrink-0 items-center justify-end gap-2 text-xs">
                 {!!recallCount && <span>Recalled: {recallCount} times</span>}
                 <Badge variant="secondary" className="rounded text-xs">
                   <Calendar className="h-3 w-3" />

@@ -1,12 +1,4 @@
-import {
-  Prisma,
-  PrismaClient,
-  type PrismaClientOrTransaction,
-  type PrismaReplicaClient,
-  type PrismaTransactionClient,
-  type PrismaTransactionOptions,
-  $transaction as transac,
-} from "@core/database";
+import { Prisma, PrismaClient } from "@core/database";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 import { env } from "./env.server";
@@ -16,72 +8,11 @@ import { singleton } from "./utils/singleton";
 
 import { type Span } from "@opentelemetry/api";
 
-export type {
-  PrismaTransactionClient,
-  PrismaClientOrTransaction,
-  PrismaTransactionOptions,
-  PrismaReplicaClient,
-};
-
-export async function $transaction<R>(
-  prisma: PrismaClientOrTransaction,
-  name: string,
-  fn: (prisma: PrismaTransactionClient, span?: Span) => Promise<R>,
-  options?: PrismaTransactionOptions,
-): Promise<R | undefined>;
-export async function $transaction<R>(
-  prisma: PrismaClientOrTransaction,
-  fn: (prisma: PrismaTransactionClient) => Promise<R>,
-  options?: PrismaTransactionOptions,
-): Promise<R | undefined>;
-export async function $transaction<R>(
-  prisma: PrismaClientOrTransaction,
-  fnOrName: ((prisma: PrismaTransactionClient) => Promise<R>) | string,
-  fnOrOptions?:
-    | ((prisma: PrismaTransactionClient) => Promise<R>)
-    | PrismaTransactionOptions,
-  options?: PrismaTransactionOptions,
-): Promise<R | undefined> {
-  if (typeof fnOrName === "string") {
-    const fn = fnOrOptions as (prisma: PrismaTransactionClient) => Promise<R>;
-
-    return await transac(
-      prisma,
-      (client) => fn(client),
-      (error) => {
-        logger.error("prisma.$transaction error", {
-          code: error.code,
-          meta: error.meta,
-          stack: error.stack,
-          message: error.message,
-          name: error.name,
-        });
-      },
-      options,
-    );
-  } else {
-    return transac(
-      prisma,
-      fnOrName,
-      (error) => {
-        logger.error("prisma.$transaction error", {
-          code: error.code,
-          meta: error.meta,
-          stack: error.stack,
-          message: error.message,
-          name: error.name,
-        });
-      },
-      typeof fnOrOptions === "function" ? undefined : fnOrOptions,
-    );
-  }
-}
-
 export { Prisma };
 
 export const prisma = singleton("prisma", getClient);
 
-export const $replica: PrismaReplicaClient = singleton(
+export const $replica = singleton(
   "replica",
   () => getReplicaClient() ?? prisma,
 );
