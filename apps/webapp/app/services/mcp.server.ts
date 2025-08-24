@@ -127,8 +127,20 @@ async function createTransport(
     },
   });
 
+  const keepAlive = setInterval(() => {
+    try {
+      transport.send({ jsonrpc: "2.0", method: "ping" });
+    } catch (e) {
+      // If sending a ping fails, the connection is likely broken.
+      // Log the error and clear the interval to prevent further attempts.
+      logger.error("Failed to send keep-alive ping, cleaning up interval." + e);
+      clearInterval(keepAlive);
+    }
+  }, 60000); // Send ping every 60 seconds
+
   // Setup cleanup on close
   transport.onclose = async () => {
+    clearInterval(keepAlive);
     await MCPSessionManager.deleteSession(sessionId);
     await TransportManager.cleanupSession(sessionId);
   };
