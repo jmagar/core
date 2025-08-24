@@ -233,7 +233,7 @@ export default function OAuthAuthorize() {
       <Card className="bg-background-3 shadow-1 w-full max-w-md rounded-lg p-5">
         <CardContent>
           <div className="flex items-center justify-center gap-4">
-            {getIconForAuthorise(client.name, client.logoUrl)}
+            {getIconForAuthorise(client.name, 40, client.logoUrl)}
             <ArrowRightLeft size={16} />
             <Logo width={40} height={40} />
           </div>

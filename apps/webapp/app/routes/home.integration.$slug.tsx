@@ -134,7 +134,7 @@ function parseSpec(spec: any) {
 }
 
 function CustomIntegrationContent({ integration }: { integration: any }) {
-  const memoryUrl = `https://core.heysol.ai/api/v1/mcp/memory?source=${integration.slug}`;
+  const memoryUrl = `https://core.heysol.ai/api/v1/mcp?source=${integration.slug}`;
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = async () => {

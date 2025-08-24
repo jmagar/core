@@ -215,6 +215,9 @@ model MCPSession {
   source       String
   integrations String[]
 
+  workspace   Workspace? @relation(references: [id], fields: [workspaceId])
+  workspaceId String?
+
   createdAt DateTime  @default(now())
   deleted   DateTime?
 }
@@ -635,6 +638,7 @@ model Workspace {
   OAuthRefreshToken       OAuthRefreshToken[]
   RecallLog               RecallLog[]
   Space                   Space[]
+  MCPSession              MCPSession[]
 }
 
 enum AuthenticationMethod {

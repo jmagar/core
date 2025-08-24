@@ -38,9 +38,20 @@ export function getIcon(icon: IconType) {
   return ICON_MAPPING["integration"];
 }
 
-export const getIconForAuthorise = (name: string, image?: string) => {
+export const getIconForAuthorise = (
+  name: string,
+  size = 40,
+  image?: string,
+) => {
   if (image) {
-    return <img src={image} alt={name} className="h-[40px] w-[40px] rounded" />;
+    return (
+      <img
+        src={image}
+        alt={name}
+        className="rounded"
+        style={{ height: size, width: size }}
+      />
+    );
   }
 
   const lowerName = name.toLowerCase();
@@ -48,8 +59,8 @@ export const getIconForAuthorise = (name: string, image?: string) => {
   if (lowerName in ICON_MAPPING) {
     const IconComponent = ICON_MAPPING[lowerName as IconType];
 
-    return <IconComponent size={40} />;
+    return <IconComponent size={size} />;
   }
 
-  return <LayoutGrid size={40} />;
+  return <LayoutGrid size={size} />;
 };

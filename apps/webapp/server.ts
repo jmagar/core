@@ -24,8 +24,7 @@ async function init() {
     ? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
     : await import("./build/server/index.js");
 
-  const { authenticateHybridRequest, handleMCPRequest, handleSessionRequest } =
-    build.entry.module;
+  const module = build.entry?.module;
 
   remixHandler = createRequestHandler({ build });
 
@@ -54,22 +53,28 @@ async function init() {
   app.use(morgan("tiny"));
 
   app.get("/api/v1/mcp", async (req, res) => {
-    const authenticationResult = await authenticateHybridRequest(req as any, {
-      allowJWT: true,
-    });
+    const authenticationResult = await module.authenticateHybridRequest(
+      req as any,
+      {
+        allowJWT: true,
+      },
+    );
 
     if (!authenticationResult) {
       res.status(401).json({ error: "Authentication required" });
       return;
     }
 
-    await handleSessionRequest(req, res);
+    await module.handleSessionRequest(req, res);
   });
 
   app.post("/api/v1/mcp", async (req, res) => {
-    const authenticationResult = await authenticateHybridRequest(req as any, {
-      allowJWT: true,
-    });
+    const authenticationResult = await module.authenticateHybridRequest(
+      req as any,
+      {
+        allowJWT: true,
+      },
+    );
 
     if (!authenticationResult) {
       res.status(401).json({ error: "Authentication required" });
@@ -85,7 +90,7 @@ async function init() {
       try {
         const parsedBody = JSON.parse(body);
         const queryParams = req.query; // Get query parameters from the request
-        await handleMCPRequest(
+        await module.handleMCPRequest(
           req,
           res,
           parsedBody,
@@ -99,16 +104,19 @@ async function init() {
   });
 
   app.delete("/api/v1/mcp", async (req, res) => {
-    const authenticationResult = await authenticateHybridRequest(req as any, {
-      allowJWT: true,
-    });
+    const authenticationResult = await module.authenticateHybridRequest(
+      req as any,
+      {
+        allowJWT: true,
+      },
+    );
 
     if (!authenticationResult) {
       res.status(401).json({ error: "Authentication required" });
       return;
     }
 
-    await handleSessionRequest(req, res);
+    await module.handleSessionRequest(req, res);
   });
 
   app.options("/api/v1/mcp", (_, res) => {

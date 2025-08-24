@@ -13,6 +13,9 @@ import { IntegrationLoader } from "~/utils/mcp/integration-loader";
 import { callMemoryTool, memoryTools } from "~/utils/mcp/memory";
 import { logger } from "~/services/logger.service";
 import { type Response, type Request } from "express";
+import { getUser } from "./session.server";
+import { getUserById } from "~/models/user.server";
+import { getWorkspaceByUser } from "~/models/workspace.server";
 
 const QueryParams = z.object({
   source: z.string().optional(),
@@ -99,7 +102,7 @@ async function createTransport(
       // Clean up old sessions (24+ hours) during new session initialization
       try {
         const [dbCleanupCount, memoryCleanupCount] = await Promise.all([
-          MCPSessionManager.cleanupOldSessions(),
+          MCPSessionManager.cleanupOldSessions(workspaceId),
           TransportManager.cleanupOldSessions(),
         ]);
         if (dbCleanupCount > 0 || memoryCleanupCount > 0) {
@@ -112,7 +115,12 @@ async function createTransport(
       }
 
       // Store session in database
-      await MCPSessionManager.upsertSession(sessionId, source, integrations);
+      await MCPSessionManager.upsertSession(
+        sessionId,
+        workspaceId,
+        source,
+        integrations,
+      );
 
       // Store main transport
       TransportManager.setMainTransport(sessionId, transport);
@@ -164,13 +172,17 @@ export const handleMCPRequest = async (
     : [];
 
   const userId = authentication.userId;
-  const workspaceId = authentication.workspaceId;
+  const workspace = await getWorkspaceByUser(userId);
+  const workspaceId = workspace?.id as string;
 
   try {
     let transport: StreamableHTTPServerTransport;
     let currentSessionId = sessionId;
 
-    if (sessionId && (await MCPSessionManager.isSessionActive(sessionId))) {
+    if (
+      sessionId &&
+      (await MCPSessionManager.isSessionActive(sessionId, workspaceId))
+    ) {
       // Use existing session
       const sessionData = TransportManager.getSessionInfo(sessionId);
       if (!sessionData.exists) {
@@ -214,10 +226,17 @@ export const handleMCPRequest = async (
   }
 };
 
-export const handleSessionRequest = async (req: Request, res: Response) => {
+export const handleSessionRequest = async (
+  req: Request,
+  res: Response,
+  workspaceId: string,
+) => {
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
-  if (sessionId && (await MCPSessionManager.isSessionActive(sessionId))) {
+  if (
+    sessionId &&
+    (await MCPSessionManager.isSessionActive(sessionId, workspaceId))
+  ) {
     const sessionData = TransportManager.getSessionInfo(sessionId);
 
     if (sessionData.exists) {

@@ -122,7 +122,7 @@ export default function Onboarding() {
   });
 
   const getMemoryUrl = (source: "Claude" | "Cursor" | "Other") => {
-    const baseUrl = "https://core.heysol.ai/api/v1/mcp/memory";
+    const baseUrl = "https://core.heysol.ai/api/v1/mcp";
     return `${baseUrl}?Source=${source}`;
   };
 

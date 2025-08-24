@@ -6,6 +6,7 @@ export interface MCPSessionData {
   integrations: string[];
   createdAt: Date;
   deleted?: Date;
+  workspaceId?: string;
 }
 
 export class MCPSessionManager {
@@ -14,6 +15,7 @@ export class MCPSessionManager {
    */
   static async upsertSession(
     sessionId: string,
+    workspaceId: string,
     source: string,
     integrations: string[],
   ): Promise<MCPSessionData> {
@@ -29,6 +31,7 @@ export class MCPSessionManager {
         data: {
           source,
           integrations,
+          workspaceId,
         },
       });
     } else {
@@ -38,6 +41,7 @@ export class MCPSessionManager {
           id: sessionId,
           source,
           integrations,
+          workspaceId,
         },
       });
     }
@@ -47,6 +51,7 @@ export class MCPSessionManager {
       source: session.source,
       integrations: session.integrations,
       createdAt: session.createdAt,
+      workspaceId: session.workspaceId as string,
       deleted: session.deleted || undefined,
     };
   }
@@ -79,6 +84,7 @@ export class MCPSessionManager {
       integrations: session.integrations,
       createdAt: session.createdAt,
       deleted: session.deleted || undefined,
+      workspaceId: session.workspaceId || undefined,
     };
   }
 
@@ -103,13 +109,14 @@ export class MCPSessionManager {
   /**
    * Clean up old sessions (older than 24 hours)
    */
-  static async cleanupOldSessions(): Promise<number> {
+  static async cleanupOldSessions(workspaceId: string): Promise<number> {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const result = await prisma.mCPSession.updateMany({
       where: {
         createdAt: { lt: twentyFourHoursAgo },
         deleted: null,
+        workspaceId,
       },
       data: {
         deleted: new Date(),
@@ -122,9 +129,12 @@ export class MCPSessionManager {
   /**
    * Check if session is active (not deleted)
    */
-  static async isSessionActive(sessionId: string): Promise<boolean> {
+  static async isSessionActive(
+    sessionId: string,
+    workspaceId: string,
+  ): Promise<boolean> {
     const session = await prisma.mCPSession.findUnique({
-      where: { id: sessionId },
+      where: { id: sessionId, workspaceId },
       select: { deleted: true },
     });
 

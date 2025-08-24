@@ -1,15 +1,4 @@
-import {
-  ArrowLeft,
-  Brain,
-  Building,
-  Clock,
-  Code,
-  User,
-  Workflow,
-  Webhook,
-} from "lucide-react";
-
-import React from "react";
+import { ArrowLeft, Code, Webhook, Cable } from "lucide-react";
 
 import {
   Sidebar,
@@ -54,6 +43,7 @@ export default function Settings() {
       // { name: "Workspace", icon: Building },
       { name: "API", icon: Code },
       { name: "Webhooks", icon: Webhook },
+      { name: "MCP", icon: Cable },
     ],
   };
   const navigate = useNavigate();
