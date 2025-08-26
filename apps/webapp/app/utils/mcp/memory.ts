@@ -59,6 +59,20 @@ export const memoryTools = [
     description: "Search through ingested memory data",
     inputSchema: SearchParamsSchema,
   },
+  {
+    name: "memory_get_spaces",
+    description: "Search spaces in my memory",
+    inputSchema: {
+      type: "object",
+      properties: {
+        all: {
+          type: "boolean",
+          description: "Get all spaces",
+          default: true,
+        },
+      },
+    },
+  },
 ];
 
 // Function to call memory tools based on toolName

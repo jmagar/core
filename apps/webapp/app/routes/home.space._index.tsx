@@ -8,7 +8,8 @@ import { requireUserId } from "~/services/session.server";
 import { useState } from "react";
 
 import { SpaceService } from "~/services/space.server";
-import { Plus } from "lucide-react";
+import { LoaderCircle, Plus } from "lucide-react";
+import { ClientOnly } from "remix-utils/client-only";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await requireUserId(request);
@@ -47,11 +48,17 @@ export default function Spaces() {
       </div>
 
       {setShowNewSpaceDialog && (
-        <NewSpaceDialog
-          open={showNewSpaceDialog}
-          onOpenChange={setShowNewSpaceDialog}
-          onSuccess={handleNewSpaceSuccess}
-        />
+        <ClientOnly
+          fallback={<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+        >
+          {() => (
+            <NewSpaceDialog
+              open={showNewSpaceDialog}
+              onOpenChange={setShowNewSpaceDialog}
+              onSuccess={handleNewSpaceSuccess}
+            />
+          )}
+        </ClientOnly>
       )}
     </>
   );
