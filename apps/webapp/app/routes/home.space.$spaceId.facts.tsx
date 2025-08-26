@@ -6,7 +6,6 @@ import { SpaceService } from "~/services/space.server";
 import { SpaceFactsFilters } from "~/components/spaces/space-facts-filters";
 import { SpaceFactsList } from "~/components/spaces/space-facts-list";
 
-import type { StatementNode } from "@core/types";
 import { ClientOnly } from "remix-utils/client-only";
 import { LoaderCircle } from "lucide-react";
 

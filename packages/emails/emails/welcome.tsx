@@ -1,14 +1,23 @@
 import { Body, Head, Html, Link, Preview, Section, Text } from "@react-email/components";
 import { Footer } from "./components/Footer";
 import { anchor, bullets, footerItalic, main, paragraphLight } from "./components/styles";
+import { z } from "zod";
 
-export default function Email({ name }: { name?: string }) {
+export const WelcomeEmailSchema = z.object({
+  email: z.literal("welcome"),
+  orgName: z.string(),
+  inviterName: z.string().optional(),
+  inviterEmail: z.string(),
+  inviteLink: z.string().url(),
+});
+
+export function WelcomeEmail({ orgName }: { orgName?: string }) {
   return (
     <Html>
       <Head />
       <Preview>Welcome to C.O.R.E. - Your Personal AI Assistant</Preview>
       <Body style={main}>
-        <Text style={paragraphLight}>Hey {name ?? "there"},</Text>
+        <Text style={paragraphLight}>Hey {orgName ?? "there"},</Text>
         <Text style={paragraphLight}>Welcome to C.O.R.E., your new personal AI assistant!</Text>
         <Text style={paragraphLight}>
           I'm excited to help you streamline your daily tasks, boost your productivity, and make

@@ -1,20 +1,21 @@
 import { z } from "zod";
-import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
+import {
+  createActionApiRoute,
+  createHybridActionApiRoute,
+} from "~/services/routeBuilders/apiBuilder.server";
 import { SpaceService } from "~/services/space.server";
 import { json } from "@remix-run/node";
-import { createSpace } from "~/services/graphModels/space";
+import { createSpace, deleteSpace } from "~/services/graphModels/space";
 import { prisma } from "~/db.server";
 import { logger } from "~/services/logger.service";
 import { triggerSpaceAssignment } from "~/trigger/spaces/space-assignment";
-
-const spaceService = new SpaceService();
 
 // Schema for space ID parameter
 const SpaceParamsSchema = z.object({
   spaceId: z.string(),
 });
 
-const { loader, action } = createActionApiRoute(
+const { loader, action } = createHybridActionApiRoute(
   {
     params: SpaceParamsSchema,
     allowJWT: true,
@@ -38,7 +39,7 @@ const { loader, action } = createActionApiRoute(
     }
 
     // Get statements in the space
-    await spaceService.deleteSpace(spaceId, userId);
+    await deleteSpace(spaceId, userId);
 
     await createSpace(
       space.id,

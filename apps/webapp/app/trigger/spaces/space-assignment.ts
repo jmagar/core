@@ -553,6 +553,7 @@ async function processBatchAI(
       maxRetries: 3,
       timeoutMs: 600000, // 10 minutes timeout
     });
+
     logger.info(`Batch AI job created: ${batchId}`, {
       userId,
       mode,

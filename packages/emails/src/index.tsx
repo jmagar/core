@@ -4,10 +4,9 @@ import { z } from "zod";
 
 import { setGlobalBasePath } from "../emails/components/BasePath";
 
-import InviteEmail, { InviteEmailSchema } from "../emails/invite";
-import MagicLinkEmail from "../emails/magic-link";
-import WelcomeEmail from "../emails/welcome";
+import { WelcomeEmail, WelcomeEmailSchema } from "../emails/welcome";
 import { constructMailTransport, MailTransport, MailTransportOptions } from "./transports";
+import MagicLinkEmail from "../emails/magic-link";
 
 export { type MailTransportOptions };
 
@@ -17,7 +16,7 @@ export const DeliverEmailSchema = z
       email: z.literal("magic_link"),
       magicLink: z.string().url(),
     }),
-    InviteEmailSchema,
+    WelcomeEmailSchema,
   ])
   .and(z.object({ to: z.string() }));
 
@@ -74,13 +73,14 @@ export class EmailClient {
     switch (data.email) {
       case "magic_link":
         return {
-          subject: "Magic sign-in link for C.O.R.E.",
+          subject: "Magic sign-in link for Trigger.dev",
           component: <MagicLinkEmail magicLink={data.magicLink} />,
         };
-      case "invite":
+
+      case "welcome":
         return {
           subject: `You've been invited to join ${data.orgName} on C.O.R.E.`,
-          component: <InviteEmail {...data} />,
+          component: <WelcomeEmail {...data} />,
         };
     }
   }

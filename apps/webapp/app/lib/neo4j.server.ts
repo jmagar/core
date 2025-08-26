@@ -1,24 +1,29 @@
 import neo4j from "neo4j-driver";
 import { type RawTriplet } from "~/components/graph/type";
 import { logger } from "~/services/logger.service";
+import { singleton } from "~/utils/singleton";
 
-// Create a driver instance
-const driver = neo4j.driver(
-  process.env.NEO4J_URI ?? "bolt://localhost:7687",
-  neo4j.auth.basic(
-    process.env.NEO4J_USERNAME as string,
-    process.env.NEO4J_PASSWORD as string,
-  ),
-  {
-    maxConnectionPoolSize: 50,
-    logging: {
-      level: "info",
-      logger: (level, message) => {
-        logger.info(message);
+// Create a singleton driver instance
+const driver = singleton("neo4j", getDriver);
+
+function getDriver() {
+  return neo4j.driver(
+    process.env.NEO4J_URI ?? "bolt://localhost:7687",
+    neo4j.auth.basic(
+      process.env.NEO4J_USERNAME as string,
+      process.env.NEO4J_PASSWORD as string,
+    ),
+    {
+      maxConnectionPoolSize: 50,
+      logging: {
+        level: "info",
+        logger: (level, message) => {
+          logger.info(message);
+        },
       },
     },
-  },
-);
+  );
+}
 
 let schemaInitialized = false;
 

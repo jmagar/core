@@ -27,7 +27,7 @@ export function SpaceFactCard({ fact }: SpaceFactCardProps) {
       <div className="flex w-full items-center px-5 pr-2">
         <div
           className={cn(
-            "group-hover:bg-grayAlpha-100 flex min-w-[0px] shrink grow items-start gap-2 rounded-md px-4",
+            "group-hover:bg-grayAlpha-100 flex min-w-[0px] shrink grow items-start gap-2 rounded-md px-3",
           )}
         >
           <div
@@ -36,7 +36,7 @@ export function SpaceFactCard({ fact }: SpaceFactCardProps) {
             )}
           >
             <div className="flex w-full items-center justify-between gap-4">
-              <div className="inline-flex min-h-[24px] min-w-[0px] shrink cursor-pointer items-center justify-start">
+              <div className="inline-flex min-h-[24px] min-w-[0px] shrink items-center justify-start">
                 <div className={cn("truncate text-left")}>{displayText}</div>
               </div>
               <div className="text-muted-foreground flex shrink-0 items-center justify-end gap-2 text-xs">

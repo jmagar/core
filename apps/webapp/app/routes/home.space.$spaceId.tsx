@@ -51,6 +51,12 @@ export default function Space() {
             isActive: location.pathname.includes("/facts"),
             onClick: () => navigate(`/home/space/${space.id}/facts`),
           },
+          {
+            label: "Patterns",
+            value: "patterns",
+            isActive: location.pathname.includes("/patterns"),
+            onClick: () => navigate(`/home/space/${space.id}/patterns`),
+          },
         ]}
         actionsNode={
           <ClientOnly

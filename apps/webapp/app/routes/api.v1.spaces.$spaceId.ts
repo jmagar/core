@@ -7,6 +7,7 @@ import {
 import { SpaceService } from "~/services/space.server";
 import { json } from "@remix-run/node";
 import { apiCors } from "~/utils/apiCors";
+import { getSpace } from "~/trigger/utils/space-utils";
 
 const spaceService = new SpaceService();
 
@@ -20,10 +21,10 @@ const UpdateSpaceSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
 });
+
 const { action } = createHybridActionApiRoute(
   {
     params: SpaceParamsSchema,
-    body: UpdateSpaceSchema.optional(),
     allowJWT: true,
     authorization: {
       action: "manage",
@@ -61,6 +62,12 @@ const { action } = createHybridActionApiRoute(
 
     if (request.method === "DELETE") {
       try {
+        const space = await getSpace(spaceId);
+
+        if (space?.name.toLowerCase() === "profile") {
+          throw new Error("You can't delete Profile space");
+        }
+
         // Delete space
         await spaceService.deleteSpace(spaceId, userId);
 

@@ -28,7 +28,7 @@ export default function Spaces() {
 
   const handleNewSpaceSuccess = () => {
     // Refresh the page to show the new space
-    setShowNewSpaceDialog(false);
+    // setShowNewSpaceDialog(false);
   };
 
   return (
@@ -52,11 +52,15 @@ export default function Spaces() {
           fallback={<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
         >
           {() => (
-            <NewSpaceDialog
-              open={showNewSpaceDialog}
-              onOpenChange={setShowNewSpaceDialog}
-              onSuccess={handleNewSpaceSuccess}
-            />
+            <>
+              {showNewSpaceDialog && (
+                <NewSpaceDialog
+                  open={showNewSpaceDialog}
+                  onOpenChange={setShowNewSpaceDialog}
+                  onSuccess={handleNewSpaceSuccess}
+                />
+              )}
+            </>
           )}
         </ClientOnly>
       )}

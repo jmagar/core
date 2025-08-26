@@ -72,21 +72,22 @@ function getStatusDisplay(status?: string | null) {
         label: "Processing",
         variant: "outline" as const,
         icon: <Activity className="h-3 w-3" />,
-        className: "text-blue-600 bg-blue-50 rounded border-border",
+        className: "text-success-foreground bg-success rounded border-none",
       };
     case "pending":
       return {
         label: "Pending",
         variant: "outline" as const,
         icon: <Clock className="h-3 w-3" />,
-        className: "text-orange-600 border-orange-200 bg-orange-50",
+        className: "text-warning-foreground bg-warning rounded border-none",
       };
     case "error":
       return {
         label: "Error",
         variant: "outline" as const,
         icon: <AlertCircle className="h-3 w-3" />,
-        className: "text-destructive rounded border-border bg-destructive/10",
+        className:
+          "text-destructive-foreground rounded bg-destructive border-none",
       };
     default:
       return null;

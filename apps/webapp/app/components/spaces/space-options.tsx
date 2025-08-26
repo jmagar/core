@@ -16,8 +16,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-import { useState } from "react";
-import { useFetcher } from "@remix-run/react";
+import { useEffect, useState } from "react";
+import { useFetcher, useNavigate } from "@remix-run/react";
 import { EditSpaceDialog } from "./edit-space-dialog.client";
 
 interface SpaceOptionsProps {
@@ -32,20 +32,28 @@ export const SpaceOptions = ({ id, name, description }: SpaceOptionsProps) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const deleteFetcher = useFetcher();
   const resetFetcher = useFetcher();
+  const navigate = useNavigate();
 
   const handleDelete = () => {
-    deleteFetcher.submit({
+    deleteFetcher.submit(null, {
       method: "DELETE",
-      action: `/api/v1/space/${id}`,
+      action: `/api/v1/spaces/${id}`,
       encType: "application/json",
     });
+
     setDeleteDialogOpen(false);
   };
 
+  useEffect(() => {
+    if (deleteFetcher.state === "idle" && deleteFetcher.data) {
+      navigate("/home/space");
+    }
+  }, [deleteFetcher.state, deleteFetcher.data, navigate]);
+
   const handleReset = () => {
-    resetFetcher.submit({
+    resetFetcher.submit(null, {
       method: "POST",
-      action: `/api/v1/space/${id}/reset`,
+      action: `/api/v1/spaces/${id}/reset`,
       encType: "application/json",
     });
     setResetSpace(false);
@@ -111,8 +119,8 @@ export const SpaceOptions = ({ id, name, description }: SpaceOptionsProps) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete space</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to reset this space? This action cannot be
-              undone.
+              Are you sure you want to reset this space? This is create
+              categorise all facts again in this space
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -3,7 +3,7 @@ import { Footer } from "./components/Footer";
 import { Image } from "./components/Image";
 import { anchor, container, h1, main, paragraphLight } from "./components/styles";
 
-export default function Email({ magicLink }: { magicLink: string }) {
+export default function MagicLinkEmail({ magicLink }: { magicLink: string }) {
   return (
     <Html>
       <Head />

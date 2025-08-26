@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { useActionData } from "@remix-run/react";
+import { useActionData, useLoaderData } from "@remix-run/react";
 import {
   type ActionFunctionArgs,
   json,
@@ -18,10 +18,14 @@ import {
 import { Button } from "~/components/ui";
 import { Input } from "~/components/ui/input";
 import { useState } from "react";
-import { requireUser, requireUserId } from "~/services/session.server";
+import {
+  requireUser,
+  requireUserId,
+  requireWorkpace,
+} from "~/services/session.server";
 import { redirectWithSuccessMessage } from "~/models/message.server";
 import { rootPath } from "~/utils/pathBuilder";
-import { createWorkspace } from "~/models/workspace.server";
+import { createWorkspace, getWorkspaceByUser } from "~/models/workspace.server";
 import { typedjson } from "remix-typedjson";
 
 const schema = z.object({
@@ -62,14 +66,17 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const workspace = await getWorkspaceByUser(user.id);
 
   return typedjson({
     user,
+    workspace,
   });
 };
 
 export default function ConfirmBasicDetails() {
   const lastSubmission = useActionData<typeof action>();
+  const { workspace } = useLoaderData<typeof loader>();
 
   const [form, fields] = useForm({
     lastSubmission: lastSubmission as any,

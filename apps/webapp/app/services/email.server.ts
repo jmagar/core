@@ -16,8 +16,8 @@ const client = singleton(
     new EmailClient({
       transport: buildTransportOptions(),
       imagesBaseUrl: env.APP_ORIGIN,
-      from: env.FROM_EMAIL ?? "team@core.heysol.ai",
-      replyTo: env.REPLY_TO_EMAIL ?? "help@core.heysol.ai",
+      from: env.FROM_EMAIL ?? "Harshith <harshith@tegon.ai>",
+      replyTo: env.REPLY_TO_EMAIL ?? "harshith@tegon.ai",
     }),
 );
 
@@ -52,26 +52,6 @@ function buildTransportOptions(): MailTransportOptions {
       };
     default:
       return { type: undefined };
-  }
-}
-
-export async function sendMagicLinkEmail(options: any): Promise<void> {
-  logger.debug("Sending magic link email", {
-    emailAddress: options.emailAddress,
-  });
-
-  try {
-    return await client.send({
-      email: "magic_link",
-      to: options.emailAddress,
-      magicLink: options.magicLink,
-    });
-  } catch (error) {
-    logger.error("Error sending magic link email", {
-      error: JSON.stringify(error),
-    });
-
-    throw error;
   }
 }
 

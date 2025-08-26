@@ -4,10 +4,7 @@ import { z } from "zod";
 
 import { openai } from "@ai-sdk/openai";
 import { logger } from "~/services/logger.service";
-import {
-  deletePersonalAccessToken,
-  getOrCreatePersonalAccessToken,
-} from "../utils/utils";
+import { getOrCreatePersonalAccessToken } from "../utils/utils";
 import axios from "axios";
 
 export const ExtensionSearchBodyRequest = z.object({
@@ -109,12 +106,9 @@ If no relevant information is found, provide a brief statement indicating that.`
         finalText = finalText + chunk;
       }
 
-      await deletePersonalAccessToken(pat.id);
-
       return finalText;
     } catch (error) {
       logger.error(`SearchMemoryAgent error: ${error}`);
-      await deletePersonalAccessToken(pat.id);
 
       return `Context related to: ${userInput}. Looking for relevant background information, previous discussions, and related concepts that would help provide a comprehensive answer.`;
     }

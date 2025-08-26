@@ -62,9 +62,8 @@ export function NewSpaceDialog({
       setName("");
       editor?.commands.clearContent(true);
       onOpenChange(false);
-      onSuccess?.();
     }
-  }, [fetcher.data, fetcher.state, editor, onOpenChange, onSuccess]);
+  }, [fetcher.data, fetcher.state, editor, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

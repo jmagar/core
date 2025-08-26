@@ -56,6 +56,7 @@ export class SpaceService {
         name: params.name.trim(),
         description: params.description?.trim(),
         workspaceId: params.workspaceId,
+        status: "pending",
       },
     });
 
