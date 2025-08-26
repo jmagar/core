@@ -83,16 +83,15 @@ export async function findSimilarEntities(params: {
   userId: string;
 }): Promise<EntityNode[]> {
   const query = `
-          MATCH (entity:Entity)
-          WHERE entity.nameEmbedding IS NOT NULL
-          WITH entity, vector.similarity.cosine($queryEmbedding, entity.nameEmbedding) AS score
+          CALL db.index.vector.queryNodes('entity_embedding', $topK, $queryEmbedding)
+          YIELD node AS entity, score
           WHERE score >= $threshold
           AND entity.userId = $userId
           RETURN entity, score
           ORDER BY score DESC
         `;
 
-  const result = await runQuery(query, params);
+  const result = await runQuery(query, { ...params, topK: params.limit });
   return result.map((record) => {
     const entity = record.get("entity").properties;
 
@@ -118,9 +117,8 @@ export async function findSimilarEntitiesWithSameType(params: {
   userId: string;
 }): Promise<EntityNode[]> {
   const query = `
-          MATCH (entity:Entity)
-          WHERE entity.nameEmbedding IS NOT NULL
-          WITH entity, vector.similarity.cosine($queryEmbedding, entity.nameEmbedding) AS score
+          CALL db.index.vector.queryNodes('entity_embedding', $topK, $queryEmbedding)
+          YIELD node AS entity, score
           WHERE score >= $threshold
           AND entity.userId = $userId
           AND entity.type = $entityType
@@ -128,7 +126,7 @@ export async function findSimilarEntitiesWithSameType(params: {
           ORDER BY score DESC
         `;
 
-  const result = await runQuery(query, params);
+  const result = await runQuery(query, { ...params, topK: params.limit });
   return result.map((record) => {
     const entity = record.get("entity").properties;
 

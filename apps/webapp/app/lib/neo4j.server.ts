@@ -313,6 +313,18 @@ const initializeSchema = async () => {
       "CREATE INDEX entity_name IF NOT EXISTS FOR (n:Entity) ON (n.name)",
     );
     await runQuery(
+      "CREATE INDEX entity_uuid IF NOT EXISTS FOR (n:Entity) ON (n.uuid)",
+    );
+    await runQuery(
+      "CREATE INDEX entity_type IF NOT EXISTS FOR (n:Entity) ON (n.type)",
+    );
+    await runQuery(
+      "CREATE INDEX entity_user_id IF NOT EXISTS FOR (n:Entity) ON (n.userId)",
+    );
+    await runQuery(
+      "CREATE INDEX statement_user_id IF NOT EXISTS FOR (n:Statement) ON (n.userId)",
+    );
+    await runQuery(
       "CREATE INDEX cluster_user_id IF NOT EXISTS FOR (n:Cluster) ON (n.userId)",
     );
     await runQuery(
@@ -322,17 +334,17 @@ const initializeSchema = async () => {
     // Create vector indexes for semantic search (if using Neo4j 5.0+)
     await runQuery(`
       CREATE VECTOR INDEX entity_embedding IF NOT EXISTS FOR (n:Entity) ON n.nameEmbedding
-      OPTIONS {indexConfig: {\`vector.dimensions\`: 1536, \`vector.similarity_function\`: 'cosine'}}
+      OPTIONS {indexConfig: {\`vector.dimensions\`: 1024, \`vector.similarity_function\`: 'cosine', \`vector.hnsw.ef_construction\`: 400, \`vector.hnsw.m\`: 32}}
     `);
 
     await runQuery(`
       CREATE VECTOR INDEX statement_embedding IF NOT EXISTS FOR (n:Statement) ON n.factEmbedding
-      OPTIONS {indexConfig: {\`vector.dimensions\`: 1536, \`vector.similarity_function\`: 'cosine'}}
+      OPTIONS {indexConfig: {\`vector.dimensions\`: 1024, \`vector.similarity_function\`: 'cosine', \`vector.hnsw.ef_construction\`: 400, \`vector.hnsw.m\`: 32}}
     `);
 
     await runQuery(`
       CREATE VECTOR INDEX episode_embedding IF NOT EXISTS FOR (n:Episode) ON n.contentEmbedding
-      OPTIONS {indexConfig: {\`vector.dimensions\`: 1536, \`vector.similarity_function\`: 'cosine'}}
+      OPTIONS {indexConfig: {\`vector.dimensions\`: 1024, \`vector.similarity_function\`: 'cosine', \`vector.hnsw.ef_construction\`: 400, \`vector.hnsw.m\`: 32}}
     `);
 
     // Create fulltext indexes for BM25 search
@@ -348,7 +360,7 @@ const initializeSchema = async () => {
 
     await runQuery(`
       CREATE FULLTEXT INDEX entity_name_index IF NOT EXISTS
-      FOR (n:Entity) ON EACH [n.name, n.description]
+      FOR (n:Entity) ON EACH [n.name]
       OPTIONS {
         indexConfig: {
           \`fulltext.analyzer\`: 'english'

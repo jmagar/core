@@ -110,11 +110,10 @@ export async function findContradictoryStatements({
   userId: string;
 }): Promise<StatementNode[]> {
   const query = `
-      MATCH (statement:Statement)
+      MATCH (subject:Entity {uuid: $subjectId}), (predicate:Entity {uuid: $predicateId})
+      MATCH (subject)<-[:HAS_SUBJECT]-(statement:Statement)-[:HAS_PREDICATE]->(predicate)
       WHERE statement.userId = $userId
         AND statement.invalidAt IS NULL
-      MATCH (subject:Entity)<-[:HAS_SUBJECT]-(statement)-[:HAS_PREDICATE]->(predicate:Entity)
-      WHERE subject.uuid = $subjectId AND predicate.uuid = $predicateId
       RETURN statement
     `;
 
@@ -157,18 +156,21 @@ export async function findStatementsWithSameSubjectObject({
   userId: string;
 }): Promise<StatementNode[]> {
   const query = `
-      MATCH (statement:Statement)
+      MATCH (subject:Entity {uuid: $subjectId}), (object:Entity {uuid: $objectId})
+      MATCH (subject)<-[:HAS_SUBJECT]-(statement:Statement)-[:HAS_OBJECT]->(object)
+      MATCH (statement)-[:HAS_PREDICATE]->(predicate:Entity)
       WHERE statement.userId = $userId
         AND statement.invalidAt IS NULL
-      MATCH (subject:Entity)<-[:HAS_SUBJECT]-(statement)-[:HAS_PREDICATE]->(predicate:Entity)
-      MATCH (statement)-[:HAS_OBJECT]->(object:Entity)
-      WHERE subject.uuid = $subjectId 
-        AND object.uuid = $objectId
         ${excludePredicateId ? "AND predicate.uuid <> $excludePredicateId" : ""}
       RETURN statement
     `;
 
-  const params = { subjectId, objectId, userId, ...(excludePredicateId && { excludePredicateId }) };
+  const params = {
+    subjectId,
+    objectId,
+    userId,
+    ...(excludePredicateId && { excludePredicateId }),
+  };
   const result = await runQuery(query, params);
 
   if (!result || result.length === 0) {
@@ -207,13 +209,12 @@ export async function findSimilarStatements({
   userId: string;
 }): Promise<StatementNode[]> {
   const query = `
-      MATCH (statement:Statement)
+      CALL db.index.vector.queryNodes('statement_embedding', $topK, $factEmbedding)
+      YIELD node AS statement, score
       WHERE statement.userId = $userId
-        AND statement.invalidAt IS NULL 
-        AND statement.factEmbedding IS NOT NULL
+        AND statement.invalidAt IS NULL
+        AND score >= $threshold
         ${excludeIds.length > 0 ? "AND NOT statement.uuid IN $excludeIds" : ""}
-      WITH statement, vector.similarity.cosine($factEmbedding, statement.factEmbedding) AS score
-      WHERE score >= $threshold
       RETURN statement, score
       ORDER BY score DESC
     `;
@@ -223,6 +224,7 @@ export async function findSimilarStatements({
     threshold,
     excludeIds,
     userId,
+    topK: 100,
   });
 
   if (!result || result.length === 0) {
@@ -396,17 +398,11 @@ export async function searchStatementsByEmbedding(params: {
   minSimilarity?: number;
 }) {
   const query = `
-  MATCH (statement:Statement)
+  CALL db.index.vector.queryNodes('statement_embedding', $topK, $embedding)
+  YIELD node AS statement, score
   WHERE statement.userId = $userId
-    AND statement.invalidAt IS NULL 
-    AND statement.factEmbedding IS NOT NULL
-  WITH statement, 
-       CASE 
-         WHEN size(statement.factEmbedding) = size($embedding) 
-         THEN vector.similarity.cosine($embedding, statement.factEmbedding) 
-         ELSE 0 
-       END AS score
-  WHERE score >= $minSimilarity
+    AND statement.invalidAt IS NULL
+    AND score >= $minSimilarity
   RETURN statement, score
   ORDER BY score DESC
 `;
@@ -416,6 +412,7 @@ export async function searchStatementsByEmbedding(params: {
     minSimilarity: params.minSimilarity,
     limit: params.limit,
     userId: params.userId,
+    topK: params.limit || 100,
   });
 
   if (!result || result.length === 0) {

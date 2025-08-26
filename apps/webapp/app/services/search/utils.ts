@@ -131,23 +131,23 @@ export async function performVectorSearch(
 
     // 1. Search for similar statements using Neo4j vector search with provenance count
     const cypher = `
-      MATCH (s:Statement)
-      WHERE 
-      (s.userId = $userId)
-      ${timeframeCondition}
-      ${spaceCondition}
-      WITH s, vector.similarity.cosine(s.factEmbedding, $embedding) AS score
-      WHERE score > 0.7
-      OPTIONAL MATCH (episode:Episode)-[:HAS_PROVENANCE]->(s)
-      WITH s, score, count(episode) as provenanceCount
-      RETURN s, score, provenanceCount
-      ORDER BY score DESC
-    `;
+    CALL db.index.vector.queryNodes('statement_embedding', $topk, $embedding)
+    YIELD node AS s, score
+    WHERE s.userId = $userId
+    AND score >= 0.7
+    ${timeframeCondition.replace("AND", "AND").replace("WHERE", "AND")}
+    ${spaceCondition}
+    OPTIONAL MATCH (episode:Episode)-[:HAS_PROVENANCE]->(s)
+    WITH s, score, count(episode) as provenanceCount
+    RETURN s, score, provenanceCount
+    ORDER BY score DESC
+  `;
 
     const params = {
       embedding: query,
       userId,
       validAt: options.endTime.toISOString(),
+      topk: options.limit || 100,
       ...(options.startTime && { startTime: options.startTime.toISOString() }),
       ...(options.spaceIds.length > 0 && { spaceIds: options.spaceIds }),
     };
@@ -281,15 +281,13 @@ export async function extractEntitiesFromQuery(
   try {
     // Use vector similarity to find relevant entities
     const cypher = `
-        // Match entities using vector similarity on name embeddings
-        MATCH (e:Entity)
-        WHERE e.nameEmbedding IS NOT NULL 
-          AND e.userId = $userId
-        WITH e, vector.similarity.cosine(e.nameEmbedding, $embedding) AS score
-        WHERE score > 0.7
+        // Match entities using vector index on name embeddings
+        CALL db.index.vector.queryNodes('entity_embedding', 3, $embedding)
+        YIELD node AS e, score
+        WHERE e.userId = $userId
+          AND score > 0.7
         RETURN e
         ORDER BY score DESC
-        LIMIT 3
       `;
 
     const params = {
