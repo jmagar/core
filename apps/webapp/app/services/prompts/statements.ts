@@ -70,6 +70,9 @@ EXTRACT NEW MEANINGFUL RELATIONSHIPS:
   * Product-organization relationships (e.g., "Software" "developed by" "Company")
   * Technical dependencies and usage (e.g., "Application" "uses" "Database")
   * Hierarchical relationships (e.g., "Manager" "supervises" "Employee")
+  * Duration relationships (e.g., "Caroline" "has known" "friends" [duration: "4 years"])
+  * Temporal sequence relationships (e.g., "Caroline" "met" "friends" [context: "since moving"])
+  * Contextual support relationships (e.g., "friends" "supported" "Caroline" [context: "during breakup"])
 
 ## SAME-NAME ENTITY RELATIONSHIP FORMATION
 When entities share identical names but have different types, CREATE explicit relationship statements:
@@ -80,6 +83,19 @@ When entities share identical names but have different types, CREATE explicit re
 - **MANDATORY**: Always create at least one relationship statement for same-name entities
 - **CONTEXT-DRIVEN**: Choose predicates that accurately reflect the most likely relationship based on available context
 
+## DURATION AND TEMPORAL CONTEXT ENTITY USAGE
+When Duration or TemporalContext entities are available in AVAILABLE ENTITIES:
+- **Duration entities** (e.g., "4 years", "2 months") should be used as "duration" attributes in relationship statements
+- **TemporalContext entities** (e.g., "since moving", "after breakup") should be used as "temporal_context" attributes
+- **DO NOT** use Duration/TemporalContext entities as direct subjects or objects in relationships
+- **DO USE** them to enrich relationship statements with temporal information
+
+EXAMPLES of correct Duration/TemporalContext usage:
+- If AVAILABLE ENTITIES contains ["Caroline", "friends", "4 years", "since moving"]:
+  * CREATE: "Caroline" "has known" "friends" [attributes: {"duration": "4 years", "temporal_context": "since moving"}]
+  * DO NOT CREATE: "Caroline" "relates to" "4 years" (Duration as object)
+  * DO NOT CREATE: "since moving" "describes" "friendship" (TemporalContext as subject)
+
 ## PREVIOUS EPISODE FILTERING
 Before creating any relationship statement:
 - **CHECK**: Review previous episodes to see if this exact relationship already exists
@@ -87,11 +103,24 @@ Before creating any relationship statement:
 - **ENHANCE**: Only create statements if they add new information or represent updates
 - **FOCUS**: Prioritize completely new connections not represented in the knowledge graph
 
-ABOUT TEMPORAL INFORMATION:
-- For events with dates/times, DO NOT create a separate statement with the event as both source and target.
-- Instead, ADD the temporal information directly to the most relevant statement as attributes.
-- Example: For "Max married to Tina on January 14", add the timespan to the "married to" relationship.
-- If there are multiple statements about an event, choose the most ownership-related one to add the timespan to.
+CRITICAL TEMPORAL INFORMATION HANDLING:
+- For events with specific dates/times, ALWAYS capture temporal information in statement attributes
+- Use the "event_date" attribute to specify when the fact/event actually occurred (not when it was mentioned)
+- Use the "temporal_context" attribute for temporal descriptions like "last week", "recently", etc.
+- MANDATORY: Use the REFERENCE_TIME to resolve relative temporal expressions to absolute ISO dates
+- Calculate event_date by using REFERENCE_TIME as the anchor point for relative time calculations
+- Example: For "Max married to Tina on January 14", add:
+  - "event_date": "January 14" (or fully resolved date if available)
+  - "temporal_context": "specific date mentioned"
+- For recent events: "went camping last week" → add:
+  - "event_date": "[resolved ISO date ~7 days before episode date, e.g., '2023-06-20T00:00:00.000Z']"  
+  - "temporal_context": "last week"
+- For past events: "read book last year" → add:
+  - "event_date": "[resolved ISO date ~1 year before episode date, e.g., '2022-06-27T00:00:00.000Z']"
+  - "temporal_context": "last year"
+- For future events: "going to Paris next month" → add:
+  - "event_date": "[resolved ISO date ~1 month after episode date, e.g., '2023-07-27T00:00:00.000Z']"
+  - "temporal_context": "next month"
 
 Format your response as a JSON object with the following structure:
 <output>
@@ -105,8 +134,12 @@ Format your response as a JSON object with the following structure:
       "targetType": "[Target Entity Type]",
       "fact": "[Natural language representation of the fact]",
       "attributes": { 
-        "confidence": confidence of the fact
+        "confidence": confidence of the fact,
         "source": "explicit or implicit source type",
+        "event_date": "ISO date when the fact/event actually occurred (if applicable)",
+        "temporal_context": "original temporal description (e.g., 'last week', 'recently')",
+        "duration": "duration information from Duration entities (e.g., '4 years', '2 months')",
+        "context": "contextual information from TemporalContext entities (e.g., 'since moving', 'after breakup')"
       }
     }
   ]
@@ -129,11 +162,18 @@ If AVAILABLE ENTITIES contains ["John", "Max", "Wedding", "John (Company)"], you
 - "Max" "married to" "Tina" with timespan attribute ✓ (if new relationship)
 - "John" "founded" "John (Company)" ✓ (PRIORITY: same name, different types)
 
+Example of CORRECT Duration/TemporalContext usage:
+If AVAILABLE ENTITIES contains ["Caroline", "friends", "4 years", "since moving", "breakup"]:
+- "Caroline" "has known" "friends" [attributes: {"duration": "4 years", "context": "since moving"}] ✓
+- "friends" "supported" "Caroline" [attributes: {"context": "during breakup"}] ✓
+- "Caroline" "met" "friends" [attributes: {"context": "since moving"}] ✓
+
 Example of INCORRECT usage:
 - "John" "attends" "Party" ✗ (if "Party" is not in AVAILABLE ENTITIES)
 - "Marriage" "occurs on" "Marriage" ✗ (NEVER create self-loops)
 - "John" "attends" "Wedding" ✗ (if already captured in previous episodes)
-- "January 14" "is" "Marriage date" ✗ (if "January 14" or "Marriage date" is not in AVAILABLE ENTITIES)`,
+- "Caroline" "relates to" "4 years" ✗ (Duration entity used as direct object)
+- "since moving" "describes" "friendship" ✗ (TemporalContext entity used as direct subject)`,
     },
     {
       role: "user",
@@ -171,9 +211,12 @@ export const resolveStatementPrompt = (
   return [
     {
       role: "system",
-      content: `You are a knowledge graph expert that analyzes statements to detect duplications and contradictions. 
-You analyze multiple new statements against existing statements to determine whether the new statement duplicates any existing statement or contradicts any existing statement.
-Pay special attention to temporal aspects, event updates, and context changes. If an event changes (like a date shift), statements about the original event are likely contradicted by statements about the updated event.
+      content: `You are a knowledge graph expert that analyzes statements to detect duplications and TRUE contradictions. 
+You analyze multiple new statements against existing statements to determine whether the new statement duplicates any existing statement or ACTUALLY contradicts any existing statement.
+
+CRITICAL: Distinguish between CONTRADICTIONS vs PROGRESSIONS:
+- CONTRADICTIONS: Statements that CANNOT both be true (mutually exclusive facts)  
+- PROGRESSIONS: Sequential states or developments that CAN both be true (e.g., planning → execution, researching → deciding)
 
 
 I need to analyze whether a new statement duplicates or contradicts existing statements in a knowledge graph.
@@ -185,32 +228,60 @@ Follow these instructions carefully:
    - Two statements are duplicates if they express the same meaning even with different wording
    - Consider entity resolution has already been done, so different entity names are NOT an issue
 
-2. Determine if the new statement contradicts any existing valid statements
-   - Contradictions occur when statements cannot both be true at the same time
-   - Pay special attention to negations, opposites, and mutually exclusive facts
-   - Consider temporal validity - statements may only be contradictions within specific time periods
-   
-3. IMPORTANT: For events that change (like rescheduled appointments, moved dates, changed locations):
-   - When an event changes date/time/location, new statements about the updated event likely contradict statements about the original event
-   - Look for contextual clues about event changes, cancellations, or rescheduling
-   - Example: If "Concert on June 10" moved to "Concert on June 12", then "John attends June 10 concert" contradicts "John doesn't attend June 12 concert"
+2. Determine if the new statement ACTUALLY contradicts any existing valid statements
+   - TRUE CONTRADICTIONS: Statements that cannot both be true simultaneously
+   - Pay attention to direct negations, opposites, and mutually exclusive facts
+   - Consider temporal context - statements may be contradictory only within specific time periods
 
-  4. Format your response as a JSON object with the following structure:
+3. CRITICAL DISTINCTION - What are NOT contradictions:
+   - PROGRESSIONS: "researching X" → "decided on X" (both can be true - research led to decision)
+   - TEMPORAL SEQUENCES: "planning camping" → "went camping" (both can be true - plan was executed)  
+   - STATE CHANGES: "single" → "married" (both can be true at different times)
+   - LEARNING/GROWTH: "studying topic X" → "expert in topic X" (both can be true - progression)
+
+4. SPECIFIC EXAMPLES:
+
+TRUE CONTRADICTIONS (mark as contradictions):
+   - "John lives in New York" vs "John lives in San Francisco" (same time period, can't be both)
+   - "Meeting at 3pm" vs "Meeting at 5pm" (same meeting, conflicting times)
+   - "Project completed" vs "Project cancelled" (mutually exclusive outcomes) 
+   - "Caroline is single" vs "Caroline is married" (same time period, opposite states)
+
+NOT CONTRADICTIONS (do NOT mark as contradictions):
+   - "Caroline researching adoption agencies" vs "Caroline finalized adoption agency" (research → decision progression)
+   - "Caroline planning camping next week" vs "Caroline went camping" (planning → execution progression)
+   - "User studying Python" vs "User completed Python course" (learning progression)
+   - "Meeting scheduled for 3pm" vs "Meeting was held at 3pm" (planning → execution)
+   - "Considering job offers" vs "Accepted job offer" (consideration → decision)
+
+5. MANDATORY OUTPUT FORMAT:
+
+You MUST wrap your response in <output> tags. Do not include any text outside these tags.
+
 <output>
 [{
     "statementId": "new_statement_uuid",
-    "isDuplicate": true/false,
-    "duplicateId": "existing_statement_uuid-if-duplicate-exists",
-    "contradictions": ["existing_statement_uuid-1", "existing_statement_uuid-2"], // UUIDs of any contradicted statements
-    }]
+    "isDuplicate": false,
+    "duplicateId": null,
+    "contradictions": []
+  },
+  {
+    "statementId": "another_statement_uuid",
+    "isDuplicate": true,
+    "duplicateId": "existing_duplicate_uuid",
+    "contradictions": ["contradicted_statement_uuid"]
+  }]
 </output>
-  
-  Important guidelines:
+
+CRITICAL FORMATTING RULES:
+- ALWAYS use <output> and </output> tags
+- Include NO text before <output> or after </output>
+- Return valid JSON array with all statement IDs from NEW_STATEMENTS
 - If the new statement is a duplicate, include the UUID of the duplicate statement
-- For contradictions, list all statement UUIDs that the new statement contradicts
-- If a statement is both a contradiction AND a duplicate (rare case), mark it as a duplicate
-- Identify temporal and contextual shifts that may create implicit contradictions
-- Don't give any reason, just give the final output.
+- For TRUE contradictions only, list statement UUIDs that the new statement contradicts
+- If a statement is both a contradiction AND a duplicate (rare case), mark it as a duplicate  
+- DO NOT mark progressions, temporal sequences, or state developments as contradictions
+- ONLY mark genuine mutually exclusive facts as contradictions
 `,
     },
     {

@@ -34,7 +34,8 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
 
 3. **Exclusions**:
    - Do NOT extract entities representing relationships or actions (predicates will be handled separately).
-   - Do NOT extract dates, times, or other temporal information—these will be handled separately.
+   - Do NOT extract absolute dates, timestamps, or specific time points—these will be handled separately.
+   - Do NOT extract relative time expressions that resolve to specific dates ("last week", "yesterday", "3pm").
 
 4. **Entity Name Extraction**:
    - Extract ONLY the core entity name, WITHOUT any type descriptors or qualifiers
@@ -45,9 +46,37 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
    - **FULL NAMES**: Use complete names when available (e.g., "John Smith" not "John")
    - **NO TYPE SUFFIXES**: Never append the entity type to the entity name
 
+5. **Temporal and Relationship Context Extraction**:
+   - EXTRACT duration expressions that describe relationship spans ("4 years", "2 months", "5 years")
+   - EXTRACT temporal context that anchors relationships ("since moving", "after graduation", "during college")
+   - EXTRACT relationship qualifiers ("close friends", "support system", "work team", "family members")
+   - DO NOT extract absolute dates, timestamps, or specific time points ("June 9, 2023", "3pm", "last Saturday")
+   - DO NOT extract relative time expressions that resolve to specific dates ("last week", "yesterday")
+
 ## Examples of Correct Entity Extraction:
 
-**CORRECT Examples:**
+**TEMPORAL INFORMATION - What to EXTRACT vs EXCLUDE:**
+
+✅ **EXTRACT - Relationship Temporal Information:**
+- Text: "I've known these friends for 4 years" → Extract: "4 years" (Duration)
+- Text: "since I moved from my home country" → Extract: "since moving" (TemporalContext)  
+- Text: "after that tough breakup" → Extract: "after breakup" (TemporalContext)
+- Text: "we've been married for 5 years" → Extract: "5 years" (Duration)
+- Text: "during college" → Extract: "during college" (TemporalContext)
+
+❌ **EXCLUDE - Absolute Dates/Times:**
+- Text: "on June 9, 2023" → Don't extract "June 9, 2023" 
+- Text: "last Saturday" → Don't extract "last Saturday"
+- Text: "at 3pm yesterday" → Don't extract "3pm" or "yesterday"
+- Text: "next week" → Don't extract "next week"
+
+**RELATIONSHIP CONTEXT ENTITIES:**
+- Text: "my close friends" → Extract: "close friends" (QualifiedGroup)
+- Text: "strong support system" → Extract: "support system" (RelationshipType)
+- Text: "work colleagues" → Extract: "work colleagues" (ProfessionalGroup)
+- Text: "family members" → Extract: "family members" (FamilyGroup)
+
+**STANDARD ENTITY EXTRACTION:**
 - Text: "Tesla car" → Name: "Tesla", Type: "Vehicle"
 - Text: "Google's search engine" → Name: "Google", Type: "Company" + Name: "Search Engine", Type: "Product"
 - Text: "Microsoft Office suite" → Name: "Microsoft Office", Type: "Software"
@@ -123,7 +152,8 @@ You are given a TEXT. Your task is to extract **entity nodes** mentioned **expli
 
 3. **Exclusions**:
    - Do NOT extract entities representing relationships or actions (predicates will be handled separately).
-   - Do NOT extract dates, times, or other temporal information—these will be handled separately.
+   - Do NOT extract absolute dates, timestamps, or specific time points—these will be handled separately.
+   - Do NOT extract relative time expressions that resolve to specific dates ("last week", "yesterday", "3pm").
 
 4. **Entity Name Extraction**:
    - Extract ONLY the core entity name, WITHOUT any type descriptors or qualifiers
@@ -134,9 +164,37 @@ You are given a TEXT. Your task is to extract **entity nodes** mentioned **expli
    - **FULL NAMES**: Use complete names when available (e.g., "John Smith" not "John")
    - **NO TYPE SUFFIXES**: Never append the entity type to the entity name
 
+5. **Temporal and Relationship Context Extraction**:
+   - EXTRACT duration expressions that describe relationship spans ("4 years", "2 months", "5 years")
+   - EXTRACT temporal context that anchors relationships ("since moving", "after graduation", "during college")
+   - EXTRACT relationship qualifiers ("close friends", "support system", "work team", "family members")
+   - DO NOT extract absolute dates, timestamps, or specific time points ("June 9, 2023", "3pm", "last Saturday")
+   - DO NOT extract relative time expressions that resolve to specific dates ("last week", "yesterday")
+
 ## Examples of Correct Entity Extraction:
 
-**CORRECT Examples:**
+**TEMPORAL INFORMATION - What to EXTRACT vs EXCLUDE:**
+
+✅ **EXTRACT - Relationship Temporal Information:**
+- Text: "I've known these friends for 4 years" → Extract: "4 years" (Duration)
+- Text: "since I moved from my home country" → Extract: "since moving" (TemporalContext)  
+- Text: "after that tough breakup" → Extract: "after breakup" (TemporalContext)
+- Text: "we've been married for 5 years" → Extract: "5 years" (Duration)
+- Text: "during college" → Extract: "during college" (TemporalContext)
+
+❌ **EXCLUDE - Absolute Dates/Times:**
+- Text: "on June 9, 2023" → Don't extract "June 9, 2023" 
+- Text: "last Saturday" → Don't extract "last Saturday"
+- Text: "at 3pm yesterday" → Don't extract "3pm" or "yesterday"
+- Text: "next week" → Don't extract "next week"
+
+**RELATIONSHIP CONTEXT ENTITIES:**
+- Text: "my close friends" → Extract: "close friends" (QualifiedGroup)
+- Text: "strong support system" → Extract: "support system" (RelationshipType)
+- Text: "work colleagues" → Extract: "work colleagues" (ProfessionalGroup)
+- Text: "family members" → Extract: "family members" (FamilyGroup)
+
+**STANDARD ENTITY EXTRACTION:**
 - Text: "Tesla car" → Name: "Tesla", Type: "Vehicle"
 - Text: "Google's search engine" → Name: "Google", Type: "Company" + Name: "Search Engine", Type: "Product"
 - Text: "Microsoft Office suite" → Name: "Microsoft Office", Type: "Software"
@@ -174,7 +232,6 @@ ${JSON.stringify(context.entityTypes || {}, null, 2)}
     { role: "user", content: userPrompt },
   ];
 };
-
 /**
  * Extract entities from an episode using JSON-based approach
  */

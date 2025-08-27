@@ -80,8 +80,9 @@ const EnvironmentSchema = z.object({
 
   // Model envs
   MODEL: z.string().default(LLMModelEnum.GPT41),
-  EMBEDDING_MODEL: z.string().default("bge-m3"),
+  EMBEDDING_MODEL: z.string().default("mxbai-embed-large"),
   OLLAMA_URL: z.string().optional(),
+  COHERE_API_KEY: z.string().optional(),
 });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;

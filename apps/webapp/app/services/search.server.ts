@@ -1,6 +1,7 @@
 import type { EpisodicNode, StatementNode } from "@core/types";
 import { logger } from "./logger.service";
 import {
+  applyCohereReranking,
   applyCrossEncoderReranking,
   applyMultiFactorMMRReranking,
 } from "./search/rerank";
@@ -13,6 +14,7 @@ import {
 import { getEmbedding } from "~/lib/model.server";
 import { prisma } from "~/db.server";
 import { runQuery } from "~/lib/neo4j.server";
+import { env } from "~/env.server";
 
 /**
  * SearchService provides methods to search the reified + temporal knowledge graph
@@ -34,7 +36,7 @@ export class SearchService {
     query: string,
     userId: string,
     options: SearchOptions = {},
-  ): Promise<{ episodes: string[]; facts: string[] }> {
+  ): Promise<{ episodes: string[]; facts: { fact: string; validAt: Date }[] }> {
     const startTime = Date.now();
     // Default options
 
@@ -95,7 +97,10 @@ export class SearchService {
 
     return {
       episodes: episodes.map((episode) => episode.content),
-      facts: filteredResults.map((statement) => statement.fact),
+      facts: filteredResults.map((statement) => ({
+        fact: statement.fact,
+        validAt: statement.validAt,
+      })),
     };
   }
 
@@ -108,6 +113,9 @@ export class SearchService {
     options: Required<SearchOptions>,
   ): StatementNode[] {
     if (results.length === 0) return [];
+    if (results.length <= 5) {
+      return results;
+    }
 
     let isRRF = false;
     // Extract scores from results
@@ -129,6 +137,8 @@ export class SearchService {
         score = (result as any).combinedScore;
       } else if ((result as any).mmrScore !== undefined) {
         score = (result as any).mmrScore;
+      } else if ((result as any).cohereScore !== undefined) {
+        score = (result as any).cohereScore;
       }
 
       return { result, score };
@@ -226,6 +236,11 @@ export class SearchService {
       results.vector.length > 0,
       results.bfs.length > 0,
     ].filter(Boolean).length;
+
+    if (env.COHERE_API_KEY) {
+      logger.info("Using Cohere reranking");
+      return applyCohereReranking(query, results, options);
+    }
 
     // If results are coming from only one source, use cross-encoder reranking
     if (nonEmptySources <= 1) {

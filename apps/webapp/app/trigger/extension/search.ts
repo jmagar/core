@@ -50,7 +50,7 @@ export const extensionSearch = task({
           const searchResult = response.data;
 
           return {
-            facts: searchResult.facts || [],
+            facts: searchResult.facts || {},
             episodes: searchResult.episodes || [],
           };
         } catch (error) {

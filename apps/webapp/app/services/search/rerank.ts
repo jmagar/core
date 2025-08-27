@@ -3,6 +3,7 @@ import { combineAndDeduplicateStatements } from "./utils";
 import { type CoreMessage } from "ai";
 import { makeModelCall } from "~/lib/model.server";
 import { logger } from "../logger.service";
+import { CohereClientV2 } from "cohere-ai";
 
 // Utility function to safely convert BigInt values to Number
 function safeNumber(value: any): number {
@@ -438,4 +439,94 @@ export function applyMultiFactorReranking(results: {
     });
 
   return sortedResults;
+}
+
+/**
+ * Apply Cohere Rerank 3.5 to search results for improved question-to-fact matching
+ * This is particularly effective for bridging the semantic gap between questions and factual statements
+ */
+export async function applyCohereReranking(
+  query: string,
+  results: {
+    bm25: StatementNode[];
+    vector: StatementNode[];
+    bfs: StatementNode[];
+  },
+  options?: {
+    limit?: number;
+    model?: string;
+  },
+): Promise<StatementNode[]> {
+  const { model = "rerank-v3.5" } = options || {};
+  const limit = 100;
+
+  try {
+    const startTime = Date.now();
+    // Combine and deduplicate all results
+    const allResults = [
+      ...results.bm25.slice(0, 100),
+      ...results.vector.slice(0, 100),
+      ...results.bfs.slice(0, 100),
+    ];
+    const uniqueResults = combineAndDeduplicateStatements(allResults);
+    console.log("Unique results:", uniqueResults.length);
+
+    if (uniqueResults.length === 0) {
+      logger.info("No results to rerank with Cohere");
+      return [];
+    }
+
+    // Check for API key
+    const apiKey = process.env.COHERE_API_KEY;
+    if (!apiKey) {
+      logger.warn("COHERE_API_KEY not found, falling back to original results");
+      return uniqueResults.slice(0, limit);
+    }
+
+    // Initialize Cohere client
+    const cohere = new CohereClientV2({
+      token: apiKey,
+    });
+
+    // Prepare documents for Cohere API
+    const documents = uniqueResults.map((statement) => statement.fact);
+
+    logger.info(
+      `Cohere reranking ${documents.length} statements with model ${model}`,
+    );
+
+    // Call Cohere Rerank API
+    const response = await cohere.rerank({
+      query,
+      documents,
+      model,
+      topN: Math.min(limit, documents.length),
+    });
+
+    console.log("Cohere reranking billed units:", response.meta?.billedUnits);
+
+    // Map results back to StatementNodes with Cohere scores
+    const rerankedResults = response.results
+      .map((result, index) => ({
+        ...uniqueResults[result.index],
+        cohereScore: result.relevanceScore,
+        cohereRank: index + 1,
+      }))
+      .filter((result) => result.cohereScore > 0.3);
+
+    const responseTime = Date.now() - startTime;
+    logger.info(
+      `Cohere reranking completed: ${rerankedResults.length} results returned in ${responseTime}ms`,
+    );
+
+    return rerankedResults;
+  } catch (error) {
+    logger.error("Cohere reranking failed:", { error });
+
+    // Graceful fallback to original results
+    const allResults = [...results.bm25, ...results.vector, ...results.bfs];
+    const uniqueResults = combineAndDeduplicateStatements(allResults);
+
+    return uniqueResults.slice(0, limit);
+  }
 }
