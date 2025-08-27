@@ -4,8 +4,12 @@ import { z } from "zod";
 
 import { openai } from "@ai-sdk/openai";
 import { logger } from "~/services/logger.service";
-import { getOrCreatePersonalAccessToken } from "../utils/utils";
+import {
+  deletePersonalAccessToken,
+  getOrCreatePersonalAccessToken,
+} from "../utils/utils";
 import axios from "axios";
+import { nanoid } from "nanoid";
 
 export const ExtensionSearchBodyRequest = z.object({
   userInput: z.string().min(1, "User input is required"),
@@ -24,8 +28,10 @@ export const extensionSearch = task({
     const { userInput, userId, context } =
       ExtensionSearchBodyRequest.parse(body);
 
+    const randomKeyName = `extensionSearch_${nanoid(10)}`;
+
     const pat = await getOrCreatePersonalAccessToken({
-      name: "extensionSearch",
+      name: randomKeyName,
       userId: userId as string,
     });
 
@@ -106,8 +112,12 @@ If no relevant information is found, provide a brief statement indicating that.`
         finalText = finalText + chunk;
       }
 
+      await deletePersonalAccessToken(pat?.id);
+
       return finalText;
     } catch (error) {
+      await deletePersonalAccessToken(pat?.id);
+
       logger.error(`SearchMemoryAgent error: ${error}`);
 
       return `Context related to: ${userInput}. Looking for relevant background information, previous discussions, and related concepts that would help provide a comprehensive answer.`;

@@ -74,6 +74,11 @@
     "TRIGGER_API_URL",
     "TRIGGER_SECRET_KEY",
     "EMBEDDING_MODEL",
-    "MODEL"
+    "MODEL",
+    "COHERE_API_KEY",
+    "RESEND_API_KEY",
+    "FROM_EMAIL",
+    "REPLY_TO_EMAIL",
+    "EMAIL_TRANSPORT"
   ]
 }

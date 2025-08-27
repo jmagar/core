@@ -16,8 +16,8 @@ const client = singleton(
     new EmailClient({
       transport: buildTransportOptions(),
       imagesBaseUrl: env.APP_ORIGIN,
-      from: env.FROM_EMAIL ?? "Harshith <harshith@tegon.ai>",
-      replyTo: env.REPLY_TO_EMAIL ?? "harshith@tegon.ai",
+      from: env.FROM_EMAIL ?? "Manik <manik@poozle.dev>",
+      replyTo: env.REPLY_TO_EMAIL ?? "manik@poozle.dev",
     }),
 );
 
@@ -85,5 +85,9 @@ export async function scheduleEmail(
 ) {}
 
 export async function sendEmail(data: DeliverEmail) {
-  return client.send(data);
+  try {
+    return client.send(data);
+  } catch (e) {
+    logger.error(`Error: ${e}`);
+  }
 }

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { setGlobalBasePath } from "../emails/components/BasePath";
 
-import { WelcomeEmail, WelcomeEmailSchema } from "../emails/welcome";
+import WelcomeEmail, { WelcomeEmailSchema } from "../emails/welcome";
 import { constructMailTransport, MailTransport, MailTransportOptions } from "./transports";
 import MagicLinkEmail from "../emails/magic-link";
 
@@ -73,14 +73,14 @@ export class EmailClient {
     switch (data.email) {
       case "magic_link":
         return {
-          subject: "Magic sign-in link for Trigger.dev",
+          subject: "Magic sign-in link for Core",
           component: <MagicLinkEmail magicLink={data.magicLink} />,
         };
 
       case "welcome":
         return {
-          subject: `You've been invited to join ${data.orgName} on C.O.R.E.`,
-          component: <WelcomeEmail {...data} />,
+          subject: `You've been invited to join on C.O.R.E.`,
+          component: <WelcomeEmail />,
         };
     }
   }

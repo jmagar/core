@@ -1,16 +1,16 @@
-import { Hr, Link, Text } from "@react-email/components";
+import { Hr, Text } from "@react-email/components";
 import React from "react";
-import { footer, footerAnchor, hr } from "./styles";
+import { footer, hr, paragraphLight } from "./styles";
 
 export function Footer() {
   return (
     <>
       <Hr style={hr} />
+      <Text style={paragraphLight}>happy building your digital brain!</Text>
       <Text style={footer}>
-        ©Sol.ai
-        <Link style={footerAnchor} href="https://core.heysol.ai/">
-          C.O.R.E
-        </Link>
+        the Core team P.S Questions?
+        <br />
+        Just hit reply - we're here to help.
       </Text>
     </>
   );

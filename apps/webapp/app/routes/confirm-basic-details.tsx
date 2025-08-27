@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { useActionData, useLoaderData } from "@remix-run/react";
+import { useActionData } from "@remix-run/react";
 import {
   type ActionFunctionArgs,
   json,
@@ -17,12 +17,7 @@ import {
 } from "~/components/ui/card";
 import { Button } from "~/components/ui";
 import { Input } from "~/components/ui/input";
-import { useState } from "react";
-import {
-  requireUser,
-  requireUserId,
-  requireWorkpace,
-} from "~/services/session.server";
+import { requireUser, requireUserId } from "~/services/session.server";
 import { redirectWithSuccessMessage } from "~/models/message.server";
 import { rootPath } from "~/utils/pathBuilder";
 import { createWorkspace, getWorkspaceByUser } from "~/models/workspace.server";
@@ -76,7 +71,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function ConfirmBasicDetails() {
   const lastSubmission = useActionData<typeof action>();
-  const { workspace } = useLoaderData<typeof loader>();
 
   const [form, fields] = useForm({
     lastSubmission: lastSubmission as any,

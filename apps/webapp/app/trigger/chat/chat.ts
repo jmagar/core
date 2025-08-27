@@ -6,6 +6,7 @@ import { MCP } from "../utils/mcp";
 import { type HistoryStep } from "../utils/types";
 import {
   createConversationHistoryForAgent,
+  deletePersonalAccessToken,
   getCreditsForUser,
   getPreviousExecutionHistory,
   init,
@@ -120,9 +121,15 @@ export const chat = task({
       );
 
       usageCredits && (await updateUserCredits(usageCredits, 1));
+
+      if (init?.tokenId) {
+        await deletePersonalAccessToken(init.tokenId);
+      }
     } catch (e) {
       await updateConversationStatus("failed", payload.conversationId);
-
+      if (init?.tokenId) {
+        await deletePersonalAccessToken(init.tokenId);
+      }
       throw new Error(e as string);
     }
   },

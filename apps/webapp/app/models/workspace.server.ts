@@ -1,5 +1,6 @@
 import { type Workspace } from "@core/database";
 import { prisma } from "~/db.server";
+import { sendEmail } from "~/services/email.server";
 import { SpaceService } from "~/services/space.server";
 
 interface CreateWorkspaceDto {
@@ -31,7 +32,7 @@ export async function createWorkspace(
     },
   });
 
-  await prisma.user.update({
+  const user = await prisma.user.update({
     where: { id: input.userId },
     data: {
       confirmedBasicDetails: true,
@@ -44,6 +45,8 @@ export async function createWorkspace(
     userId: input.userId,
     workspaceId: workspace.id,
   });
+
+  await sendEmail({ email: "welcome", to: user.email });
 
   return workspace;
 }

@@ -8,10 +8,7 @@ export const h1 = {
   padding: "0",
 };
 
-export const main = {
-  backgroundColor: "#15171A",
-  padding: "0 20px",
-};
+export const main = {};
 
 export const container = {
   backgroundColor: "#15171A",
@@ -30,29 +27,42 @@ export const hr = {
 };
 
 export const paragraph = {
-  color: "#878C99",
+  color: "black",
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-  fontSize: "16px",
+  fontSize: "14px",
   lineHeight: "24px",
   textAlign: "left" as const,
 };
 
 export const paragraphLight = {
-  color: "#D7D9DD",
+  color: "black",
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-  fontSize: "16px",
+  fontSize: "14px",
   lineHeight: "24px",
   textAlign: "left" as const,
+  margin: 0,
+};
+
+export const heading = {
+  color: "black",
+  fontFamily:
+    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
+  fontSize: "14px",
+  lineHeight: "24px",
+  textAlign: "left" as const,
+  fontWeight: "bold",
+  margin: 0,
+  marginTop: "20px",
 };
 
 export const paragraphTight = {
-  color: "#D7D9DD",
+  color: "black",
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-  fontSize: "16px",
-  lineHeight: "16px",
+  fontSize: "14px",
+  lineHeight: "14px",
   textAlign: "left" as const,
 };
 
@@ -60,18 +70,19 @@ export const bullets = {
   color: "#D7D9DD",
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-  fontSize: "16px",
+  fontSize: "14px",
   lineHeight: "24px",
   textAlign: "left" as const,
   margin: "0",
 };
 
 export const anchor = {
-  color: "#826DFF",
+  marginRight: "3px",
   fontFamily:
     "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
-  fontSize: "16px",
+  fontSize: "14px",
   textDecoration: "underline",
+  color: "black",
 };
 
 export const button = {
@@ -80,7 +91,7 @@ export const button = {
   color: "#D7D9DD",
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-  fontSize: "16px",
+  fontSize: "14px",
   fontWeight: "bold",
   textDecoration: "none",
   textAlign: "center" as const,
@@ -92,7 +103,7 @@ export const footer = {
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
   fontSize: "12px",
-  lineHeight: "16px",
+  lineHeight: "14px",
 };
 
 export const footerItalic = {
@@ -101,7 +112,7 @@ export const footerItalic = {
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
   fontSize: "12px",
-  lineHeight: "16px",
+  lineHeight: "14px",
 };
 
 export const footerAnchor = {

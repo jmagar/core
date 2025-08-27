@@ -22,7 +22,7 @@ export function SpacePatternCard({ pattern }: SpacePatternCardProps) {
         actionType,
         patternId: pattern.id,
       },
-      { method: "POST" }
+      { method: "POST" },
     );
     setDialog(false);
   };
@@ -77,19 +77,19 @@ export function SpacePatternCard({ pattern }: SpacePatternCardProps) {
 
             <div className="flex justify-end">
               <div className="flex gap-2">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   onClick={() => handleAction("delete")}
                   disabled={fetcher.state === "submitting"}
                 >
                   Delete
                 </Button>
-                <Button 
-                  variant="secondary" 
+                <Button
+                  variant="secondary"
                   onClick={() => handleAction("add")}
                   disabled={fetcher.state === "submitting"}
                 >
-                  Add
+                  Add to memory
                 </Button>
               </div>
             </div>

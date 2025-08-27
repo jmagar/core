@@ -170,7 +170,7 @@ export const init = async ({ payload }: { payload: InitChatPayload }) => {
     return { conversation, conversationHistory };
   }
 
-  const randomKeyName = `chat`;
+  const randomKeyName = `chat_${nanoid(10)}`;
   const pat = await getOrCreatePersonalAccessToken({
     name: randomKeyName,
     userId: workspace.userId as string,

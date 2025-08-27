@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { createActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
+import {
+  createActionApiRoute,
+  createHybridActionApiRoute,
+} from "~/services/routeBuilders/apiBuilder.server";
 import { SearchService } from "~/services/search.server";
 import { json } from "@remix-run/node";
 
@@ -19,7 +22,7 @@ export const SearchBodyRequest = z.object({
 });
 
 const searchService = new SearchService();
-const { action, loader } = createActionApiRoute(
+const { action, loader } = createHybridActionApiRoute(
   {
     body: SearchBodyRequest,
     allowJWT: true,

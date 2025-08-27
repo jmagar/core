@@ -1,59 +1,86 @@
-import { Body, Head, Html, Link, Preview, Section, Text } from "@react-email/components";
+import { Body, Head, Html, Img, Link, Preview, Text } from "@react-email/components";
 import { Footer } from "./components/Footer";
-import { anchor, bullets, footerItalic, main, paragraphLight } from "./components/styles";
+import { anchor, heading, main, paragraphLight } from "./components/styles";
 import { z } from "zod";
 
 export const WelcomeEmailSchema = z.object({
   email: z.literal("welcome"),
-  orgName: z.string(),
-  inviterName: z.string().optional(),
-  inviterEmail: z.string(),
-  inviteLink: z.string().url(),
 });
 
-export function WelcomeEmail({ orgName }: { orgName?: string }) {
+export default function WelcomeEmail() {
   return (
     <Html>
       <Head />
-      <Preview>Welcome to C.O.R.E. - Your Personal AI Assistant</Preview>
+      <Preview>building your digital brain</Preview>
       <Body style={main}>
-        <Text style={paragraphLight}>Hey {orgName ?? "there"},</Text>
-        <Text style={paragraphLight}>Welcome to C.O.R.E., your new personal AI assistant!</Text>
-        <Text style={paragraphLight}>
-          I'm excited to help you streamline your daily tasks, boost your productivity, and make
-          your work life easier. C.O.R.E. is designed to be intuitive and powerful, adapting to your
-          unique needs and preferences.
-        </Text>
-        <Text style={paragraphLight}>
-          To get started, you can{" "}
-          <Link style={anchor} href="https://core.heysol.ai/home">
-            visit your dashboard
-          </Link>{" "}
-          where you'll find all the features and capabilities at your disposal. Whether it's
-          managing your schedule, handling communications, or automating repetitive tasks, I'm here
-          to help.
-        </Text>
-
-        <Text style={paragraphLight}>
-          If you have any questions or need assistance, don't hesitate to reach out. You can:{"\n"}•
-          Ask me directly through the chat interface{"\n"}•{" "}
-          <Link style={anchor} href="https://core.heysol.ai/support">
-            Visit our support center
+        <Text style={paragraphLight}>hi there,</Text>
+        <Text
+          style={{
+            ...paragraphLight,
+            marginTop: "10px",
+          }}
+        >
+          <Link style={anchor} href="https://x.com/manikagg01">
+            Manik
           </Link>
-          {"\n"}• Join our{" "}
-          <Link style={anchor} href="https://discord.gg/heysol">
-            Discord community
-          </Link>{" "}
-          to connect with other users and our team
+          from core here. welcome to core. when i first tried core memory, two actions made it click
+          for me. each came down to the same thing: understanding how I can add relevant context
+          about everything that matters to me in core memory and recall it wherever I want.
         </Text>
+        <Text style={heading}>core mcp</Text>
+        <Text style={paragraphLight}>
+          seamlessly add your code context from cursor/claude-code, project context from linear, or
+          brainstorming sessions from claude desktop via mcp. solve context loss problems across ai
+          tools with persistent, cross-session memory. add this url and get started
+        </Text>
+        <Link
+          style={{
+            ...anchor,
+            marginTop: "10px",
+            marginBottom: "10px",
+          }}
+        >
+          https://core.heysol.ai/api/v1/mcp?source='Your Coding Agent'
+        </Link>
+        <Img
+          alt="Claude"
+          style={{
+            marginLeft: "auto",
+            marginRight: "auto",
+            width: "100%",
+            borderRadius: "2%",
+            marginTop: "10px",
+          }}
+          src="https://integrations.heysol.ai/core-claude.gif"
+        />
+        <Text style={heading}>browser extension</Text>
+        <Text style={paragraphLight}>
+          recall relevant context from core memory in chatgpt, grok, and gemini. save conversations
+          and content from chatgpt, grok, gemini, twitter, youtube, blog posts, and any webpage
+          directly into your Core memory with simple text selection.
+        </Text>
+        <Img
+          alt="Claude"
+          style={{
+            marginLeft: "auto",
+            marginRight: "auto",
+            width: "100%",
+            borderRadius: "2%",
+            marginTop: "10px",
+          }}
+          src="https://integrations.heysol.ai/core-extension.gif"
+        />
 
-        <Text style={paragraphLight}>Looking forward to being your trusted assistant!</Text>
-
-        <Text style={bullets}>Best regards,</Text>
-        <Text style={bullets}>C.O.R.E.</Text>
-        <Text style={paragraphLight}>Your AI Assistant</Text>
-        <Text style={footerItalic}>
-          You can customize your notification preferences anytime in your account settings.
+        <Text style={heading}>need real-time, human help to get started? </Text>
+        <Text style={paragraphLight}>
+          - join our discord community & get direct help from our team + over 100+ enthusiasts using
+          Core memory
+        </Text>
+        <Text style={paragraphLight}>
+          - We are open-source us on our repo -{" "}
+          <Link style={anchor} href="https://github.com/RedPlanetHQ/core">
+            https://github.com/RedPlanetHQ/core
+          </Link>
         </Text>
         <Footer />
       </Body>
