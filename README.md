@@ -78,11 +78,15 @@ CORE is an open-source unified, persistent memory layer for all your AI tools. Y
 ### 🧠 **Unified, Portable Memory**: 
 Add and recall your memory across **Cursor, Windsurf, Claude Desktop, Claude Code, Gemini CLI, AWS's Kiro, VS Code, and Roo Code** via MCP
 
+![core-claude](https://github.com/user-attachments/assets/56c98288-ee87-4cd0-8b02-860aca1c7f9a)
+
+
 ### 🕸️ **Temporal + Reified Knowledge Graph**: 
 
 Remember the story behind every fact—track who said what, when, and why with rich relationships and full provenance, not just flat storage
 
-https://github.com/user-attachments/assets/d18e3caa-72ea-4596-bbf7-cc9e32bd772f
+![core-memory-graph](https://github.com/user-attachments/assets/5d1ee659-d519-4624-85d1-e0497cbdd60a)
+
 
 ### 🌐 **Browser Extension**: 
 
@@ -101,20 +105,23 @@ https://github.com/user-attachments/assets/6e629834-1b9d-4fe6-ae58-a9068986036a
 ### 💬 **Chat with Memory**: 
 Ask questions like "What are my writing preferences?" with instant insights from your connected knowledge
 
-https://github.com/user-attachments/assets/6be5aca5-1d2f-419e-9deb-acb897a05c20
+![chat-with-memory](https://github.com/user-attachments/assets/d798802f-bd51-4daf-b2b5-46de7d206f66)
+
 
 ### ⚡ **Auto-Sync from Apps**: 
 
 Automatically capture relevant context from Linear, Slack, Notion, GitHub and other connected apps into your CORE memory
 
-https://github.com/user-attachments/assets/a797f182-406d-49e8-80a8-20932169931d
+![core-slack](https://github.com/user-attachments/assets/d5fefe38-221e-4076-8a44-8ed673960f03)
+
 
 ### 🔗 **MCP Integration Hub**: 
 
-Connect Linear, Slack, GitHub, Notion once to CORE—then use all their tools in Claude, Cursor, or any MCP client
+Connect Linear, Slack, GitHub, Notion once to CORE—then use all their tools in Claude, Cursor, or any MCP client with a single URL
 
 
-https://github.com/user-attachments/assets/be2d69a7-6c6c-43ad-91b7-6db66712821d
+![core-linear-claude](https://github.com/user-attachments/assets/7d59d92b-8c56-4745-a7ab-9a3c0341aa32)
+
 
 
 
@@ -170,6 +177,7 @@ Have questions or feedback? We're here to help:
 <a href="https://github.com/RedPlanetHQ/core/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=RedPlanetHQ/core" />
 </a>
+
 
 
 
