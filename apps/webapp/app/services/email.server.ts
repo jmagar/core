@@ -55,6 +55,26 @@ function buildTransportOptions(): MailTransportOptions {
   }
 }
 
+export async function sendMagicLinkEmail(options: any): Promise<void> {
+  logger.debug("Sending magic link email", {
+    emailAddress: options.emailAddress,
+  });
+
+  try {
+    return await client.send({
+      email: "magic_link",
+      to: options.emailAddress,
+      magicLink: options.magicLink,
+    });
+  } catch (error) {
+    logger.error("Error sending magic link email", {
+      error: JSON.stringify(error),
+    });
+
+    throw error;
+  }
+}
+
 export async function sendPlainTextEmail(options: SendPlainTextOptions) {
   return client.sendPlainText(options);
 }
