@@ -14,6 +14,7 @@ import { callMemoryTool, memoryTools } from "~/utils/mcp/memory";
 import { logger } from "~/services/logger.service";
 import { type Response, type Request } from "express";
 import { getWorkspaceByUser } from "~/models/workspace.server";
+import { Workspace } from "@prisma/client";
 
 const QueryParams = z.object({
   source: z.string().optional(),

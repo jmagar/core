@@ -20,6 +20,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const contentType = request.headers.get("content-type");
     let body: any;
     let tokenRequest: OAuth2TokenRequest;
+    const authHeader = request.headers.get("authorization");
+    let basicAuthClientId: string | undefined;
+    let basicAuthClientSecret: string | undefined;
+
+    if (authHeader?.startsWith("Basic ")) {
+      try {
+        const encoded = authHeader.slice(6); // Remove "Basic " prefix
+        const decoded = Buffer.from(encoded, "base64").toString("utf-8");
+        const [clientId, clientSecret] = decoded.split(":");
+        basicAuthClientId = clientId;
+        basicAuthClientSecret = clientSecret;
+      } catch (error) {
+        return json(
+          {
+            error: OAuth2Errors.INVALID_CLIENT,
+            error_description: "Invalid Basic authorization header",
+          },
+          { status: 401 },
+        );
+      }
+    }
 
     // Support both JSON and form-encoded data
     if (contentType?.includes("application/json")) {
@@ -28,8 +49,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         grant_type: body.grant_type,
         code: body.code || undefined,
         redirect_uri: body.redirect_uri || undefined,
-        client_id: body.client_id,
-        client_secret: body.client_secret || undefined,
+        client_id: basicAuthClientId || body.client_id,
+        client_secret: basicAuthClientSecret || body.client_secret || undefined,
         code_verifier: body.code_verifier || undefined,
       };
     } else {
@@ -41,8 +62,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         grant_type: formData.get("grant_type") as string,
         code: (formData.get("code") as string) || undefined,
         redirect_uri: (formData.get("redirect_uri") as string) || undefined,
-        client_id: formData.get("client_id") as string,
-        client_secret: (formData.get("client_secret") as string) || undefined,
+        client_id: basicAuthClientId || (formData.get("client_id") as string),
+        client_secret:
+          basicAuthClientSecret ||
+          (formData.get("client_secret") as string) ||
+          undefined,
         code_verifier: (formData.get("code_verifier") as string) || undefined,
       };
     }
@@ -68,14 +92,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           },
           { status: 400 },
         );
-      }
-
-      if (!tokenRequest.client_id || !tokenRequest.client_secret) {
-        const clientData = await oauth2Service.getClientForCode(
-          tokenRequest.code,
-        );
-        tokenRequest.client_id = clientData.client_id as string;
-        tokenRequest.client_secret = clientData.client_secret;
       }
 
       // Validate client

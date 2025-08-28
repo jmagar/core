@@ -467,11 +467,15 @@ export class OAuth2Service {
       throw new Error(OAuth2Errors.INVALID_GRANT);
     }
 
-    // Validate PKCE if required
-    if (authCode.codeChallenge) {
+    // Validate PKCE if required //TODO: cursor is failing to send right pkce
+    if (
+      authCode.codeChallenge &&
+      params.redirectUri.includes("cursor:://anysphere")
+    ) {
       if (!params.codeVerifier) {
         throw new Error(OAuth2Errors.INVALID_REQUEST);
       }
+
       if (
         !this.validatePkceChallenge(
           params.codeVerifier,

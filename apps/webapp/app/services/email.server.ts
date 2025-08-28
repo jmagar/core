@@ -57,13 +57,13 @@ function buildTransportOptions(): MailTransportOptions {
 
 export async function sendMagicLinkEmail(options: any): Promise<void> {
   logger.debug("Sending magic link email", {
-    emailAddress: options.emailAddress,
+    email: options.email,
   });
 
   try {
     return await client.send({
       email: "magic_link",
-      to: options.emailAddress,
+      to: options.email,
       magicLink: options.magicLink,
     });
   } catch (error) {

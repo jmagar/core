@@ -82,7 +82,6 @@ export class MCPSessionManager {
       id: session.id,
       source: session.source,
       integrations: session.integrations,
-      noIntegrations: session.noIntegrations,
       createdAt: session.createdAt,
       deleted: session.deleted || undefined,
       workspaceId: session.workspaceId || undefined,
