@@ -193,7 +193,7 @@ async function generateSpaceSummary(
     const statements = await getSpaceStatements(
       spaceId,
       userId,
-      existingSummary?.lastUpdated,
+      isIncremental ? existingSummary?.lastUpdated : undefined,
     );
 
     // Handle case where no new statements exist for incremental update
@@ -564,17 +564,6 @@ function parseSummaryResponse(response: string): {
     }
 
     let jsonContent = outputMatch[1].trim();
-
-    // Clean up common JSON formatting issues from LLM responses
-    jsonContent = jsonContent
-      .replace(/[\u0000-\u001F\u007F]/g, "") // Remove control characters
-      .replace(/\n/g, "\\n") // Escape newlines
-      .replace(/\r/g, "\\r") // Escape carriage returns
-      .replace(/\t/g, "\\t") // Escape tabs
-      .replace(/\\/g, "\\\\") // Escape backslashes (but avoid double escaping)
-      .replace(/\\\\n/g, "\\n") // Fix double-escaped newlines
-      .replace(/\\\\r/g, "\\r") // Fix double-escaped carriage returns
-      .replace(/\\\\t/g, "\\t"); // Fix double-escaped tabs
 
     let parsed;
     try {

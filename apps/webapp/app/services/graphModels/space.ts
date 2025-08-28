@@ -57,9 +57,9 @@ export async function getSpace(
     MATCH (s:Space {uuid: $spaceId, userId: $userId})
     WHERE s.isActive = true
     
-    // Count statements in this space
-    OPTIONAL MATCH (stmt:Statement)
-    WHERE stmt.userId = $userId AND s.id IN stmt.spaceIds
+    // Count statements in this space using optimized approach
+    OPTIONAL MATCH (stmt:Statement {userId: $userId})
+    WHERE stmt.spaceIds IS NOT NULL AND $spaceId IN stmt.spaceIds AND stmt.invalidAt IS NULL
     
     WITH s, count(stmt) as statementCount
     RETURN s, statementCount
@@ -152,8 +152,8 @@ export async function deleteSpace(
 
     // 2. Clean up statement references (remove spaceId from spaceIds arrays)
     const cleanupQuery = `
-      MATCH (s:Statement)
-      WHERE s.userId = $userId AND $spaceId IN s.spaceIds
+      MATCH (s:Statement {userId: $userId})
+      WHERE s.spaceIds IS NOT NULL AND $spaceId IN s.spaceIds
       SET s.spaceIds = [id IN s.spaceIds WHERE id <> $spaceId]
       RETURN count(s) as updatedStatements
     `;
@@ -203,8 +203,8 @@ export async function assignStatementsToSpace(
     }
 
     const query = `
-      MATCH (s:Statement)
-      WHERE s.uuid IN $statementIds AND s.userId = $userId
+      MATCH (s:Statement {userId: $userId})
+      WHERE s.uuid IN $statementIds
       SET s.spaceIds = CASE 
         WHEN s.spaceIds IS NULL THEN [$spaceId]
         WHEN $spaceId IN s.spaceIds THEN s.spaceIds
@@ -244,8 +244,8 @@ export async function removeStatementsFromSpace(
 ): Promise<SpaceAssignmentResult> {
   try {
     const query = `
-      MATCH (s:Statement)
-      WHERE s.uuid IN $statementIds AND s.userId = $userId AND $spaceId IN s.spaceIds
+      MATCH (s:Statement {userId: $userId})
+      WHERE s.uuid IN $statementIds AND s.spaceIds IS NOT NULL AND $spaceId IN s.spaceIds
       SET s.spaceIds = [id IN s.spaceIds WHERE id <> $spaceId]
       RETURN count(s) as updated
     `;
@@ -271,8 +271,8 @@ export async function removeStatementsFromSpace(
  */
 export async function getSpaceStatements(spaceId: string, userId: string) {
   const query = `
-    MATCH (s:Statement)
-    WHERE s.userId = $userId AND s.spaceIds IS NOT NULL AND $spaceId IN s.spaceIds
+    MATCH (s:Statement {userId: $userId})
+    WHERE s.spaceIds IS NOT NULL AND $spaceId IN s.spaceIds AND s.invalidAt IS NULL
     MATCH (s)-[:HAS_SUBJECT]->(subj:Entity)
     MATCH (s)-[:HAS_PREDICATE]->(pred:Entity)
     MATCH (s)-[:HAS_OBJECT]->(obj:Entity)
@@ -309,9 +309,8 @@ export async function getSpaceStatementCount(
   userId: string,
 ): Promise<number> {
   const query = `
-    MATCH (s:Statement)
-    WHERE s.userId = $userId 
-      AND s.spaceIds IS NOT NULL 
+    MATCH (s:Statement {userId: $userId})
+    WHERE s.spaceIds IS NOT NULL 
       AND $spaceId IN s.spaceIds 
       AND s.invalidAt IS NULL
     RETURN count(s) as statementCount

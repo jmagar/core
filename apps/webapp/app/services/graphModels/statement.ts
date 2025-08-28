@@ -22,6 +22,7 @@ export async function saveTriple(triple: Triple): Promise<string> {
           n.createdAt = $createdAt,
           n.validAt = $validAt,
           n.invalidAt = $invalidAt,
+          n.invalidatedBy = $invalidatedBy,
           n.attributes = $attributes,
           n.userId = $userId,
           n.space = $space
@@ -30,6 +31,7 @@ export async function saveTriple(triple: Triple): Promise<string> {
           n.factEmbedding = $factEmbedding,
           n.validAt = $validAt,
           n.invalidAt = $invalidAt,
+          n.invalidatedBy = $invalidatedBy,
           n.attributes = $attributes,
           n.space = $space
         RETURN n.uuid as uuid
@@ -44,6 +46,7 @@ export async function saveTriple(triple: Triple): Promise<string> {
     invalidAt: triple.statement.invalidAt
       ? triple.statement.invalidAt.toISOString()
       : null,
+    invalidatedBy: triple.statement.invalidatedBy || null,
     attributes: JSON.stringify(triple.statement.attributes || {}),
     userId: triple.provenance.userId,
     space: triple.statement.space || null,
@@ -132,6 +135,7 @@ export async function findContradictoryStatements({
       createdAt: new Date(statement.createdAt),
       validAt: new Date(statement.validAt),
       invalidAt: statement.invalidAt ? new Date(statement.invalidAt) : null,
+      invalidatedBy: statement.invalidatedBy || undefined,
       attributes: statement.attributesJson
         ? JSON.parse(statement.attributesJson)
         : {},
@@ -186,6 +190,7 @@ export async function findStatementsWithSameSubjectObject({
       createdAt: new Date(statement.createdAt),
       validAt: new Date(statement.validAt),
       invalidAt: statement.invalidAt ? new Date(statement.invalidAt) : null,
+      invalidatedBy: statement.invalidatedBy || undefined,
       attributes: statement.attributesJson
         ? JSON.parse(statement.attributesJson)
         : {},
@@ -233,7 +238,6 @@ export async function findSimilarStatements({
 
   return result.map((record) => {
     const statement = record.get("statement").properties;
-    const score = record.get("score");
 
     return {
       uuid: statement.uuid,
@@ -242,6 +246,7 @@ export async function findSimilarStatements({
       createdAt: new Date(statement.createdAt),
       validAt: new Date(statement.validAt),
       invalidAt: statement.invalidAt ? new Date(statement.invalidAt) : null,
+      invalidatedBy: statement.invalidatedBy || undefined,
       attributes: statement.attributesJson
         ? JSON.parse(statement.attributesJson)
         : {},
@@ -287,6 +292,7 @@ export async function getTripleForStatement({
     invalidAt: statementProps.invalidAt
       ? new Date(statementProps.invalidAt)
       : null,
+    invalidatedBy: statementProps.invalidatedBy || undefined,
     attributes: statementProps.attributesJson
       ? JSON.parse(statementProps.attributesJson)
       : {},
@@ -360,17 +366,25 @@ export async function getTripleForStatement({
 export async function invalidateStatement({
   statementId,
   invalidAt,
+  invalidatedBy,
 }: {
   statementId: string;
   invalidAt: string;
+  invalidatedBy?: string;
 }) {
   const query = `
       MATCH (statement:Statement {uuid: $statementId})
       SET statement.invalidAt = $invalidAt
+      ${invalidatedBy ? "SET statement.invalidatedBy = $invalidatedBy" : ""}
       RETURN statement
     `;
 
-  const result = await runQuery(query, { statementId, invalidAt });
+  const params = { 
+    statementId, 
+    invalidAt,
+    ...(invalidatedBy && { invalidatedBy })
+  };
+  const result = await runQuery(query, params);
 
   if (!result || result.length === 0) {
     return null;
@@ -381,13 +395,15 @@ export async function invalidateStatement({
 
 export async function invalidateStatements({
   statementIds,
+  invalidatedBy,
 }: {
   statementIds: string[];
+  invalidatedBy?: string;
 }) {
   const invalidAt = new Date().toISOString();
   return statementIds.map(
     async (statementId) =>
-      await invalidateStatement({ statementId, invalidAt }),
+      await invalidateStatement({ statementId, invalidAt, invalidatedBy }),
   );
 }
 
@@ -421,7 +437,6 @@ export async function searchStatementsByEmbedding(params: {
 
   return result.map((record) => {
     const statement = record.get("statement").properties;
-    const score = record.get("score");
 
     return {
       uuid: statement.uuid,
@@ -430,6 +445,7 @@ export async function searchStatementsByEmbedding(params: {
       createdAt: new Date(statement.createdAt),
       validAt: new Date(statement.validAt),
       invalidAt: statement.invalidAt ? new Date(statement.invalidAt) : null,
+      invalidatedBy: statement.invalidatedBy || undefined,
       attributes: statement.attributesJson
         ? JSON.parse(statement.attributesJson)
         : {},

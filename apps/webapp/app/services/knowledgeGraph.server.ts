@@ -251,7 +251,10 @@ export class KnowledgeGraphService {
       logger.log(`Saved triples in ${saveTriplesTime - updatedTriplesTime} ms`);
 
       // Invalidate invalidated statements
-      await invalidateStatements({ statementIds: invalidatedStatements });
+      await invalidateStatements({ 
+        statementIds: invalidatedStatements, 
+        invalidatedBy: episode.uuid 
+      });
 
       const endTime = Date.now();
       const processingTimeMs = endTime - startTime;

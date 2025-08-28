@@ -174,6 +174,7 @@ async function checkAndTriggerSpacePatterns(
 
 export const spaceAssignmentTask = task({
   id: "space-assignment",
+  maxDuration: 900, // 15 minutes timeout
   run: async (payload: SpaceAssignmentPayload) => {
     const {
       userId,
@@ -471,12 +472,10 @@ async function getStatementsToAnalyze(
     `;
   } else {
     query = `
-      MATCH (s:Statement)
-      WHERE s.userId = $userId 
-        AND s.invalidAt IS NULL
-        AND s.episodeUuid = $episodeId
+      MATCH (e:Episode {uuid: $episodeId, userId: $userId})-[:HAS_PROVENANCE]->(s:Statement)
+      WHERE s.invalidAt IS NULL
       MATCH (s)-[:HAS_SUBJECT]->(subj:Entity)
-      MATCH (s)-[:HAS_PREDICATE]->(pred:Entity)
+      MATCH (s)-[:HAS_PREDICATE]->(pred:Entity)  
       MATCH (s)-[:HAS_OBJECT]->(obj:Entity)
       RETURN s, subj.name as subject, pred.name as predicate, obj.name as object
       ORDER BY s.createdAt DESC
@@ -561,7 +560,7 @@ async function processBatchAI(
     });
 
     // Poll for completion with improved handling
-    const maxPollingTime = 600000; // 10 minutes
+    const maxPollingTime = 780000; // 10 minutes
     const pollInterval = 5000; // 5 seconds
     const startTime = Date.now();
 

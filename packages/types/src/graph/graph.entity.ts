@@ -50,6 +50,7 @@ export interface StatementNode {
   createdAt: Date;
   validAt: Date;
   invalidAt: Date | null;
+  invalidatedBy?: string; // UUID of the episode that invalidated this statement
   attributes: Record<string, any>;
   userId: string;
   space?: string; // Legacy field - deprecated in favor of spaceIds
