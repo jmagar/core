@@ -177,6 +177,7 @@ export class SpaceService {
         name: updates.name,
         description: updates.description,
         icon: updates.icon,
+        status: updates.status,
       },
     });
     try {

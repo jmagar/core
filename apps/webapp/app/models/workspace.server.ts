@@ -1,6 +1,7 @@
 import { type Workspace } from "@core/database";
 import { prisma } from "~/db.server";
 import { sendEmail } from "~/services/email.server";
+import { logger } from "~/services/logger.service";
 import { SpaceService } from "~/services/space.server";
 
 interface CreateWorkspaceDto {
@@ -46,7 +47,11 @@ export async function createWorkspace(
     workspaceId: workspace.id,
   });
 
-  await sendEmail({ email: "welcome", to: user.email });
+  try {
+    await sendEmail({ email: "welcome", to: user.email });
+  } catch (e) {
+    logger.error("Error sending email");
+  }
 
   return workspace;
 }

@@ -21,6 +21,7 @@ export interface UpdateSpaceParams {
   name?: string;
   description?: string;
   icon?: string;
+  status?: string;
 }
 
 export interface SpaceWithStatements extends SpaceNode {

@@ -5,7 +5,11 @@ import {
 } from "~/services/routeBuilders/apiBuilder.server";
 import { SpaceService } from "~/services/space.server";
 import { json } from "@remix-run/node";
-import { createSpace, deleteSpace } from "~/services/graphModels/space";
+import {
+  createSpace,
+  deleteSpace,
+  updateSpace,
+} from "~/services/graphModels/space";
 import { prisma } from "~/db.server";
 import { logger } from "~/services/logger.service";
 import { triggerSpaceAssignment } from "~/trigger/spaces/space-assignment";
@@ -27,6 +31,7 @@ const { loader, action } = createHybridActionApiRoute(
   async ({ authentication, params }) => {
     const userId = authentication.userId;
     const { spaceId } = params;
+    const spaceService = new SpaceService();
 
     // Verify space exists and belongs to user
     const space = await prisma.space.findUnique({
@@ -47,6 +52,8 @@ const { loader, action } = createHybridActionApiRoute(
       space.description?.trim(),
       userId,
     );
+
+    await spaceService.updateSpace(space.id, { status: "pending" }, userId);
 
     logger.info(`Created space ${space.id} successfully`);
 
