@@ -174,7 +174,7 @@ async function checkAndTriggerSpacePatterns(
 
 export const spaceAssignmentTask = task({
   id: "space-assignment",
-  maxDuration: 900, // 15 minutes timeout
+  maxDuration: 1800, // 15 minutes timeout
   run: async (payload: SpaceAssignmentPayload) => {
     const {
       userId,
@@ -550,7 +550,7 @@ async function processBatchAI(
       requests: batchRequests,
       outputSchema: AssignmentResultSchema,
       maxRetries: 3,
-      timeoutMs: 600000, // 10 minutes timeout
+      timeoutMs: 1200000, // 10 minutes timeout
     });
 
     logger.info(`Batch AI job created: ${batchId}`, {
@@ -560,7 +560,7 @@ async function processBatchAI(
     });
 
     // Poll for completion with improved handling
-    const maxPollingTime = 780000; // 10 minutes
+    const maxPollingTime = 1200000; // 13 minutes
     const pollInterval = 5000; // 5 seconds
     const startTime = Date.now();
 
