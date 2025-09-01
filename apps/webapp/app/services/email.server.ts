@@ -86,7 +86,9 @@ export async function scheduleEmail(
 
 export async function sendEmail(data: DeliverEmail) {
   try {
-    return client.send(data);
+    const response = client.send(data);
+
+    return response;
   } catch (e) {
     logger.error(`Error: ${e}`);
   }

@@ -317,6 +317,35 @@ export async function getEpisodeStatements(params: {
 
   return result.map((record) => {
     const stmt = record.get("stmt").properties;
+
+    return {
+      uuid: stmt.uuid,
+      fact: stmt.fact,
+      factEmbedding: stmt.factEmbedding,
+      createdAt: new Date(stmt.createdAt),
+      validAt: new Date(stmt.validAt),
+      invalidAt: stmt.invalidAt ? new Date(stmt.invalidAt) : null,
+      attributes: stmt.attributesJson ? JSON.parse(stmt.attributesJson) : {},
+      userId: stmt.userId,
+    };
+  });
+}
+
+export async function getStatementsInvalidatedByEpisode(params: {
+  episodeUuid: string;
+  userId: string;
+}) {
+  const query = `
+  MATCH (stmt:Statement {invalidatedBy: $episodeUuid})
+  RETURN stmt
+  `;
+
+  const result = await runQuery(query, {
+    episodeUuid: params.episodeUuid,
+  });
+
+  return result.map((record) => {
+    const stmt = record.get("stmt").properties;
     return {
       uuid: stmt.uuid,
       fact: stmt.fact,

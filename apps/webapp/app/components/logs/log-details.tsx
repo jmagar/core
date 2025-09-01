@@ -23,6 +23,7 @@ interface EpisodeFact {
 
 interface EpisodeFactsResponse {
   facts: EpisodeFact[];
+  invalidFacts: EpisodeFact[];
 }
 
 export function LogDetails({
@@ -33,6 +34,7 @@ export function LogDetails({
   log,
 }: LogDetailsProps) {
   const [facts, setFacts] = useState<any[]>([]);
+  const [invalidFacts, setInvalidFacts] = useState<any[]>([]);
   const [factsLoading, setFactsLoading] = useState(false);
   const fetcher = useFetcher<EpisodeFactsResponse>();
 
@@ -50,6 +52,7 @@ export function LogDetails({
       setFactsLoading(false);
       const response = fetcher.data;
       setFacts(response.facts);
+      setInvalidFacts(response.invalidFacts);
     }
   }, [fetcher.data, fetcher.state]);
 
@@ -122,6 +125,33 @@ export function LogDetails({
                           <span>
                             Valid: {new Date(fact.validAt).toLocaleString()}
                           </span>
+                          {fact.invalidAt && (
+                            <span>
+                              Invalid:{" "}
+                              {new Date(fact.invalidAt).toLocaleString()}
+                            </span>
+                          )}
+                          {Object.keys(fact.attributes).length > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {Object.keys(fact.attributes).length} attributes
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {invalidFacts.map((fact) => (
+                      <div
+                        key={fact.uuid}
+                        className="bg-grayAlpha-100 rounded-md p-3"
+                      >
+                        <p className="mb-1 text-sm">{fact.fact}</p>
+                        <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                          {fact.invalidAt && (
+                            <span>
+                              Invalid:{" "}
+                              {new Date(fact.invalidAt).toLocaleString()}
+                            </span>
+                          )}
                           {Object.keys(fact.attributes).length > 0 && (
                             <Badge variant="secondary" className="text-xs">
                               {Object.keys(fact.attributes).length} attributes

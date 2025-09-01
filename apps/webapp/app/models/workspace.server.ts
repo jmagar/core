@@ -48,9 +48,10 @@ export async function createWorkspace(
   });
 
   try {
-    await sendEmail({ email: "welcome", to: user.email });
+    const response = await sendEmail({ email: "welcome", to: user.email });
+    logger.info(`${JSON.stringify(response)}`);
   } catch (e) {
-    logger.error("Error sending email");
+    logger.error(`Error sending email: ${e}`);
   }
 
   return workspace;

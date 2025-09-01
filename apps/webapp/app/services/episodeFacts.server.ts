@@ -1,4 +1,7 @@
-import { getEpisodeStatements } from "~/services/graphModels/episode";
+import {
+  getEpisodeStatements,
+  getStatementsInvalidatedByEpisode,
+} from "~/services/graphModels/episode";
 
 export async function getEpisodeFacts(episodeUuid: string, userId: string) {
   try {
@@ -7,13 +10,27 @@ export async function getEpisodeFacts(episodeUuid: string, userId: string) {
       userId,
     });
 
+    const invalidFacts = await getStatementsInvalidatedByEpisode({
+      episodeUuid,
+      userId,
+    });
+
     return {
       success: true,
-      facts: facts.map(fact => ({
+      facts: facts.map((fact) => ({
         uuid: fact.uuid,
         fact: fact.fact,
         createdAt: fact.createdAt.toISOString(),
         validAt: fact.validAt.toISOString(),
+        invalidAt: fact.invalidAt ? fact.invalidAt.toISOString() : null,
+        attributes: fact.attributes,
+      })),
+      invalidFacts: invalidFacts.map((fact) => ({
+        uuid: fact.uuid,
+        fact: fact.fact,
+        createdAt: fact.createdAt.toISOString(),
+        validAt: fact.validAt.toISOString(),
+        invalidAt: fact.invalidAt ? fact.invalidAt.toISOString() : null,
         attributes: fact.attributes,
       })),
     };
