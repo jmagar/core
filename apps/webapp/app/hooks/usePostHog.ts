@@ -19,7 +19,7 @@ export const usePostHog = (
     if (postHogInitialized.current === true) return;
     if (logging) console.log("Initializing PostHog");
     posthog.init(apiKey, {
-      api_host: "/relay-Xm1a",
+      api_host: "/ph-relay-core20",
       ui_host: "https://us.posthog.com",
       opt_in_site_apps: true,
       debug,

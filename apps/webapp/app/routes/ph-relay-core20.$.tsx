@@ -5,7 +5,7 @@ const ASSET_HOST = "us-assets.i.posthog.com";
 
 const posthogProxy = async (request: Request) => {
   const url = new URL(request.url);
-  const hostname = url.pathname.startsWith("/relay-Xm1a/static/")
+  const hostname = url.pathname.startsWith("/ph-relay-core20/static/")
     ? ASSET_HOST
     : API_HOST;
 
@@ -13,7 +13,7 @@ const posthogProxy = async (request: Request) => {
   newUrl.protocol = "https";
   newUrl.hostname = hostname;
   newUrl.port = "443";
-  newUrl.pathname = newUrl.pathname.replace(/^\/relay-Xm1a/, "");
+  newUrl.pathname = newUrl.pathname.replace(/^\/ph-relay-core20/, "");
 
   const headers = new Headers(request.headers);
   headers.set("host", hostname);
