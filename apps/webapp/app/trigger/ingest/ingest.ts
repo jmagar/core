@@ -1,11 +1,13 @@
 import { queue, task } from "@trigger.dev/sdk";
 import { z } from "zod";
 import { KnowledgeGraphService } from "~/services/knowledgeGraph.server";
+import { linkEpisodeToDocument } from "~/services/graphModels/document";
 
 import { IngestionStatus } from "@core/database";
 import { logger } from "~/services/logger.service";
 import { triggerSpaceAssignment } from "../spaces/space-assignment";
 import { prisma } from "../utils/prisma";
+import { EpisodeType } from "@core/types";
 
 export const IngestBodyRequest = z.object({
   episodeBody: z.string(),
@@ -14,6 +16,9 @@ export const IngestBodyRequest = z.object({
   source: z.string(),
   spaceId: z.string().optional(),
   sessionId: z.string().optional(),
+  type: z
+    .enum([EpisodeType.CONVERSATION, EpisodeType.DOCUMENT])
+    .default(EpisodeType.CONVERSATION),
 });
 
 const ingestionQueue = queue({
@@ -35,7 +40,7 @@ export const ingestTask = task({
     try {
       logger.log(`Processing job for user ${payload.userId}`);
 
-      await prisma.ingestionQueue.update({
+      const ingestionQueue = await prisma.ingestionQueue.update({
         where: { id: payload.queueId },
         data: {
           status: IngestionStatus.PROCESSING,
@@ -54,11 +59,56 @@ export const ingestTask = task({
         prisma,
       );
 
+      // Link episode to document if it's a document chunk
+      if (
+        episodeBody.type === EpisodeType.DOCUMENT &&
+        episodeBody.metadata.documentUuid &&
+        episodeDetails.episodeUuid
+      ) {
+        try {
+          await linkEpisodeToDocument(
+            episodeDetails.episodeUuid,
+            episodeBody.metadata.documentUuid,
+            episodeBody.metadata.chunkIndex || 0,
+          );
+          logger.log(
+            `Linked episode ${episodeDetails.episodeUuid} to document ${episodeBody.metadata.documentUuid} at chunk ${episodeBody.metadata.chunkIndex || 0}`,
+          );
+        } catch (error) {
+          logger.error(`Failed to link episode to document:`, {
+            error,
+            episodeUuid: episodeDetails.episodeUuid,
+            documentUuid: episodeBody.metadata.documentUuid,
+          });
+        }
+      }
+
+      let finalOutput = episodeDetails;
+      let episodeUuids: string[] = episodeDetails.episodeUuid
+        ? [episodeDetails.episodeUuid]
+        : [];
+      let currentStatus: IngestionStatus = IngestionStatus.COMPLETED;
+      if (episodeBody.type === EpisodeType.DOCUMENT) {
+        const currentOutput = ingestionQueue.output as any;
+        currentOutput.episodes.push(episodeDetails);
+        episodeUuids = currentOutput.episodes.map(
+          (episode: any) => episode.episodeUuid,
+        );
+
+        finalOutput = {
+          ...currentOutput,
+        };
+
+        if (currentOutput.episodes.length !== currentOutput.totalChunks) {
+          currentStatus = IngestionStatus.PROCESSING;
+        }
+      }
+
       await prisma.ingestionQueue.update({
         where: { id: payload.queueId },
         data: {
-          output: episodeDetails,
-          status: IngestionStatus.COMPLETED,
+          output: finalOutput,
+          status: currentStatus,
         },
       });
 
@@ -69,12 +119,15 @@ export const ingestTask = task({
           workspaceId: payload.workspaceId,
           episodeId: episodeDetails?.episodeUuid,
         });
-        if (episodeDetails.episodeUuid) {
+        if (
+          episodeDetails.episodeUuid &&
+          currentStatus === IngestionStatus.COMPLETED
+        ) {
           await triggerSpaceAssignment({
             userId: payload.userId,
             workspaceId: payload.workspaceId,
             mode: "episode",
-            episodeId: episodeDetails.episodeUuid,
+            episodeIds: episodeUuids,
           });
         }
       } catch (assignmentError) {

@@ -148,6 +148,8 @@ export const getClusteredGraphData = async (userId: string) => {
          s.uuid as statementUuid,
          s.spaceIds as spaceIds,
          s.fact as fact, 
+         s.invalidAt as invalidAt,
+         s.validAt as validAt,
          s.createdAt as createdAt,
          rel.isEntityToStatement as isEntityToStatement,
          rel.isStatementToEntity as isStatementToEntity`,
@@ -175,6 +177,8 @@ export const getClusteredGraphData = async (userId: string) => {
       const clusterIds = record.get("spaceIds");
       const clusterId = clusterIds ? clusterIds[0] : undefined;
       const fact = record.get("fact");
+      const invalidAt = record.get("invalidAt");
+      const validAt = record.get("validAt");
       const createdAt = record.get("createdAt");
 
       // Create unique edge identifier to avoid duplicates
@@ -195,6 +199,8 @@ export const getClusteredGraphData = async (userId: string) => {
             clusterId,
             nodeType: "Statement",
             fact,
+            invalidAt,
+            validAt,
           }
         : {
             ...sourceProperties,
@@ -209,6 +215,8 @@ export const getClusteredGraphData = async (userId: string) => {
             clusterId,
             nodeType: "Statement",
             fact,
+            invalidAt,
+            validAt,
           }
         : {
             ...targetProperties,
@@ -354,6 +362,12 @@ const initializeSchema = async () => {
     );
     await runQuery(
       "CREATE INDEX entity_user_uuid IF NOT EXISTS FOR (n:Entity) ON (n.userId, n.uuid)",
+    );
+    await runQuery(
+      "CREATE INDEX episode_user_uuid IF NOT EXISTS FOR (n:Episode) ON (n.userId, n.uuid)",
+    );
+    await runQuery(
+      "CREATE INDEX episode_user_id IF NOT EXISTS FOR (n:Episode) ON (n.userId)",
     );
 
     // Create vector indexes for semantic search (if using Neo4j 5.0+)

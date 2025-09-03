@@ -11,6 +11,7 @@ import { SpacePattern } from "~/services/spacePattern.server";
 import { addToQueue } from "~/lib/ingest.server";
 import { redirect } from "@remix-run/node";
 import { SpaceService } from "~/services/space.server";
+import { EpisodeTypeEnum } from "@core/types";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const workspace = await requireWorkpace(request);
@@ -68,6 +69,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
           },
           source: space.name,
           spaceId: space.id,
+          type: EpisodeTypeEnum.CONVERSATION,
         },
         userId,
       );

@@ -97,6 +97,7 @@
     "execa": "^9.6.0",
     "express": "^4.18.1",
     "fast-sort": "^3.4.0",
+    "gpt-tokenizer": "^3.0.1",
     "graphology": "^0.26.0",
     "graphology-layout-force": "^0.2.4",
     "graphology-layout-forceatlas2": "^0.10.1",
@@ -125,6 +126,7 @@
     "remix-themes": "^2.0.4",
     "remix-typedjson": "0.3.1",
     "remix-utils": "^7.7.0",
+    "react-markdown": "10.1.0",
     "sdk": "link:@modelcontextprotocol/sdk",
     "sigma": "^3.0.2",
     "simple-oauth2": "^5.1.0",
@@ -174,10 +176,10 @@
     "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "4.1.7",
+    "tsx": "4.20.4",
     "typescript": "5.8.3",
     "vite": "^6.0.0",
-    "vite-tsconfig-paths": "^4.2.1",
-    "tsx": "4.20.4"
+    "vite-tsconfig-paths": "^4.2.1"
   },
   "engines": {
     "node": ">=20.0.0"

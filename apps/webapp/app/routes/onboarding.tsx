@@ -26,6 +26,7 @@ import { updateUser } from "~/models/user.server";
 import { Copy, Check } from "lucide-react";
 import { addToQueue } from "~/lib/ingest.server";
 import { cn } from "~/lib/utils";
+import { EpisodeTypeEnum } from "@core/types";
 
 const ONBOARDING_STEP_COOKIE = "onboardingStep";
 const onboardingStepCookie = createCookie(ONBOARDING_STEP_COOKIE, {
@@ -75,6 +76,7 @@ export async function action({ request }: ActionFunctionArgs) {
         source: "Core",
         episodeBody: aboutUser,
         referenceTime: new Date().toISOString(),
+        type: EpisodeTypeEnum.CONVERSATION,
       },
       userId,
     );

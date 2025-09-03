@@ -25,7 +25,7 @@ interface SpaceAssignmentPayload {
   workspaceId: string;
   mode: "new_space" | "episode";
   newSpaceId?: string; // For new_space mode
-  episodeId?: string; // For daily_batch mode (default: 1)
+  episodeIds?: string[]; // For daily_batch mode (default: 1)
   batchSize?: number; // Processing batch size
 }
 
@@ -181,7 +181,7 @@ export const spaceAssignmentTask = task({
       workspaceId,
       mode,
       newSpaceId,
-      episodeId,
+      episodeIds,
       batchSize = mode === "new_space"
         ? CONFIG.newSpaceMode.batchSize
         : CONFIG.episodeMode.batchSize,
@@ -191,7 +191,7 @@ export const spaceAssignmentTask = task({
       userId,
       mode,
       newSpaceId,
-      episodeId,
+      episodeIds,
       batchSize,
     });
 
@@ -213,7 +213,7 @@ export const spaceAssignmentTask = task({
       // 2. Get statements to analyze based on mode
       const statements = await getStatementsToAnalyze(userId, mode, {
         newSpaceId,
-        episodeId,
+        episodeIds,
       });
 
       if (statements.length === 0) {
@@ -454,7 +454,7 @@ export const spaceAssignmentTask = task({
 async function getStatementsToAnalyze(
   userId: string,
   mode: "new_space" | "episode",
-  options: { newSpaceId?: string; episodeId?: string },
+  options: { newSpaceId?: string; episodeIds?: string[] },
 ): Promise<StatementData[]> {
   let query: string;
   let params: any = { userId };
@@ -471,16 +471,19 @@ async function getStatementsToAnalyze(
       ORDER BY s.createdAt DESC
     `;
   } else {
+    // Optimized query: Use UNWIND for better performance with IN clause
+    // and combine entity lookups in single pattern
     query = `
-      MATCH (e:Episode {uuid: $episodeId, userId: $userId})-[:HAS_PROVENANCE]->(s:Statement)
+      UNWIND $episodeIds AS episodeId
+      MATCH (e:Episode {uuid: episodeId, userId: $userId})-[:HAS_PROVENANCE]->(s:Statement)
       WHERE s.invalidAt IS NULL
-      MATCH (s)-[:HAS_SUBJECT]->(subj:Entity)
-      MATCH (s)-[:HAS_PREDICATE]->(pred:Entity)  
-      MATCH (s)-[:HAS_OBJECT]->(obj:Entity)
+      MATCH (s)-[:HAS_SUBJECT]->(subj:Entity),
+            (s)-[:HAS_PREDICATE]->(pred:Entity),
+            (s)-[:HAS_OBJECT]->(obj:Entity)
       RETURN s, subj.name as subject, pred.name as predicate, obj.name as object
       ORDER BY s.createdAt DESC
     `;
-    params.episodeId = options.episodeId;
+    params.episodeIds = options.episodeIds;
   }
 
   const result = await runQuery(query, params);

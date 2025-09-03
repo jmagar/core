@@ -82,10 +82,12 @@ export function GraphPopovers({
       }),
     );
 
-    return Object.entries(entityProperties).map(([key, value]) => ({
-      key,
-      value,
-    }));
+    return Object.entries(entityProperties)
+      .map(([key, value]) => ({
+        key,
+        value,
+      }))
+      .filter(({ value }) => value);
   }, [nodePopupContent]);
 
   return (

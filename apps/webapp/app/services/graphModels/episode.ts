@@ -1,5 +1,5 @@
 import { runQuery } from "~/lib/neo4j.server";
-import type { EntityNode, EpisodicNode } from "@core/types";
+import { type EntityNode, EpisodeType, type EpisodicNode } from "@core/types";
 
 export async function saveEpisode(episode: EpisodicNode): Promise<string> {
   const query = `
@@ -83,8 +83,7 @@ export async function getRecentEpisodes(params: {
   source?: string;
   sessionId?: string;
 }): Promise<EpisodicNode[]> {
-  let filters = `WHERE e.validAt <= $referenceTime
-  AND e.userId = $userId`;
+  let filters = `WHERE e.validAt <= $referenceTime`;
 
   if (params.source) {
     filters += `\nAND e.source = $source`;
@@ -95,9 +94,11 @@ export async function getRecentEpisodes(params: {
   }
 
   const query = `
-    MATCH (e:Episode)
+    MATCH (e:Episode{userId: $userId})
     ${filters}
-    RETURN e
+    MATCH (e)-[:HAS_PROVENANCE]->(s:Statement)
+    WHERE s.invalidAt IS NULL
+    RETURN DISTINCT e
     ORDER BY e.validAt DESC
     LIMIT ${params.limit}
   `;
@@ -126,6 +127,7 @@ export async function getRecentEpisodes(params: {
       userId: episode.userId,
       space: episode.space,
       sessionId: episode.sessionId,
+      documentId: episode.documentId,
     };
   });
 }
@@ -170,6 +172,7 @@ export async function searchEpisodesByEmbedding(params: {
         ? JSON.parse(episode.attributesJson)
         : {},
       userId: episode.userId,
+      documentId: episode.documentId,
     };
   });
 }
@@ -307,6 +310,7 @@ export async function getEpisodeStatements(params: {
 }) {
   const query = `
   MATCH (episode:Episode {uuid: $episodeUuid, userId: $userId})-[:HAS_PROVENANCE]->(stmt:Statement)
+  WHERE stmt.invalidAt IS NULL
   RETURN stmt
   `;
 

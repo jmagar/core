@@ -4,6 +4,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Badge } from "../ui/badge";
 import { type LogItem } from "~/hooks/use-logs";
+import Markdown from "react-markdown";
 
 interface LogDetailsProps {
   open: boolean;
@@ -79,13 +80,9 @@ export function LogDetails({
 
         <div className="max-h-[70vh] overflow-auto p-4 pt-0">
           {/* Log Content */}
-          <div className="mb-4">
+          <div className="mb-4 text-sm break-words whitespace-pre-wrap">
             <div className="rounded-md">
-              <p
-                className="text-sm break-words whitespace-pre-wrap"
-                style={{ lineHeight: "1.5" }}
-                dangerouslySetInnerHTML={{ __html: text || "No log details." }}
-              />
+              <Markdown>{text}</Markdown>
             </div>
           </div>
 

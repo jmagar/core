@@ -1,4 +1,4 @@
-import { type Message } from "@core/types";
+import { EpisodeTypeEnum, type Message } from "@core/types";
 import { addToQueue } from "./queue";
 import { triggerWebhookDelivery } from "../webhooks/webhook-delivery";
 import { logger } from "@trigger.dev/sdk";
@@ -149,6 +149,7 @@ export const createActivities = async ({
         episodeBody: message.data.text,
         referenceTime: new Date().toISOString(),
         source: integrationAccount?.integrationDefinition.slug,
+        type: EpisodeTypeEnum.CONVERSATION,
       };
 
       const queueResponse = await addToQueue(

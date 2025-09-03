@@ -747,7 +747,7 @@ export function createHybridActionApiRoute<
 
   async function loader({ request, params }: LoaderFunctionArgs) {
     if (corsStrategy !== "none" && request.method.toUpperCase() === "OPTIONS") {
-      return apiCors(request, json({}));
+      return apiCors(request, json({ origin: "*" }));
     }
 
     return new Response(null, { status: 405 });

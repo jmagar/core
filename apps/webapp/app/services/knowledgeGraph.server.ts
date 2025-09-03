@@ -6,6 +6,8 @@ import {
   type EpisodicNode,
   type StatementNode,
   type Triple,
+  EpisodeTypeEnum,
+  type EpisodeType,
 } from "@core/types";
 import { logger } from "./logger.service";
 import { ClusteringService } from "./clustering.server";
@@ -42,13 +44,14 @@ import {
   searchStatementsByEmbedding,
 } from "./graphModels/statement";
 import { getEmbedding, makeModelCall } from "~/lib/model.server";
+import { runQuery } from "~/lib/neo4j.server";
 import {
   Apps,
   getNodeTypes,
   getNodeTypesString,
   isPresetType,
 } from "~/utils/presets/nodes";
-import { normalizePrompt } from "./prompts";
+import { normalizePrompt, normalizeDocumentPrompt } from "./prompts";
 import { type PrismaClient } from "@prisma/client";
 
 // Default number of previous episodes to retrieve for context
@@ -63,6 +66,162 @@ export class KnowledgeGraphService {
 
   async getEmbedding(text: string) {
     return getEmbedding(text);
+  }
+
+  /**
+   * Invalidate statements from a previous document version that are no longer supported
+   * by the new document content using semantic similarity analysis
+   */
+  async invalidateStatementsFromPreviousDocumentVersion(params: {
+    previousDocumentUuid: string;
+    newDocumentContent: string;
+    userId: string;
+    invalidatedBy: string;
+    semanticSimilarityThreshold?: number;
+  }): Promise<{
+    invalidatedStatements: string[];
+    preservedStatements: string[];
+    totalStatementsAnalyzed: number;
+  }> {
+    const threshold = params.semanticSimilarityThreshold || 0.75; // Lower threshold for document-level analysis
+    const invalidatedStatements: string[] = [];
+    const preservedStatements: string[] = [];
+
+    // Step 1: Get all statements from the previous document version
+    const previousStatements = await this.getStatementsFromDocument(
+      params.previousDocumentUuid,
+      params.userId,
+    );
+
+    if (previousStatements.length === 0) {
+      return {
+        invalidatedStatements: [],
+        preservedStatements: [],
+        totalStatementsAnalyzed: 0,
+      };
+    }
+
+    logger.log(
+      `Analyzing ${previousStatements.length} statements from previous document version`,
+    );
+
+    // Step 2: Generate embedding for new document content
+    const newDocumentEmbedding = await this.getEmbedding(
+      params.newDocumentContent,
+    );
+
+    // Step 3: For each statement, check if it's still semantically supported by new content
+    for (const statement of previousStatements) {
+      try {
+        // Generate embedding for the statement fact
+        const statementEmbedding = await this.getEmbedding(statement.fact);
+
+        // Calculate semantic similarity between statement and new document
+        const semanticSimilarity = this.calculateCosineSimilarity(
+          statementEmbedding,
+          newDocumentEmbedding,
+        );
+
+        if (semanticSimilarity < threshold) {
+          invalidatedStatements.push(statement.uuid);
+          logger.log(
+            `Invalidating statement: "${statement.fact}" (similarity: ${semanticSimilarity.toFixed(3)})`,
+          );
+        } else {
+          preservedStatements.push(statement.uuid);
+          logger.log(
+            `Preserving statement: "${statement.fact}" (similarity: ${semanticSimilarity.toFixed(3)})`,
+          );
+        }
+      } catch (error) {
+        logger.error(`Error analyzing statement ${statement.uuid}:`, { error });
+        // On error, be conservative and invalidate
+        invalidatedStatements.push(statement.uuid);
+      }
+    }
+
+    // Step 4: Bulk invalidate the selected statements
+    if (invalidatedStatements.length > 0) {
+      await invalidateStatements({
+        statementIds: invalidatedStatements,
+        invalidatedBy: params.invalidatedBy,
+      });
+
+      logger.log(`Document-level invalidation completed`, {
+        previousDocumentUuid: params.previousDocumentUuid,
+        totalAnalyzed: previousStatements.length,
+        invalidated: invalidatedStatements.length,
+        preserved: preservedStatements.length,
+        threshold,
+      });
+    }
+
+    return {
+      invalidatedStatements,
+      preservedStatements,
+      totalStatementsAnalyzed: previousStatements.length,
+    };
+  }
+
+  /**
+   * Get all statements that were created from episodes linked to a specific document
+   */
+  private async getStatementsFromDocument(
+    documentUuid: string,
+    userId: string,
+  ): Promise<StatementNode[]> {
+    const query = `
+      MATCH (doc:Document {uuid: $documentUuid, userId: $userId})-[:CONTAINS_CHUNK]->(episode:Episode)
+      MATCH (episode)-[:HAS_PROVENANCE]->(stmt:Statement)
+      RETURN stmt
+    `;
+
+    const result = await runQuery(query, {
+      documentUuid,
+      userId,
+    });
+
+    return result.map((record) => {
+      const stmt = record.get("stmt").properties;
+      return {
+        uuid: stmt.uuid,
+        fact: stmt.fact,
+        factEmbedding: stmt.factEmbedding || [],
+        createdAt: new Date(stmt.createdAt),
+        validAt: new Date(stmt.validAt),
+        invalidAt: stmt.invalidAt ? new Date(stmt.invalidAt) : null,
+        attributes: stmt.attributesJson ? JSON.parse(stmt.attributesJson) : {},
+        userId: stmt.userId,
+      };
+    });
+  }
+
+  /**
+   * Calculate cosine similarity between two embedding vectors
+   */
+  private calculateCosineSimilarity(vecA: number[], vecB: number[]): number {
+    if (vecA.length !== vecB.length) {
+      throw new Error("Vector dimensions must match");
+    }
+
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+
+    for (let i = 0; i < vecA.length; i++) {
+      dotProduct += vecA[i] * vecB[i];
+      normA += vecA[i] * vecA[i];
+      normB += vecB[i] * vecB[i];
+    }
+
+    normA = Math.sqrt(normA);
+    normB = Math.sqrt(normB);
+
+    if (normA === 0 || normB === 0) {
+      return 0;
+    }
+
+    return dotProduct / (normA * normB);
   }
 
   /**
@@ -110,6 +269,7 @@ export class KnowledgeGraphService {
         prisma,
         new Date(params.referenceTime),
         sessionContext,
+        params.type,
       );
 
       const normalizedTime = Date.now() - startTime;
@@ -251,9 +411,9 @@ export class KnowledgeGraphService {
       logger.log(`Saved triples in ${saveTriplesTime - updatedTriplesTime} ms`);
 
       // Invalidate invalidated statements
-      await invalidateStatements({ 
-        statementIds: invalidatedStatements, 
-        invalidatedBy: episode.uuid 
+      await invalidateStatements({
+        statementIds: invalidatedStatements,
+        invalidatedBy: episode.uuid,
       });
 
       const endTime = Date.now();
@@ -1146,6 +1306,7 @@ export class KnowledgeGraphService {
     prisma: PrismaClient,
     episodeTimestamp?: Date,
     sessionContext?: string,
+    contentType?: EpisodeType,
   ) {
     let appEnumValues: Apps[] = [];
     if (Apps[source.toUpperCase() as keyof typeof Apps]) {
@@ -1171,7 +1332,12 @@ export class KnowledgeGraphService {
         episodeTimestamp?.toISOString() || new Date().toISOString(),
       sessionContext,
     };
-    const messages = normalizePrompt(context);
+
+    // Route to appropriate normalization prompt based on content type
+    const messages =
+      contentType === EpisodeTypeEnum.DOCUMENT
+        ? normalizeDocumentPrompt(context)
+        : normalizePrompt(context);
     let responseText = "";
     await makeModelCall(false, messages, (text) => {
       responseText = text;

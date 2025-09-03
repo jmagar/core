@@ -16,7 +16,9 @@ async function init() {
     const build = viteDevServer
         ? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
         : await import("./build/server/index.js");
-    const module = build.entry?.module;
+    const module = viteDevServer
+        ? (await build()).entry.module
+        : build.entry?.module;
     remixHandler = createRequestHandler({ build });
     const app = express();
     app.use(compression());

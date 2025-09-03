@@ -4,7 +4,11 @@ import { useEffect, useRef } from "react";
 
 import { useOptionalUser, useUserChanged } from "./useUser";
 
-export const usePostHog = (apiKey?: string, logging = false, debug = false): void => {
+export const usePostHog = (
+  apiKey?: string,
+  logging = false,
+  debug = false,
+): void => {
   const postHogInitialized = useRef(false);
   const location = useLocation();
   const user = useOptionalUser();
@@ -15,7 +19,7 @@ export const usePostHog = (apiKey?: string, logging = false, debug = false): voi
     if (postHogInitialized.current === true) return;
     if (logging) console.log("Initializing PostHog");
     posthog.init(apiKey, {
-      api_host: "https://eu.posthog.com",
+      api_host: "https://us.i.posthog.com",
       opt_in_site_apps: true,
       debug,
       loaded: function (posthog) {

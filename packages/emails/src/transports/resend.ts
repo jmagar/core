@@ -27,7 +27,7 @@ export class ResendMailTransport implements MailTransport {
     if (result.error) {
       console.log(result);
       console.error(
-        `Failed to send email to ${to}, ${subject}. Error ${result.error.name}: ${result.error.message}`
+        `Failed to send email  to ${to}, ${subject}. Error ${result.error.name}: ${result.error.message}`
       );
       throw new EmailError(result.error);
     }
@@ -44,7 +44,7 @@ export class ResendMailTransport implements MailTransport {
 
     if (result.error) {
       console.error(
-        `Failed to send email to ${to}, ${subject}. Error ${result.error.name}: ${result.error.message}`
+        `Failed to send email plain to ${to}, ${subject}. Error ${result.error.name}: ${result.error.message}`
       );
       throw new EmailError(result.error);
     }

@@ -9,6 +9,7 @@ import { addToQueue } from "~/lib/ingest.server";
 import { SearchService } from "~/services/search.server";
 import { handleTransport } from "~/utils/mcp";
 import { SpaceService } from "~/services/space.server";
+import { EpisodeTypeEnum } from "@core/types";
 
 // Map to store transports by session ID with cleanup tracking
 const transports: {
@@ -124,6 +125,7 @@ const handleMCPRequest = async (
                 episodeBody: args.message,
                 referenceTime: new Date().toISOString(),
                 source,
+                type: EpisodeTypeEnum.CONVERSATION,
               },
               userId,
             );

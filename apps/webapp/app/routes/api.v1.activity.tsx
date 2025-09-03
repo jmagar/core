@@ -6,6 +6,7 @@ import { addToQueue } from "~/lib/ingest.server";
 import { prisma } from "~/db.server";
 import { logger } from "~/services/logger.service";
 import { triggerWebhookDelivery } from "~/trigger/webhooks/webhook-delivery";
+import { EpisodeTypeEnum } from "@core/types";
 
 const ActivityCreateSchema = z.object({
   text: z.string().min(1, "Text is required"),
@@ -56,6 +57,7 @@ const { action, loader } = createActionApiRoute(
         episodeBody: body.text,
         referenceTime: new Date().toISOString(),
         source: body.source,
+        type: EpisodeTypeEnum.CONVERSATION,
       };
 
       const queueResponse = await addToQueue(

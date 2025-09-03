@@ -20,7 +20,7 @@ export async function apiCors(
     return response;
   }
 
-  return cors(request, response, options);
+  return cors(request, response, { ...options });
 }
 
 export function makeApiCors(

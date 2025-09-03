@@ -1,8 +1,10 @@
 // lib/ingest.queue.ts
 import { IngestionStatus } from "@core/database";
+import { EpisodeType } from "@core/types";
 import { type z } from "zod";
 import { prisma } from "~/db.server";
 import { type IngestBodyRequest, ingestTask } from "~/trigger/ingest/ingest";
+import { ingestDocumentTask } from "~/trigger/ingest/ingest-document";
 
 export const addToQueue = async (
   body: z.infer<typeof IngestBodyRequest>,
@@ -35,16 +37,38 @@ export const addToQueue = async (
     },
   });
 
-  const handler = await ingestTask.trigger(
-    { body, userId, workspaceId: user.Workspace.id, queueId: queuePersist.id },
-    {
-      queue: "ingestion-queue",
-      concurrencyKey: userId,
-      tags: [user.id, queuePersist.id],
-    },
-  );
+  let handler;
+  if (body.type === EpisodeType.DOCUMENT) {
+    handler = await ingestDocumentTask.trigger(
+      {
+        body,
+        userId,
+        workspaceId: user.Workspace.id,
+        queueId: queuePersist.id,
+      },
+      {
+        queue: "document-ingestion-queue",
+        concurrencyKey: userId,
+        tags: [user.id, queuePersist.id],
+      },
+    );
+  } else if (body.type === EpisodeType.CONVERSATION) {
+    handler = await ingestTask.trigger(
+      {
+        body,
+        userId,
+        workspaceId: user.Workspace.id,
+        queueId: queuePersist.id,
+      },
+      {
+        queue: "ingestion-queue",
+        concurrencyKey: userId,
+        tags: [user.id, queuePersist.id],
+      },
+    );
+  }
 
-  return { id: handler.id, token: handler.publicAccessToken };
+  return { id: handler?.id, token: handler?.publicAccessToken };
 };
 
 export { IngestBodyRequest };

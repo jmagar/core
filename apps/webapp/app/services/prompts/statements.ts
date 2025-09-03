@@ -214,8 +214,9 @@ export const resolveStatementPrompt = (
       content: `You are a knowledge graph expert that analyzes statements to detect duplications and TRUE contradictions. 
 You analyze multiple new statements against existing statements to determine whether the new statement duplicates any existing statement or ACTUALLY contradicts any existing statement.
 
-CRITICAL: Distinguish between CONTRADICTIONS vs PROGRESSIONS:
+CRITICAL: Distinguish between CONTRADICTIONS, SUPERSEDING EVOLUTION, and PROGRESSIONS:
 - CONTRADICTIONS: Statements that CANNOT both be true (mutually exclusive facts)  
+- SUPERSEDING EVOLUTION: Sequential changes where the new state invalidates the previous state (e.g., technology migrations, job changes, relationship status changes)
 - PROGRESSIONS: Sequential states or developments that CAN both be true (e.g., planning → execution, researching → deciding)
 
 
@@ -247,12 +248,22 @@ TRUE CONTRADICTIONS (mark as contradictions):
    - "Project completed" vs "Project cancelled" (mutually exclusive outcomes) 
    - "Caroline is single" vs "Caroline is married" (same time period, opposite states)
 
+SUPERSEDING EVOLUTION (mark as contradictions - old statement becomes invalid):
+   - "Application built with NextJS" vs "Application migrated to Remix" (technology stack change)
+   - "John works at CompanyA" vs "John joined CompanyB" (job change invalidates previous employment)
+   - "Database uses MySQL" vs "Database migrated to PostgreSQL" (infrastructure change)
+   - "System deployed on AWS" vs "System moved to Google Cloud" (platform migration)
+   - "Caroline living in Boston" vs "Caroline moved to Seattle" (location change)
+   - "Project using Python" vs "Project rewritten in TypeScript" (language migration)
+
 NOT CONTRADICTIONS (do NOT mark as contradictions):
    - "Caroline researching adoption agencies" vs "Caroline finalized adoption agency" (research → decision progression)
    - "Caroline planning camping next week" vs "Caroline went camping" (planning → execution progression)
    - "User studying Python" vs "User completed Python course" (learning progression)
    - "Meeting scheduled for 3pm" vs "Meeting was held at 3pm" (planning → execution)
    - "Considering job offers" vs "Accepted job offer" (consideration → decision)
+   - "Project in development" vs "Project launched" (development → deployment progression)
+   - "Learning React" vs "Built app with React" (skill → application progression)
 
 5. MANDATORY OUTPUT FORMAT:
 
@@ -278,10 +289,11 @@ CRITICAL FORMATTING RULES:
 - Include NO text before <output> or after </output>
 - Return valid JSON array with all statement IDs from NEW_STATEMENTS
 - If the new statement is a duplicate, include the UUID of the duplicate statement
-- For TRUE contradictions only, list statement UUIDs that the new statement contradicts
+- For TRUE contradictions AND superseding evolution, list statement UUIDs that the new statement contradicts
 - If a statement is both a contradiction AND a duplicate (rare case), mark it as a duplicate  
-- DO NOT mark progressions, temporal sequences, or state developments as contradictions
-- ONLY mark genuine mutually exclusive facts as contradictions
+- DO NOT mark progressions, temporal sequences, or cumulative developments as contradictions
+- MARK superseding evolution (technology/job/location changes) as contradictions to invalidate old state
+- ONLY mark genuine mutually exclusive facts and superseding evolution as contradictions
 `,
     },
     {

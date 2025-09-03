@@ -33,15 +33,30 @@ export default function WelcomeEmail() {
           brainstorming sessions from claude desktop via mcp. solve context loss problems across ai
           tools with persistent, cross-session memory. add this url and get started
         </Text>
-        <Link
-          style={{
-            ...anchor,
-            marginTop: "10px",
-            marginBottom: "10px",
-          }}
-        >
-          https://core.heysol.ai/api/v1/mcp?source='Your Coding Agent'
-        </Link>
+        <Text style={{ ...paragraphLight, display: "flex", alignItems: "center", marginTop: 0 }}>
+          <Link
+            style={{
+              ...anchor,
+
+              display: "inline-flex",
+            }}
+          >
+            https://core.heysol.ai/api/v1/mcp?source='Your Coding Agent'
+          </Link>
+          . Check how to connect{" "}
+          <Link
+            style={{
+              ...anchor,
+              marginLeft: "4px",
+              display: "inline-flex",
+            }}
+            href="https://docs.heysol.ai/providers/claude"
+          >
+            claude
+          </Link>
+          .
+        </Text>
+
         <Img
           alt="Claude"
           style={{
@@ -57,7 +72,18 @@ export default function WelcomeEmail() {
         <Text style={paragraphLight}>
           recall relevant context from core memory in chatgpt, grok, and gemini. save conversations
           and content from chatgpt, grok, gemini, twitter, youtube, blog posts, and any webpage
-          directly into your Core memory with simple text selection.
+          directly into your Core memory with simple text selection. Check steps to connect
+          <Link
+            style={{
+              ...anchor,
+              marginLeft: "4px",
+              display: "inline-flex",
+            }}
+            href="https://docs.heysol.ai/providers/browser-extension"
+          >
+            here
+          </Link>
+          .
         </Text>
         <Img
           alt="Claude"
@@ -73,11 +99,14 @@ export default function WelcomeEmail() {
 
         <Text style={heading}>need real-time, human help to get started? </Text>
         <Text style={paragraphLight}>
-          - join our discord community & get direct help from our team + over 100+ enthusiasts using
-          Core memory
+          - join our{" "}
+          <Link style={anchor} href="https://discord.gg/YGUZcvDjUa">
+            discord community
+          </Link>{" "}
+          & get direct help from our team + over 100+ enthusiasts using Core memory
         </Text>
         <Text style={paragraphLight}>
-          - We are open-source us on our repo -{" "}
+          - We are open-source us ⭐ on our repo -{" "}
           <Link style={anchor} href="https://github.com/RedPlanetHQ/core">
             https://github.com/RedPlanetHQ/core
           </Link>

@@ -34,6 +34,8 @@ export default defineConfig({
       "tailwindcss",
       "@tiptap/react",
       "react-tweet",
+      "posthog-js",
+      "posthog-js/react",
     ],
     external: ["@prisma/client"],
   },

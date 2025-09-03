@@ -513,7 +513,7 @@ export const GraphClustering = forwardRef<
       } else if (complexity < 500) {
         durationSeconds = 4.0;
       } else {
-        durationSeconds = Math.min(8, 5 + (complexity - 500) * 0.006);
+        durationSeconds = Math.min(20, 5 + (complexity - 500) * 0.006);
       }
 
       return {

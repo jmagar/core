@@ -1,6 +1,5 @@
 import type { User } from "~/models/user.server";
 import { createWorkspace } from "~/models/workspace.server";
-import { singleton } from "~/utils/singleton";
 
 export async function postAuthentication({
   user,
