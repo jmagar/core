@@ -292,7 +292,7 @@ async function generateSpaceSummary(
       spaceId: space.uuid,
       spaceName: space.name,
       spaceDescription: space.description as string,
-      statementCount: statements.length,
+      statementCount: existingSummary?.statementCount ? existingSummary?.statementCount + statements.length : statements.length,
       summary: summaryResult.summary,
       keyEntities: summaryResult.keyEntities || [],
       themes: summaryResult.themes,
@@ -485,6 +485,7 @@ async function getExistingSummary(spaceId: string): Promise<{
   summary: string;
   themes: string[];
   lastUpdated: Date;
+  statementCount: number;
 } | null> {
   try {
     const existingSummary = await getSpace(spaceId);
@@ -493,7 +494,8 @@ async function getExistingSummary(spaceId: string): Promise<{
       return {
         summary: existingSummary.summary,
         themes: existingSummary.themes,
-        lastUpdated: existingSummary.updatedAt,
+        lastUpdated: existingSummary.lastPatternTrigger,
+        statementCount: existingSummary.statementCount,
       };
     }
 
