@@ -14,6 +14,10 @@ export function dashboardPath() {
   return `/home/dashboard`;
 }
 
+export function activityPath() {
+  return `/home/logs`;
+}
+
 export function conversationPath() {
   return `/home/conversation`;
 }

@@ -379,10 +379,10 @@ export async function invalidateStatement({
       RETURN statement
     `;
 
-  const params = { 
-    statementId, 
+  const params = {
+    statementId,
     invalidAt,
-    ...(invalidatedBy && { invalidatedBy })
+    ...(invalidatedBy && { invalidatedBy }),
   };
   const result = await runQuery(query, params);
 

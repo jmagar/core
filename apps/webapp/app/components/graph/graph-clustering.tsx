@@ -46,6 +46,8 @@ export interface GraphClusteringProps {
   labelColorMap?: Map<string, number>;
   showClusterLabels?: boolean;
   enableClusterColors?: boolean;
+  // Change this later
+  forOnboarding?: boolean;
 }
 
 export interface GraphClusteringRef {
@@ -88,6 +90,7 @@ export const GraphClustering = forwardRef<
       labelColorMap: externalLabelColorMap,
       showClusterLabels = true,
       enableClusterColors = true,
+      forOnboarding,
     },
     ref,
   ) => {
@@ -101,6 +104,7 @@ export const GraphClustering = forwardRef<
     const selectedNodeRef = useRef<string | null>(null);
     const selectedEdgeRef = useRef<string | null>(null);
     const selectedClusterRef = useRef<string | null>(null);
+    const size = forOnboarding ? 16 : 4;
 
     // Create cluster color mapping
     const clusterColorMap = useMemo(() => {
@@ -236,7 +240,7 @@ export const GraphClustering = forwardRef<
               ? triplet.source.value.split(/\s+/).slice(0, 4).join(" ") +
                 (triplet.source.value.split(/\s+/).length > 4 ? " ..." : "")
               : "",
-            size: isStatementNode ? 4 : 2, // Statement nodes slightly larger
+            size: isStatementNode ? size : size / 2, // Statement nodes slightly larger
             color: nodeColor,
             x: width,
             y: height,
@@ -260,7 +264,7 @@ export const GraphClustering = forwardRef<
               ? triplet.target.value.split(/\s+/).slice(0, 4).join(" ") +
                 (triplet.target.value.split(/\s+/).length > 4 ? " ..." : "")
               : "",
-            size: isStatementNode ? 4 : 2, // Statement nodes slightly larger
+            size: isStatementNode ? size : size / 2, // Statement nodes slightly larger
             color: nodeColor,
             x: width,
             y: height,
@@ -329,7 +333,7 @@ export const GraphClustering = forwardRef<
 
         graph.setNodeAttribute(node, "highlighted", false);
         graph.setNodeAttribute(node, "color", originalColor);
-        graph.setNodeAttribute(node, "size", isStatementNode ? 4 : 2);
+        graph.setNodeAttribute(node, "size", isStatementNode ? size : size / 2);
         graph.setNodeAttribute(node, "zIndex", 1);
       });
       graph.forEachEdge((edge) => {
@@ -519,7 +523,7 @@ export const GraphClustering = forwardRef<
       return {
         scalingRatio: Math.round(scalingRatio * 10) / 10,
         gravity: Math.round(gravity * 10) / 10,
-        duration: Math.round(durationSeconds * 100) / 100, // in seconds
+        duration: forOnboarding ? 1 : Math.round(durationSeconds * 100) / 100, // in seconds
       };
     }, []);
 
@@ -661,7 +665,11 @@ export const GraphClustering = forwardRef<
         });
 
         layout.start();
-        setTimeout(() => layout.stop(), (optimalParams.duration ?? 2) * 1000);
+        if (!forOnboarding) {
+          setTimeout(() => layout.stop(), (optimalParams.duration ?? 2) * 1000);
+        } else {
+          setTimeout(() => layout.stop(), 500);
+        }
       }
 
       // Create Sigma instance
@@ -673,7 +681,9 @@ export const GraphClustering = forwardRef<
         edgeProgramClasses: {
           "edges-fast": EdgeLineProgram,
         },
-        renderLabels: false,
+        renderLabels: true,
+        labelRenderedSizeThreshold: 15, // labels appear when node size >= 10px
+
         enableEdgeEvents: true,
         minCameraRatio: 0.01,
         defaultDrawNodeHover: drawHover,
@@ -692,12 +702,6 @@ export const GraphClustering = forwardRef<
             .animate(sigma.getCamera().getState(), { duration: 750 });
         }, 100);
       }
-
-      // Update cluster labels after any camera movement
-      sigma.getCamera().on("updated", () => {
-        if (showClusterLabels) {
-        }
-      });
 
       // Drag and drop implementation (same as original)
       let draggedNode: string | null = null;
@@ -841,8 +845,8 @@ export const GraphClustering = forwardRef<
         ref={containerRef}
         className=""
         style={{
-          width: `${width}px`,
-          height: `${height}px`,
+          width: forOnboarding ? "100%" : `${width}px`,
+          height: forOnboarding ? "100%" : `${height}px`,
           borderRadius: "8px",
           cursor: "grab",
           fontSize: "12px",

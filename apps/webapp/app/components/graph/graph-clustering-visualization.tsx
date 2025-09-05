@@ -24,6 +24,7 @@ export interface GraphClusteringVisualizationProps {
   selectedClusterId?: string | null;
   onClusterSelect?: (clusterId: string) => void;
   singleClusterView?: boolean;
+  forOnboarding?: boolean;
 }
 
 export const GraphClusteringVisualization = forwardRef<
@@ -41,6 +42,7 @@ export const GraphClusteringVisualization = forwardRef<
       selectedClusterId,
       onClusterSelect,
       singleClusterView,
+      forOnboarding,
     },
     ref,
   ) => {
@@ -265,6 +267,7 @@ export const GraphClusteringVisualization = forwardRef<
             labelColorMap={sharedLabelColorMap}
             showClusterLabels={!selectedClusterId} // Show cluster labels when not filtering
             enableClusterColors={true} // Always enable cluster colors
+            forOnboarding={forOnboarding}
           />
         ) : (
           <div className="flex h-full items-center justify-center">
