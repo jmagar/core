@@ -111,6 +111,7 @@ export default function WelcomeEmail() {
             https://github.com/RedPlanetHQ/core
           </Link>
         </Text>
+
         <Footer />
       </Body>
     </Html>

@@ -79,7 +79,7 @@ export class EmailClient {
 
       case "welcome":
         return {
-          subject: `welcome to core`,
+          subject: `Your CORE setup is ready ⚡`,
           component: <WelcomeEmail />,
         };
     }
