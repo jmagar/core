@@ -111,6 +111,26 @@ export class SpaceService {
     });
   }
 
+  async getSpaceByName(name: string, userId: string) {
+    const user = await prisma.user.findFirst({
+      where: {
+        id: userId,
+      },
+      include: {
+        Workspace: true,
+      },
+    });
+
+    const space = await prisma.space.findFirst({
+      where: {
+        name: name,
+        workspaceId: user?.Workspace?.id,
+      },
+    });
+
+    return space;
+  }
+
   /**
    * Get a specific space by ID
    */

@@ -52,15 +52,19 @@ Follow these instructions:
    - predicate: The relationship type (can be a descriptive phrase)
    - target: The object entity (MUST be from AVAILABLE ENTITIES)
 
-EXTRACT NEW MEANINGFUL RELATIONSHIPS:
+EXTRACT NEW MEANINGFUL RELATIONSHIPS AND CHARACTERISTICS:
 - Extract meaningful relationships between available entities that are NOT already captured in previous episodes
+- Extract individual entity characteristics, roles, and properties as standalone facts
 - Use predicates that accurately describe new relationships between entities
 - Be creative but precise in identifying NEW relationships - focus on value-adding connections
 - **HIGHEST PRIORITY**: Entities with identical names but different types MUST be connected with explicit relationship statements
 - **MANDATORY**: When you find entities like "John (Person)" and "John (Company)", create explicit relationships such as "John" "owns" "John" or "John" "founded" "John"
+- **ROLE/CHARACTERISTIC EXTRACTION**: Always extract roles, professions, titles, and key characteristics as separate statements
 - Look for both explicit and implicit NEW relationships mentioned in the text
 - **FILTER OUT**: Relationships already established in previous episodes unless they represent updates or changes
 - Common relationship types include (but are not limited to):
+  * **Roles and professions** (e.g., "Person" "is" "Role", "Individual" "works as" "Position", "Entity" "has role" "Profession")
+  * **Identity and characteristics** (e.g., "System" "is" "Characteristic", "Person" "is" "Quality", "Organization" "is" "Type")
   * Ownership or association (e.g., "Alice" "owns" "Restaurant")
   * Participation or attendance (e.g., "Team" "participates in" "Tournament")
   * Personal connections (e.g., "Sarah" "works with" "Michael")
@@ -157,10 +161,11 @@ IMPORTANT RULES:
 - **OUTPUT FORMAT**: Always wrap output in tags <output> </output>
 
 Example of CORRECT usage:
-If AVAILABLE ENTITIES contains ["John", "Max", "Wedding", "John (Company)"], you can create:
-- "John" "attends" "Wedding" ✓ (if not already in previous episodes)
-- "Max" "married to" "Tina" with timespan attribute ✓ (if new relationship)
-- "John" "founded" "John (Company)" ✓ (PRIORITY: same name, different types)
+If AVAILABLE ENTITIES contains ["Person", "Individual", "Event", "Organization", "Role"], you can create:
+- "Person" "is" "Role" ✓ (PRIORITY: role/characteristic extraction)
+- "Person" "attends" "Event" ✓ (if not already in previous episodes)
+- "Individual" "married to" "Person" with timespan attribute ✓ (if new relationship)
+- "Person" "founded" "Organization" ✓ (PRIORITY: same name, different types when applicable)
 
 Example of CORRECT Duration/TemporalContext usage:
 If AVAILABLE ENTITIES contains ["Caroline", "friends", "4 years", "since moving", "breakup"]:

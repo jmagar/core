@@ -23,12 +23,12 @@ export interface ChunkedDocument {
 
 /**
  * Document chunking service that splits large documents into semantic chunks
- * Targets 10-15k tokens per chunk with natural paragraph boundaries
+ * Targets 1-3k tokens per chunk for better entity extraction with natural paragraph boundaries
  */
 export class DocumentChunker {
-  private readonly TARGET_CHUNK_SIZE = 12500; // Middle of 10-15k range
-  private readonly MIN_CHUNK_SIZE = 10000;
-  private readonly MAX_CHUNK_SIZE = 15000;
+  private readonly TARGET_CHUNK_SIZE = 3000; // Much smaller for better entity extraction
+  private readonly MIN_CHUNK_SIZE = 1000;
+  private readonly MAX_CHUNK_SIZE = 5000;
   private readonly MIN_PARAGRAPH_SIZE = 100; // Minimum tokens for a paragraph to be considered
 
   /**

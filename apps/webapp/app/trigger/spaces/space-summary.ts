@@ -352,6 +352,11 @@ function createUnifiedSummaryPrompt(
   previousSummary: string | null,
   previousThemes: string[],
 ): CoreMessage[] {
+  // If there are no statements and no previous summary, we cannot generate a meaningful summary
+  if (statements.length === 0 && previousSummary === null) {
+    throw new Error("Cannot generate summary without statements or existing summary");
+  }
+
   const statementsText = statements
     .map(
       (stmt) =>
@@ -377,6 +382,13 @@ function createUnifiedSummaryPrompt(
     {
       role: "system",
       content: `You are an expert at analyzing and summarizing structured knowledge within semantic spaces. Your task is to ${isUpdate ? "update an existing summary by integrating new statements" : "create a comprehensive summary of statements"}.
+
+CRITICAL RULES: 
+1. Base your summary ONLY on insights derived from the actual facts/statements provided
+2. Use the space description only as contextual guidance, never copy or paraphrase it
+3. Write in a factual, neutral tone - avoid promotional language ("pivotal", "invaluable", "cutting-edge")
+4. Be specific and concrete - reference actual entities, relationships, and patterns found in the data
+5. If statements are insufficient for meaningful insights, state that more data is needed
 
 INSTRUCTIONS:
 ${
@@ -415,7 +427,7 @@ Provide your response inside <output></output> tags with valid JSON. The summary
 
 <output>
 {
-  "summary": "${isUpdate ? "Updated HTML summary that integrates new insights with existing knowledge through identified connections. Use HTML tags like <p>, <strong>, <em>, <ul>, <li> to structure and emphasize key information. The summary should clearly explain what this space contains, what topics are covered, and what users can learn from it." : "A comprehensive 2-3 paragraph HTML summary that clearly explains what this space contains, what knowledge domains it covers, and what insights users can gain. Use HTML tags like <p>, <strong>, <em>, <ul>, <li> to structure and emphasize key information for better readability. Focus on making the content accessible and understandable to users who want to know what they'll find in this space."}",
+  "summary": "${isUpdate ? "Updated HTML summary that integrates new insights with existing knowledge. Write factually about what the statements reveal - mention specific entities, relationships, and patterns found in the data. Avoid marketing language. Use HTML tags for structure." : "Factual HTML summary based on patterns found in the statements. Report what the data actually shows - specific entities, relationships, frequencies, and concrete insights. Avoid promotional language. Use HTML tags like <p>, <strong>, <ul>, <li> for structure. Keep it concise and evidence-based."}",
   "keyEntities": ["entity1", "entity2", "entity3"],
   "themes": ["${isUpdate ? 'updated_theme1", "new_theme2", "evolved_theme3' : 'theme1", "theme2", "theme3'}"],
   "confidence": 0.85
@@ -437,20 +449,20 @@ ${
 - Themes should evolve naturally, don't replace wholesale  
 - The updated summary should read as a coherent whole
 - Make the summary user-friendly and explain what value this space provides`
-    : `- Summary should clearly communicate what this space is about and what users will find
-- Focus on practical value - what knowledge, insights, or information does this space contain?
-- Use accessible language that helps users understand the space's purpose and content
-- Format the summary using HTML tags for better visual presentation and readability
-- Themes must be backed by at least 5 supporting statements
-- Only include themes with substantial evidence - better to have fewer, well-supported themes than many weak ones
-- Confidence should reflect data quality, coherence, coverage, and theme strength`
+    : `- Report only what the statements actually reveal - be specific and concrete
+- Cite actual entities and relationships found in the data
+- Avoid generic descriptions that could apply to any space
+- Use neutral, factual language - no "comprehensive", "robust", "cutting-edge" etc.
+- Themes must be backed by at least 5 supporting statements with clear evidence
+- Better to have fewer, well-supported themes than many weak ones
+- Confidence should reflect actual data quality and coverage, not aspirational goals`
 }`,
     },
     {
       role: "user",
       content: `SPACE INFORMATION:
 Name: "${spaceName}"
-Description: ${spaceDescription || "No description provided"}
+Description (for context only): ${spaceDescription || "No description provided"}
 
 ${
   isUpdate
@@ -474,8 +486,8 @@ ${topEntities.join(", ")}`
 
 ${
   isUpdate
-    ? "Please identify connections between the existing summary and new statements, then update the summary to integrate the new insights coherently."
-    : "Please analyze this space and provide a comprehensive summary that captures its semantic content and major themes."
+    ? "Please identify connections between the existing summary and new statements, then update the summary to integrate the new insights coherently. Remember: only summarize insights from the actual statements, not the space description."
+    : "Please analyze the statements and provide a comprehensive summary that captures insights derived from the facts provided. Use the description only as context. If there are too few statements to generate meaningful insights, indicate that more data is needed rather than falling back on the description."
 }`,
     },
   ];

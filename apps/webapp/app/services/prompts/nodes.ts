@@ -23,6 +23,7 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
 1. **Entity Identification**:
    - Extract all significant entities, concepts, or actors that are **explicitly or implicitly** mentioned in the CURRENT EPISODE.
    - For identity statements like "I am X" or "I'm X", extract BOTH the pronoun ("I") as a Alias entity AND the named entity (X).
+   - **ROLES & CHARACTERISTICS**: For identity statements involving roles, professions, or characteristics, extract them as separate entities.
    - For pronouns that refer to named entities, extract them as separate Alias entities.
 
 2. **Entity Classification**:
@@ -34,6 +35,7 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
 
 3. **Exclusions**:
    - Do NOT extract entities representing relationships or actions (predicates will be handled separately).
+   - **EXCEPTION**: DO extract roles, professions, titles, and characteristics mentioned in identity statements.
    - Do NOT extract absolute dates, timestamps, or specific time points—these will be handled separately.
    - Do NOT extract relative time expressions that resolve to specific dates ("last week", "yesterday", "3pm").
 
@@ -141,6 +143,7 @@ You are given a TEXT. Your task is to extract **entity nodes** mentioned **expli
 1. **Entity Identification**:
    - Extract all significant entities, concepts, or actors that are **explicitly or implicitly** mentioned in the TEXT.
    - For identity statements like "I am X" or "I'm X", extract BOTH the pronoun ("I") as a Alias entity AND the named entity (X).
+   - **ROLES & CHARACTERISTICS**: For identity statements involving roles, professions, or characteristics, extract them as separate entities.
    - For pronouns that refer to named entities, extract them as separate Alias entities.
 
 2. **Entity Classification**:
@@ -152,6 +155,7 @@ You are given a TEXT. Your task is to extract **entity nodes** mentioned **expli
 
 3. **Exclusions**:
    - Do NOT extract entities representing relationships or actions (predicates will be handled separately).
+   - **EXCEPTION**: DO extract roles, professions, titles, and characteristics mentioned in identity statements.
    - Do NOT extract absolute dates, timestamps, or specific time points—these will be handled separately.
    - Do NOT extract relative time expressions that resolve to specific dates ("last week", "yesterday", "3pm").
 
