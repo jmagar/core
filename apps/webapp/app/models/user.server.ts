@@ -203,7 +203,8 @@ export function updateUser({
   marketingEmails,
   referralSource,
   onboardingComplete,
-}: Pick<User, "id" | "onboardingComplete"> & {
+  metadata,
+}: Pick<User, "id" | "onboardingComplete" | "metadata"> & {
   marketingEmails?: boolean;
   referralSource?: string;
 }) {
@@ -214,6 +215,7 @@ export function updateUser({
       referralSource,
       confirmedBasicDetails: true,
       onboardingComplete,
+      metadata: metadata ? metadata : {},
     },
   });
 }

@@ -210,18 +210,6 @@ model InvitationCode {
   createdAt DateTime @default(now())
 }
 
-model MCPSession {
-  id           String   @id @default(cuid())
-  source       String
-  integrations String[]
-
-  workspace   Workspace? @relation(references: [id], fields: [workspaceId])
-  workspaceId String?
-
-  createdAt DateTime  @default(now())
-  deleted   DateTime?
-}
-
 model OAuthAuthorizationCode {
   id String @id @default(cuid())
 
@@ -543,6 +531,8 @@ model User {
 
   referralSource String?
 
+  metadata Json @default("{}")
+
   personalAccessTokens PersonalAccessToken[]
   InvitationCode       InvitationCode?        @relation(fields: [invitationCodeId], references: [id])
   invitationCodeId     String?
@@ -638,7 +628,6 @@ model Workspace {
   OAuthRefreshToken       OAuthRefreshToken[]
   RecallLog               RecallLog[]
   Space                   Space[]
-  MCPSession              MCPSession[]
 }
 
 enum AuthenticationMethod {

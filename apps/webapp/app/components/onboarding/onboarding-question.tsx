@@ -130,7 +130,7 @@ export default function OnboardingQuestionComponent({
               </div>
             )}
 
-            <div className="flex justify-between pt-4">
+            <div className="flex justify-end gap-2 pt-4">
               {!isFirst && (
                 <Button
                   type="button"
@@ -142,8 +142,6 @@ export default function OnboardingQuestionComponent({
                   Previous
                 </Button>
               )}
-
-              <div className="flex-1" />
 
               <Button
                 type="button"

@@ -61,6 +61,9 @@ export async function action({ request }: ActionFunctionArgs) {
     await updateUser({
       id: userId,
       onboardingComplete: true,
+      metadata: {
+        answers,
+      },
     });
 
     await addToQueue(

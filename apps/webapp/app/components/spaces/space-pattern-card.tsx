@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui";
 import { useFetcher } from "@remix-run/react";
+import { getTailwindColor, getTeamColor } from "../ui/color-utils";
 
 interface SpacePatternCardProps {
   pattern: SpacePattern;
@@ -46,10 +47,22 @@ export function SpacePatternCard({ pattern }: SpacePatternCardProps) {
                 <div className={cn("truncate text-left")}>{displayText}</div>
               </div>
               <div className="text-muted-foreground flex shrink-0 items-center justify-end gap-2 text-xs">
-                <Badge variant="secondary" className="rounded text-xs">
+                <Badge
+                  variant="secondary"
+                  className="rounded text-xs"
+                  style={{
+                    color: getTailwindColor(pattern.type),
+                  }}
+                >
                   {pattern.type}
                 </Badge>
-                <Badge variant="secondary" className="rounded text-xs">
+                <Badge
+                  variant="secondary"
+                  className="rounded text-xs"
+                  style={{
+                    color: getTailwindColor(pattern.name),
+                  }}
+                >
                   {pattern.name}
                 </Badge>
               </div>
@@ -66,10 +79,22 @@ export function SpacePatternCard({ pattern }: SpacePatternCardProps) {
 
           <div className="flex flex-col gap-2">
             <div className="flex gap-2">
-              <Badge variant="secondary" className="rounded text-xs">
+              <Badge
+                variant="secondary"
+                className="rounded text-xs"
+                style={{
+                  color: getTailwindColor(pattern.type),
+                }}
+              >
                 {pattern.type}
               </Badge>
-              <Badge variant="secondary" className="rounded text-xs">
+              <Badge
+                variant="secondary"
+                className="rounded text-xs"
+                style={{
+                  color: getTailwindColor(pattern.name),
+                }}
+              >
                 {pattern.name}
               </Badge>
             </div>

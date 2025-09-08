@@ -531,6 +531,8 @@ model User {
 
   referralSource String?
 
+  metadata Json @default("{}")
+
   personalAccessTokens PersonalAccessToken[]
   InvitationCode       InvitationCode?        @relation(fields: [invitationCodeId], references: [id])
   invitationCodeId     String?
