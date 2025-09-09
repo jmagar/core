@@ -132,10 +132,8 @@ Format your response as a JSON object with the following structure:
   "edges": [
     {
       "source": "[Subject Entity Name - MUST be from AVAILABLE ENTITIES]",
-      "sourceType": "[Source Entity Type]",
       "predicate": "[Relationship Type]",
       "target": "[Object Entity Name - MUST be from AVAILABLE ENTITIES]", 
-      "targetType": "[Target Entity Type]",
       "fact": "[Natural language representation of the fact]",
       "attributes": { 
         "confidence": confidence of the fact,

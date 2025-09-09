@@ -2,19 +2,9 @@ import type { EntityNode } from "@core/types";
 import { runQuery } from "~/lib/neo4j.server";
 
 export async function saveEntity(entity: EntityNode): Promise<string> {
-  // Debug: Log entity to identify missing typeEmbedding
-  if (!entity.typeEmbedding) {
-    console.error(`Entity missing typeEmbedding:`, {
-      uuid: entity.uuid,
-      name: entity.name,
-      type: entity.type,
-      hasNameEmbedding: !!entity.nameEmbedding,
-    });
-    throw new Error(
-      `Entity ${entity.name} (${entity.type}) is missing typeEmbedding`,
-    );
-  }
-
+  // Build query conditionally based on whether typeEmbedding exists
+  const hasTypeEmbedding = entity.typeEmbedding && entity.typeEmbedding.length > 0;
+  
   const query = `
     MERGE (n:Entity {uuid: $uuid})
       ON CREATE SET
@@ -22,7 +12,7 @@ export async function saveEntity(entity: EntityNode): Promise<string> {
         n.type = $type,
         n.attributes = $attributes,
         n.nameEmbedding = $nameEmbedding,
-        n.typeEmbedding = $typeEmbedding,
+        ${hasTypeEmbedding ? 'n.typeEmbedding = $typeEmbedding,' : ''}
         n.createdAt = $createdAt,
         n.userId = $userId,
         n.space = $space
@@ -31,22 +21,26 @@ export async function saveEntity(entity: EntityNode): Promise<string> {
         n.type = $type,
         n.attributes = $attributes,
         n.nameEmbedding = $nameEmbedding,
-        n.typeEmbedding = $typeEmbedding,
+        ${hasTypeEmbedding ? 'n.typeEmbedding = $typeEmbedding,' : ''}
         n.space = $space
       RETURN n.uuid as uuid
     `;
 
-  const params = {
+  const params: any = {
     uuid: entity.uuid,
     name: entity.name,
-    type: entity.type,
+    type: entity.type || "",
     attributes: JSON.stringify(entity.attributes || {}),
     nameEmbedding: entity.nameEmbedding,
-    typeEmbedding: entity.typeEmbedding,
     createdAt: entity.createdAt.toISOString(),
     userId: entity.userId,
     space: entity.space || null,
   };
+
+  // Add typeEmbedding to params only if it exists
+  if (hasTypeEmbedding) {
+    params.typeEmbedding = entity.typeEmbedding;
+  }
 
   const result = await runQuery(query, params);
   return result[0].get("uuid");
@@ -65,10 +59,10 @@ export async function getEntity(uuid: string): Promise<EntityNode | null> {
   return {
     uuid: entity.uuid,
     name: entity.name,
-    type: entity.type,
+    type: entity.type || null,
     attributes: JSON.parse(entity.attributes || "{}"),
     nameEmbedding: entity.nameEmbedding,
-    typeEmbedding: entity.typeEmbedding,
+    typeEmbedding: entity.typeEmbedding || null,
     createdAt: new Date(entity.createdAt),
     userId: entity.userId,
     space: entity.space,

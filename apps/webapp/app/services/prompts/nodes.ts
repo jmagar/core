@@ -5,16 +5,20 @@
 import { type CoreMessage } from "ai";
 
 /**
- * Extract entities from an episode using message-based approach
+ * Extract entities from content using unified approach (works for both conversations and documents)
  */
-export const extractMessage = (context: Record<string, any>): CoreMessage[] => {
+export const extractEntities = (
+  context: Record<string, any>, 
+  extractionMode: 'conversation' | 'document' = 'conversation'
+): CoreMessage[] => {
   const sysPrompt = `You are an AI assistant that extracts entity nodes from conversational messages for a reified knowledge graph.
-Your primary task is to extract and classify significant entities mentioned in the conversation.
+Your primary task is to extract all significant entities mentioned in the conversation, treating both concrete entities and type/concept entities as first-class nodes.
 
-In a reified knowledge graph, we need to identify subject and object entities that will be connected through statements.
+In a reified knowledge graph, we need to identify all entities that will be connected through explicit relationships.
 Focus on extracting:
-1. Subject entities (people, objects, concepts)
-2. Object entities (people, objects, concepts)
+1. Concrete entities (people, objects, specific instances)
+2. Type/concept entities (categories, classes, abstract concepts)
+3. All entities that participate in "X is a Y" relationships
 
 Instructions:
 
@@ -22,16 +26,16 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
 
 1. **Entity Identification**:
    - Extract all significant entities, concepts, or actors that are **explicitly or implicitly** mentioned in the CURRENT EPISODE.
-   - For identity statements like "I am X" or "I'm X", extract BOTH the pronoun ("I") as a Alias entity AND the named entity (X).
+   - For identity statements like "I am X" or "I'm X", extract BOTH the pronoun ("I") as an Alias entity AND the named entity (X).
    - **ROLES & CHARACTERISTICS**: For identity statements involving roles, professions, or characteristics, extract them as separate entities.
    - For pronouns that refer to named entities, extract them as separate Alias entities.
+   - **TYPE/CONCEPT ENTITIES**: When text contains "X is a Y" statements, extract BOTH X and Y as separate entities.
 
-2. **Entity Classification**:
-   - Prefer using appropriate types from the ENTITY_TYPES section when they fit naturally.
-   - DO NOT force-fit entities into inappropriate types from ENTITY_TYPES.
-   - If no type from ENTITY_TYPES fits naturally, create a descriptive type based on context (e.g., "memory_graph_system", "authentication_bug").
-   - Each entity should have exactly ONE type that best describes what it is.
-   - Classify pronouns (I, me, you, etc.) as "Alias" entities.
+2. **Type and Concept Entity Extraction**:
+   - **EXTRACT TYPE ENTITIES**: For statements like "Profile is a memory space", extract both "Profile" AND "MemorySpace" as separate entities.
+   - **EXTRACT CATEGORY ENTITIES**: For statements like "Tier 1 contains essential spaces", extract "Tier1", "Essential", and "Spaces" as separate entities.
+   - **EXTRACT ABSTRACT CONCEPTS**: Terms like "usefulness", "rating", "classification", "hierarchy" should be extracted as concept entities.
+   - **NO ENTITY TYPING**: Do not assign types to entities in the output - all typing will be handled through explicit relationships.
 
 3. **Exclusions**:
    - Do NOT extract entities representing relationships or actions (predicates will be handled separately).
@@ -40,13 +44,13 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
    - Do NOT extract relative time expressions that resolve to specific dates ("last week", "yesterday", "3pm").
 
 4. **Entity Name Extraction**:
-   - Extract ONLY the core entity name, WITHOUT any type descriptors or qualifiers
-   - When text mentions "Tesla car", extract name as "Tesla" with type "Vehicle" 
-   - When text mentions "John's company", extract name as "John" with type "Person" (company is a separate entity)
-   - **CLEAN NAMES**: Remove type words like "app", "system", "platform", "tool", "service", "company", "organization" from the entity name
-   - **PRONOUNS**: Use exact form as they appear (e.g., "I", "me", "you") and classify as "Alias"
+   - Extract ONLY the core entity name, WITHOUT any descriptors or qualifiers
+   - When text mentions "Tesla car", extract TWO entities: "Tesla" AND "Car" 
+   - When text mentions "memory space system", extract "Memory", "Space", AND "System" as separate entities
+   - **CLEAN NAMES**: Remove articles (a, an, the) and quantifiers, but preserve the core concept
+   - **PRONOUNS**: Use exact form as they appear (e.g., "I", "me", "you") 
    - **FULL NAMES**: Use complete names when available (e.g., "John Smith" not "John")
-   - **NO TYPE SUFFIXES**: Never append the entity type to the entity name
+   - **CONCEPT NORMALIZATION**: Convert to singular form where appropriate ("spaces" → "Space")
 
 5. **Temporal and Relationship Context Extraction**:
    - EXTRACT duration expressions that describe relationship spans ("4 years", "2 months", "5 years")
@@ -56,6 +60,19 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
    - DO NOT extract relative time expressions that resolve to specific dates ("last week", "yesterday")
 
 ## Examples of Correct Entity Extraction:
+
+**TYPE/CONCEPT ENTITY EXTRACTION:**
+
+✅ **EXTRACT BOTH ENTITIES IN "IS A" RELATIONSHIPS:**
+- Text: "Profile is a memory space" → Extract: "Profile" AND "MemorySpace"
+- Text: "Tesla is a car" → Extract: "Tesla" AND "Car"
+- Text: "John is a teacher" → Extract: "John" AND "Teacher"
+- Text: "Goals space connects to Projects" → Extract: "Goals", "Space", AND "Projects"
+
+✅ **EXTRACT CONCEPT ENTITIES:**
+- Text: "rated 10/10 for usefulness" → Extract: "Usefulness", "Rating"
+- Text: "essential classification tier" → Extract: "Essential", "Classification", "Tier"
+- Text: "hierarchical memory system" → Extract: "Hierarchical", "Memory", "System"
 
 **TEMPORAL INFORMATION - What to EXTRACT vs EXCLUDE:**
 
@@ -73,47 +90,50 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
 - Text: "next week" → Don't extract "next week"
 
 **RELATIONSHIP CONTEXT ENTITIES:**
-- Text: "my close friends" → Extract: "close friends" (QualifiedGroup)
-- Text: "strong support system" → Extract: "support system" (RelationshipType)
-- Text: "work colleagues" → Extract: "work colleagues" (ProfessionalGroup)
-- Text: "family members" → Extract: "family members" (FamilyGroup)
+- Text: "my close friends" → Extract: "Close Friends" (QualifiedGroup)
+- Text: "strong support system" → Extract: "Support System" (RelationshipType)
+- Text: "work colleagues" → Extract: "Work Colleagues" (ProfessionalGroup)
+- Text: "family members" → Extract: "Family Members" (FamilyGroup)
 
 **STANDARD ENTITY EXTRACTION:**
-- Text: "Tesla car" → Name: "Tesla", Type: "Vehicle"
-- Text: "Google's search engine" → Name: "Google", Type: "Company" + Name: "Search Engine", Type: "Product"
-- Text: "Microsoft Office suite" → Name: "Microsoft Office", Type: "Software"
-- Text: "John's startup company" → Name: "John", Type: "Person" + Name: "Startup", Type: "Company"
+- Text: "Tesla car" → Extract: "Tesla" AND "Car"
+- Text: "Google's search engine" → Extract: "Google" AND "Search Engine"
+- Text: "Microsoft Office suite" → Extract: "Microsoft Office" AND "Suite"
+- Text: "John's startup company" → Extract: "John", "Startup", AND "Company"
 
-**INCORRECT Examples:**
-- Text: "Tesla car" → ❌ Name: "Tesla car", Type: "Vehicle"
-- Text: "authentication system" → ❌ Name: "authentication system", Type: "System"
-- Text: "payment service" → ❌ Name: "payment service", Type: "Service"
+**CORRECT vs INCORRECT Examples:**
+
+✅ **CORRECT:**
+- Text: "Profile is a memory space" → Extract: "Profile", "MemorySpace"
+- Text: "essential classification system" → Extract: "Essential", "Classification", "System"
+- Text: "10/10 usefulness rating" → Extract: "Usefulness", "Rating"
+
+❌ **INCORRECT:**
+- Text: "Profile is a memory space" → ❌ Only extract: "Profile" 
+- Text: "authentication system" → ❌ Extract: "authentication system" (should be "Authentication", "System")
+- Text: "payment service" → ❌ Extract: "payment service" (should be "Payment", "Service")
 
 Format your response as a JSON object with the following structure:
 <output>
 {
   "entities": [
     {
-      "name": "Entity Name",
-      "type": "Entity Type",
+      "name": "Entity Name"
     }
     // Additional entities...
   ]
 }
 </output>`;
 
+  const contentLabel = extractionMode === 'conversation' ? 'CURRENT EPISODE' : 'TEXT';
   const userPrompt = `
-<PREVIOUS EPISODES>
+${extractionMode === 'conversation' ? `<PREVIOUS EPISODES>
 ${JSON.stringify(context.previousEpisodes || [], null, 2)}
 </PREVIOUS EPISODES>
 
-<CURRENT EPISODE>
+` : ''}<${contentLabel}>
 ${context.episodeContent}
-</CURRENT EPISODE>
-
-<ENTITY_TYPES>
-${JSON.stringify(context.entityTypes || {}, null, 2)}
-</ENTITY_TYPES>
+</${contentLabel}>
 
 `;
 
@@ -123,161 +143,6 @@ ${JSON.stringify(context.entityTypes || {}, null, 2)}
   ];
 };
 
-/**
- * Extract entities from text-based content
- */
-export const extractText = (context: Record<string, any>): CoreMessage[] => {
-  const sysPrompt = `
-You are an AI assistant that extracts entity nodes from text for a reified knowledge graph.
-Your primary task is to extract and classify significant entities mentioned in the provided text.
-
-In a reified knowledge graph, we need to identify subject and object entities that will be connected through statements.
-Focus on extracting:
-1. Subject entities
-2. Object entities 
-
-Instructions:
-
-You are given a TEXT. Your task is to extract **entity nodes** mentioned **explicitly or implicitly** in the TEXT.
-
-1. **Entity Identification**:
-   - Extract all significant entities, concepts, or actors that are **explicitly or implicitly** mentioned in the TEXT.
-   - For identity statements like "I am X" or "I'm X", extract BOTH the pronoun ("I") as a Alias entity AND the named entity (X).
-   - **ROLES & CHARACTERISTICS**: For identity statements involving roles, professions, or characteristics, extract them as separate entities.
-   - For pronouns that refer to named entities, extract them as separate Alias entities.
-
-2. **Entity Classification**:
-   - Prefer using appropriate types from the ENTITY_TYPES section when they fit naturally.
-   - DO NOT force-fit entities into inappropriate types from ENTITY_TYPES.
-   - If no type from ENTITY_TYPES fits naturally, create a descriptive type based on context.
-   - Each entity should have exactly ONE type that best describes what it is.
-   - Classify pronouns (I, me, you, etc.) as "Alias" entities.
-
-3. **Exclusions**:
-   - Do NOT extract entities representing relationships or actions (predicates will be handled separately).
-   - **EXCEPTION**: DO extract roles, professions, titles, and characteristics mentioned in identity statements.
-   - Do NOT extract absolute dates, timestamps, or specific time points—these will be handled separately.
-   - Do NOT extract relative time expressions that resolve to specific dates ("last week", "yesterday", "3pm").
-
-4. **Entity Name Extraction**:
-   - Extract ONLY the core entity name, WITHOUT any type descriptors or qualifiers
-   - When text mentions "Tesla car", extract name as "Tesla" with type "Vehicle" 
-   - When text mentions "John's company", extract name as "John" with type "Person" (company is a separate entity)
-   - **CLEAN NAMES**: Remove type words like "app", "system", "platform", "tool", "service", "company", "organization" from the entity name
-   - **PRONOUNS**: Use exact form as they appear (e.g., "I", "me", "you") and classify as "Alias"
-   - **FULL NAMES**: Use complete names when available (e.g., "John Smith" not "John")
-   - **NO TYPE SUFFIXES**: Never append the entity type to the entity name
-
-5. **Temporal and Relationship Context Extraction**:
-   - EXTRACT duration expressions that describe relationship spans ("4 years", "2 months", "5 years")
-   - EXTRACT temporal context that anchors relationships ("since moving", "after graduation", "during college")
-   - EXTRACT relationship qualifiers ("close friends", "support system", "work team", "family members")
-   - DO NOT extract absolute dates, timestamps, or specific time points ("June 9, 2023", "3pm", "last Saturday")
-   - DO NOT extract relative time expressions that resolve to specific dates ("last week", "yesterday")
-
-## Examples of Correct Entity Extraction:
-
-**TEMPORAL INFORMATION - What to EXTRACT vs EXCLUDE:**
-
-✅ **EXTRACT - Relationship Temporal Information:**
-- Text: "I've known these friends for 4 years" → Extract: "4 years" (Duration)
-- Text: "since I moved from my home country" → Extract: "since moving" (TemporalContext)  
-- Text: "after that tough breakup" → Extract: "after breakup" (TemporalContext)
-- Text: "we've been married for 5 years" → Extract: "5 years" (Duration)
-- Text: "during college" → Extract: "during college" (TemporalContext)
-
-❌ **EXCLUDE - Absolute Dates/Times:**
-- Text: "on June 9, 2023" → Don't extract "June 9, 2023" 
-- Text: "last Saturday" → Don't extract "last Saturday"
-- Text: "at 3pm yesterday" → Don't extract "3pm" or "yesterday"
-- Text: "next week" → Don't extract "next week"
-
-**RELATIONSHIP CONTEXT ENTITIES:**
-- Text: "my close friends" → Extract: "close friends" (QualifiedGroup)
-- Text: "strong support system" → Extract: "support system" (RelationshipType)
-- Text: "work colleagues" → Extract: "work colleagues" (ProfessionalGroup)
-- Text: "family members" → Extract: "family members" (FamilyGroup)
-
-**STANDARD ENTITY EXTRACTION:**
-- Text: "Tesla car" → Name: "Tesla", Type: "Vehicle"
-- Text: "Google's search engine" → Name: "Google", Type: "Company" + Name: "Search Engine", Type: "Product"
-- Text: "Microsoft Office suite" → Name: "Microsoft Office", Type: "Software"
-- Text: "John's startup company" → Name: "John", Type: "Person" + Name: "Startup", Type: "Company"
-
-**INCORRECT Examples:**
-- Text: "Tesla car" → ❌ Name: "Tesla car", Type: "Vehicle"
-- Text: "authentication system" → ❌ Name: "authentication system", Type: "System"
-- Text: "payment service" → ❌ Name: "payment service", Type: "Service"
-
-Format your response as a JSON object with the following structure:
-<output>
-{
-  "entities": [
-    {
-      "name": "Entity Name",
-      "type": "Entity Type"
-    }
-    // Additional entities...
-  ]
-}
-</output>`;
-  const userPrompt = `
-<TEXT>
-${context.episodeContent}
-</TEXT>
-
-<ENTITY_TYPES>
-${JSON.stringify(context.entityTypes || {}, null, 2)}
-</ENTITY_TYPES>
-`;
-
-  return [
-    { role: "system", content: sysPrompt },
-    { role: "user", content: userPrompt },
-  ];
-};
-/**
- * Extract entities from an episode using JSON-based approach
- */
-export const extractJson = (context: Record<string, any>): CoreMessage[] => {
-  const sysPrompt = `You are an AI assistant that extracts entity nodes from text. 
-Your primary task is to extract and classify significant entities mentioned in the content.`;
-
-  const userPrompt = `
-<PREVIOUS EPISODES>
-${JSON.stringify(context.previousEpisodes || [], null, 2)}
-</PREVIOUS EPISODES>
-
-<CURRENT EPISODE>
-${context.episodeContent}
-</CURRENT EPISODE>
-
-<ENTITY TYPES>
-${JSON.stringify(context.entityTypes || {}, null, 2)}
-</ENTITY TYPES>
-
-Instructions:
-
-Extract all significant entities mentioned in the CURRENT EPISODE. For each entity, provide a name and type.
-Respond with a JSON object containing an "entities" array of objects, each with "name" and "type" properties.
-
-Guidelines:
-1. Extract significant entities, concepts, or actors mentioned in the content.
-2. Avoid creating nodes for relationships or actions.
-3. Avoid creating nodes for temporal information like dates, times or years (these will be added to edges later).
-4. **CLEAN ENTITY NAMES**: Extract ONLY the core entity name WITHOUT type descriptors:
-   - "Tesla car" → Name: "Tesla", Type: "Vehicle"
-   - Remove words like "app", "system", "platform", "tool", "service", "company" from entity names
-5. Use full names when available and avoid abbreviations.
-
-${context.customPrompt || ""}
-`;
-
-  return [
-    { role: "system", content: sysPrompt },
-    { role: "user", content: userPrompt },
-  ];
-};
 
 /**
  * Resolve entity duplications
@@ -286,84 +151,53 @@ export const dedupeNodes = (context: Record<string, any>): CoreMessage[] => {
   return [
     {
       role: "system",
-      content: `You are a helpful assistant who determines whether or not ENTITIES extracted from a conversation are duplicates of existing entities.
+      content: `You are a helpful assistant who determines whether extracted entities are duplicates of existing entities.
 
-## CRITICAL RULE: Entity Type Matters
-DO NOT mark entities with different types as duplicates, even if they have identical names.
-- DO NOT mark "John" (Person) and "John" (Company) as duplicates
-- DO NOT mark "Apple" (Company) and "Apple" (Fruit) as duplicates  
-- DO NOT mark "Core" (App) and "Core" (Concept) as duplicates
-
-Consider entities as potential duplicates ONLY if they have:
-1. Similar or identical names AND
-2. The EXACT SAME entity type
+Focus on name-based similarity and contextual meaning to identify duplicates.
 
 Each entity in ENTITIES is represented as a JSON object with the following structure:
 {
     id: integer id of the entity,
     name: "name of the entity",
-    entity_type: "ontological classification of the entity",
-    entity_type_description: "Description of what the entity type represents",
     duplication_candidates: [
         {
             idx: integer index of the candidate entity,
             name: "name of the candidate entity",
-            entity_type: "ontological classification of the candidate entity",
             ...<additional attributes>
         }
     ]
 }
 
-## Duplication Decision Rules
-For each entity, determine if it is a duplicate of any of its duplication candidates:
+## Duplication Decision Framework
 
 ### MARK AS DUPLICATE (duplicate_idx >= 0) when:
-- Verify the candidate has the SAME entity_type as the current entity
-- AND confirm the entities refer to the same real-world object or concept
-- AND check that the names are very similar or identical
-
-### SPECIAL RULE FOR PREDICATES:
-**ALWAYS mark identical predicates as duplicates** - predicates are universal and reusable:
-- Mark "is associated with" (Predicate) vs "is associated with" (Predicate) → duplicate_idx = 0 ✓
-- Mark "works for" (Predicate) vs "works for" (Predicate) → duplicate_idx = 0 ✓
-- Mark "owns" (Predicate) vs "owns" (Predicate) → duplicate_idx = 0 ✓
+- **IDENTICAL NAMES**: Exact same name or obvious synonyms
+- **SEMANTIC EQUIVALENCE**: Different names but clearly referring to the same entity
+- **STRUCTURAL VARIATIONS**: Same entity with minor formatting differences
 
 ### DO NOT mark as duplicate (duplicate_idx = -1) when:
-- Confirm the candidate has a DIFFERENT entity_type (even with identical names)
-- Identify they are related but distinct entities
-- Recognize they have similar names or purposes but refer to separate instances or concepts
-- Distinguish when one is a general concept and the other is a specific instance
-- **EXCEPTION**: DO NOT apply this rule to Predicates - always deduplicate identical predicates
+- **DIFFERENT INSTANCES**: Similar names but different real-world entities
+- **CONTEXTUAL DISTINCTION**: Same name but different contexts suggest distinct entities
+- **HIERARCHICAL RELATIONSHIPS**: One is part of/contains the other
 
-## Examples:
+## Example Patterns:
 
-**CORRECT - Mark as NOT Duplicates (Different Types):**
-- Set "Tesla" (Company) vs "Tesla" (Car) → duplicate_idx = -1
-- Set "Apple" (Company) vs "Apple" (Fruit) → duplicate_idx = -1
-- Set "Core" (App) vs "Core" (System) → duplicate_idx = -1
+**DUPLICATE CASES:**
+- "John Smith" vs "John Smith" → Check context for same person
+- "Microsoft" vs "Microsoft Corporation" → Same organization (duplicate_idx = 0)
+- "iPhone" vs "Apple iPhone" → Same product (duplicate_idx = 0)
+- "Tier 1" vs "Tier 1" → Same classification level (duplicate_idx = 0)
 
-**CORRECT - Mark Predicates AS Duplicates (Same Name, Same Type):**
-- Set "is associated with" (Predicate) vs "is associated with" (Predicate) → duplicate_idx = 0
-- Set "works for" (Predicate) vs "works for" (Predicate) → duplicate_idx = 0
-- Set "owns" (Predicate) vs "owns" (Predicate) → duplicate_idx = 0
+**NOT DUPLICATE CASES:**
+- "Meeting Room A" vs "Meeting Room B" → Different rooms (duplicate_idx = -1)
+- "Project Alpha" vs "Project Beta" → Different projects (duplicate_idx = -1)
+- "Essential" vs "Critical" → Different priority levels (duplicate_idx = -1)
+- "Team Lead" vs "Team Member" → Different roles (duplicate_idx = -1)
 
-**CORRECT - Evaluate Potential Duplicates (Same Type):**
-- Check if "John Smith" (Person) vs "John Smith" (Person) refer to same person
-- Check if "Microsoft" (Company) vs "Microsoft Corporation" (Company) are the same company
-- Check if "iPhone" (Product) vs "Apple iPhone" (Product) are the same product
-
-**CORRECT - Mark as NOT Duplicates (Same Type, Different Instances):**
-- Set "Meeting" (Event) vs "Meeting" (Event) → duplicate_idx = -1 (different meetings)
-- Set "Project" (Task) vs "Project" (Task) → duplicate_idx = -1 (different projects)
-- **NOTE**: DO NOT apply this rule to Predicates - always deduplicate identical predicates
-
-## Task:
-Provide your response as a JSON object with an "entity_resolutions" array containing one entry for each entity.
-
-For each entity, include:
-- "id": the id of the entity (integer)
-- "name": the name of the entity (string)  
-- "duplicate_idx": the index of the duplicate candidate, or -1 if no duplicate (integer)
+## Decision Guidelines:
+- **CONSERVATIVE APPROACH**: When uncertain, prefer NOT marking as duplicate
+- **CONTEXT MATTERS**: Consider the episode content and previous episodes
+- **SEMANTIC MEANING**: Focus on whether they refer to the same real-world entity
 
 Format your response as follows:
 <output>
@@ -380,12 +214,9 @@ Format your response as follows:
 </output>
 
 ## Important Instructions:
-- FIRST check if entity types match before considering any duplication
-- If entity types don't match, immediately set duplicate_idx = -1
-- Only mark entities with identical types as potential duplicates
-- When in doubt, prefer NOT marking as duplicate (duplicate_idx = -1)
 - Always include all entities from the input in your response
 - Always wrap the output in these tags <output> </output>
+- When in doubt, prefer NOT marking as duplicate (duplicate_idx = -1)
     `,
     },
     {
@@ -412,16 +243,21 @@ export const extractAttributes = (
 ): CoreMessage[] => {
   const sysPrompt = `
 You are an AI assistant that extracts and enhances entity attributes based on context.
-Your task is to analyze entities and provide appropriate attribute values for each entity based on its type definition.
+Your task is to analyze entities and provide appropriate attribute values based on available information.
 
 For each entity:
-1. Look at its type and identify the required and optional attributes from the entity type definitions
-2. Check if the entity already has values for these attributes
-3. For missing attributes, extract appropriate values from the context if possible
-4. For existing attributes, enhance or correct them if needed based on the context
-5. Give empty attributes object ({}) when there are no attributes to update
-6. Only include attributes that you're updating - don't repeat existing attributes that don't need changes
-7. I'll merge your new attributes with the current attributes, so only provide values that should be added or modified
+1. Analyze the context to identify relevant attributes for the entity
+2. Extract appropriate values from the episode content if available
+3. Focus on factual, descriptive attributes rather than type classifications
+4. Give empty attributes object ({}) when there are no attributes to update
+5. Only include attributes that you're adding or modifying
+6. I'll merge your new attributes with existing ones, so only provide updates
+
+Common attribute types to consider:
+- Descriptive properties (color, size, status, etc.)
+- Relational context (role, position, relationship, etc.)
+- Temporal information (duration, frequency, etc.)
+- Qualitative aspects (importance, preference, etc.)
 
 Provide your output in this structure:
 <output>
@@ -441,10 +277,6 @@ Provide your output in this structure:
 </output>`;
 
   const userPrompt = `
-<ENTITY_TYPES>
-${JSON.stringify(context.entityTypes, null, 2)}
-</ENTITY_TYPES>
-
 <ENTITIES>
 ${JSON.stringify(context.entities, null, 2)}
 </ENTITIES>
@@ -453,7 +285,7 @@ ${JSON.stringify(context.entities, null, 2)}
 ${context.episodeContent}
 </EPISODE_CONTENT>
 
-Based on the above information, please extract and enhance attributes for each entity according to its type definition. Return only the uuid and updated attributes for each entity.`;
+Based on the above information, please extract and enhance attributes for each entity based on the context. Return only the uuid and updated attributes for each entity.`;
   return [
     { role: "system", content: sysPrompt },
     { role: "user", content: userPrompt },

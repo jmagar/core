@@ -15,8 +15,7 @@ import crypto from "crypto";
 import {
   dedupeNodes,
   extractAttributes,
-  extractMessage,
-  extractText,
+  extractEntities,
 } from "./prompts/nodes";
 import {
   extractStatements,
@@ -25,14 +24,11 @@ import {
 import {
   getEpisodeStatements,
   getRecentEpisodes,
-  getRelatedEpisodesEntities,
   searchEpisodesByEmbedding,
 } from "./graphModels/episode";
 import {
   findExactPredicateMatches,
   findSimilarEntities,
-  findSimilarEntitiesWithSameType,
-  replaceEntityReferences,
 } from "./graphModels/entity";
 import {
   findContradictoryStatements,
@@ -47,9 +43,7 @@ import { getEmbedding, makeModelCall } from "~/lib/model.server";
 import { runQuery } from "~/lib/neo4j.server";
 import {
   Apps,
-  getNodeTypes,
   getNodeTypesString,
-  isPresetType,
 } from "~/utils/presets/nodes";
 import { normalizePrompt, normalizeDocumentPrompt } from "./prompts";
 import { type PrismaClient } from "@prisma/client";
@@ -272,8 +266,8 @@ export class KnowledgeGraphService {
         params.type,
       );
 
-      const normalizedTime = Date.now() - startTime;
-      logger.log(`Normalized episode body in ${normalizedTime} ms`);
+      const normalizedTime = Date.now();
+      logger.log(`Normalized episode body in ${normalizedTime - startTime} ms`);
 
       if (normalizedEpisodeBody === "NOTHING_TO_REMEMBER") {
         logger.log("Nothing to remember");
@@ -283,15 +277,6 @@ export class KnowledgeGraphService {
           processingTimeMs: 0,
         };
       }
-
-      const relatedEpisodesEntities = await getRelatedEpisodesEntities({
-        embedding: await this.getEmbedding(normalizedEpisodeBody),
-        userId: params.userId,
-        minSimilarity: 0.7,
-      });
-
-      const relatedTime = Date.now() - normalizedTime;
-      logger.log(`Related episodes entities in ${relatedTime} ms`);
 
       // Step 2: Episode Creation - Create or retrieve the episode
       const episode: EpisodicNode = {
@@ -316,23 +301,18 @@ export class KnowledgeGraphService {
       );
 
       const extractedTime = Date.now();
-      logger.log(`Extracted entities in ${extractedTime - relatedTime} ms`);
+      logger.log(`Extracted entities in ${extractedTime - normalizedTime} ms`);
 
-      // Step 3.1: Context-aware entity resolution with preset type evolution
-      await this.resolveEntitiesWithContext(
-        extractedNodes,
-        relatedEpisodesEntities,
-      );
-
-      // Step 3.2: Handle preset type logic - expand entities for statement extraction
-      const categorizedEntities = await this.expandEntitiesForStatements(
-        extractedNodes,
-        episode,
-      );
+      // Step 3.1: Simple entity categorization (no type-based expansion needed)
+      const categorizedEntities = {
+        primary: extractedNodes,
+        expanded: [], // No expansion needed with type-free approach
+      };
 
       const expandedTime = Date.now();
-      logger.log(`Expanded entities in ${expandedTime - extractedTime} ms`);
+      logger.log(`Processed entities in ${expandedTime - extractedTime} ms`);
 
+      console.log(extractedNodes.map((e) => e.name));
       // Step 4: Statement Extrraction - Extract statements (triples) instead of direct edges
       const extractedStatements = await this.extractStatements(
         episode,
@@ -371,10 +351,12 @@ export class KnowledgeGraphService {
       );
 
       // Step 7: ADd attributes to entity nodes
-      const updatedTriples = await this.addAttributesToEntities(
-        resolvedStatements,
-        episode,
-      );
+      // const updatedTriples = await this.addAttributesToEntities(
+      //   resolvedStatements,
+      //   episode,
+      // );
+
+      const updatedTriples = resolvedStatements;
 
       const updatedTriplesTime = Date.now();
       logger.log(
@@ -439,12 +421,6 @@ export class KnowledgeGraphService {
     episode: EpisodicNode,
     previousEpisodes: EpisodicNode[],
   ): Promise<EntityNode[]> {
-    // Get all app keys
-    const allAppEnumValues = Object.values(Apps);
-
-    // Get all node types
-    const entityTypes = getNodeTypes(allAppEnumValues);
-
     // Use the prompt library to get the appropriate prompts
     const context = {
       episodeContent: episode.content,
@@ -452,13 +428,11 @@ export class KnowledgeGraphService {
         content: ep.content,
         createdAt: ep.createdAt.toISOString(),
       })),
-      entityTypes: entityTypes,
     };
 
-    // Get the extract_json prompt from the prompt library
-    const messages = episode.sessionId
-      ? extractMessage(context)
-      : extractText(context);
+    // Get the unified entity extraction prompt
+    const extractionMode = episode.sessionId ? 'conversation' : 'document';
+    const messages = extractEntities(context, extractionMode);
 
     let responseText = "";
 
@@ -474,21 +448,19 @@ export class KnowledgeGraphService {
       responseText = outputMatch[1].trim();
       const extractedEntities = JSON.parse(responseText || "{}").entities || [];
 
-      // Batch generate embeddings for better performance
+      // Batch generate embeddings for entity names
       const entityNames = extractedEntities.map((entity: any) => entity.name);
-      const entityTypes = extractedEntities.map((entity: any) => entity.type);
-      const [nameEmbeddings, typeEmbeddings] = await Promise.all([
-        Promise.all(entityNames.map((name: string) => this.getEmbedding(name))),
-        Promise.all(entityTypes.map((type: string) => this.getEmbedding(type))),
-      ]);
+      const nameEmbeddings = await Promise.all(
+        entityNames.map((name: string) => this.getEmbedding(name))
+      );
 
       entities = extractedEntities.map((entity: any, index: number) => ({
         uuid: crypto.randomUUID(),
         name: entity.name,
-        type: entity.type,
+        type: undefined, // Type will be inferred from statements
         attributes: entity.attributes || {},
         nameEmbedding: nameEmbeddings[index],
-        typeEmbedding: typeEmbeddings[index],
+        typeEmbedding: undefined, // No type embedding needed
         createdAt: new Date(),
         userId: episode.userId,
       }));
@@ -537,6 +509,8 @@ export class KnowledgeGraphService {
       responseText = text;
     });
 
+    console.log(responseText);
+
     const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
     if (outputMatch && outputMatch[1]) {
       responseText = outputMatch[1].trim();
@@ -547,6 +521,8 @@ export class KnowledgeGraphService {
     // Parse the statements from the LLM response
     const extractedTriples: ExtractedTripleData[] =
       JSON.parse(responseText || "{}").edges || [];
+
+    console.log(`extracted triples length: ${extractedTriples.length}`)
 
     // Create maps to deduplicate entities by name within this extraction
     const predicateMap = new Map<string, EntityNode>();
@@ -597,17 +573,13 @@ export class KnowledgeGraphService {
     // Convert extracted triples to Triple objects with Statement nodes
     const triples = extractedTriples.map(
       (triple: ExtractedTripleData, tripleIndex: number) => {
-        // Find the subject and object nodes by matching both name and type
+        // Find the subject and object nodes by matching name (type-free approach)
         const subjectNode = allEntities.find(
-          (node) =>
-            node.name.toLowerCase() === triple.source.toLowerCase() &&
-            node.type.toLowerCase() === triple.sourceType.toLowerCase(),
+          (node) => node.name.toLowerCase() === triple.source.toLowerCase()
         );
 
         const objectNode = allEntities.find(
-          (node) =>
-            node.name.toLowerCase() === triple.target.toLowerCase() &&
-            node.type.toLowerCase() === triple.targetType.toLowerCase(),
+          (node) => node.name.toLowerCase() === triple.target.toLowerCase()
         );
 
         // Get the deduplicated predicate node
@@ -661,108 +633,7 @@ export class KnowledgeGraphService {
     return triples.filter(Boolean) as Triple[];
   }
 
-  /**
-   * Expand entities for statement extraction by adding existing preset entities
-   */
-  private async expandEntitiesForStatements(
-    extractedNodes: EntityNode[],
-    episode: EpisodicNode,
-  ): Promise<{
-    primary: EntityNode[];
-    expanded: EntityNode[];
-  }> {
-    const allAppEnumValues = Object.values(Apps);
-    const expandedEntities: EntityNode[] = [];
 
-    // For each extracted entity, check if we need to add existing preset entities
-    for (const entity of extractedNodes) {
-      const newIsPreset = isPresetType(entity.type, allAppEnumValues);
-
-      // Find similar entities with same name
-      const similarEntities = await findSimilarEntities({
-        queryEmbedding: entity.nameEmbedding,
-        limit: 5,
-        threshold: 0.8,
-        userId: episode.userId,
-      });
-
-      for (const existingEntity of similarEntities) {
-        const existingIsPreset = isPresetType(
-          existingEntity.type,
-          allAppEnumValues,
-        );
-
-        // If both are preset types, include both for statement extraction
-        if (newIsPreset && existingIsPreset) {
-          // Add the existing entity to the list if not already present
-          if (!expandedEntities.some((e) => e.uuid === existingEntity.uuid)) {
-            expandedEntities.push(existingEntity);
-          }
-        }
-      }
-    }
-
-    // Deduplicate by name AND type combination
-    const deduplicateEntities = (entities: EntityNode[]) => {
-      const seen = new Map<string, EntityNode>();
-      return entities.filter((entity) => {
-        const key = `${entity.name.toLowerCase()}_${entity.type.toLowerCase()}`;
-        if (seen.has(key)) {
-          return false;
-        }
-        seen.set(key, entity);
-        return true;
-      });
-    };
-
-    return {
-      primary: deduplicateEntities(extractedNodes),
-      expanded: deduplicateEntities(
-        expandedEntities.filter(
-          (e) => !extractedNodes.some((primary) => primary.uuid === e.uuid),
-        ),
-      ),
-    };
-  }
-
-  /**
-   * Resolve entities with context-aware deduplication and preset type evolution
-   * Only merges entities that appear in semantically related episodes
-   */
-  private async resolveEntitiesWithContext(
-    extractedNodes: EntityNode[],
-    relatedEpisodesEntities: EntityNode[],
-  ): Promise<void> {
-    const allAppEnumValues = Object.values(Apps);
-
-    extractedNodes.map(async (newEntity) => {
-      // Find same-name entities in related episodes (contextually relevant)
-      const sameNameInContext = relatedEpisodesEntities.filter(
-        (existing) =>
-          existing.name.toLowerCase() === newEntity.name.toLowerCase(),
-      );
-
-      if (sameNameInContext.length > 0) {
-        let existingEntityIds: string[] = [];
-        sameNameInContext.forEach(async (existingEntity) => {
-          const newIsPreset = isPresetType(newEntity.type, allAppEnumValues);
-          const existingIsPreset = isPresetType(
-            existingEntity.type,
-            allAppEnumValues,
-          );
-
-          if (newIsPreset && !existingIsPreset) {
-            // New is preset, existing is custom - evolve existing entity to preset type
-            existingEntityIds.push(existingEntity.uuid);
-          }
-        });
-
-        if (existingEntityIds.length > 0) {
-          await replaceEntityReferences(newEntity, existingEntityIds);
-        }
-      }
-    });
-  }
 
   /**
    * Resolve extracted nodes to existing nodes or create new ones
@@ -835,9 +706,8 @@ export class KnowledgeGraphService {
     // Step 2a: Find similar entities for non-predicate entities
     const similarEntitiesResults = await Promise.all(
       nonPredicates.map(async (entity) => {
-        const similarEntities = await findSimilarEntitiesWithSameType({
+        const similarEntities = await findSimilarEntities({
           queryEmbedding: entity.nameEmbedding,
-          entityType: entity.type,
           limit: 5,
           threshold: 0.7,
           userId: episode.userId,
@@ -1240,20 +1110,12 @@ export class KnowledgeGraphService {
       return triples; // No entities to process
     }
 
-    // Get all app keys
-    const allAppEnumValues = Object.values(Apps);
-
-    // Get all node types with their attribute definitions
-    const entityTypes = getNodeTypes(allAppEnumValues);
-
     // Prepare simplified context for the LLM
     const context = {
       episodeContent: episode.content,
-      entityTypes: entityTypes,
       entities: entities.map((entity) => ({
         uuid: entity.uuid,
         name: entity.name,
-        type: entity.type,
         currentAttributes: entity.attributes || {},
       })),
     };
