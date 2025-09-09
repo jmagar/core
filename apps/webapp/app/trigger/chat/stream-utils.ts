@@ -177,6 +177,8 @@ export async function* generate(
 
       case "gpt-4.1-2025-04-14":
       case "gpt-4.1-mini-2025-04-14":
+      case "gpt-5-mini-2025-08-07":
+      case "gpt-5-2025-08-07":
       case "gpt-4.1-nano-2025-04-14":
         if (!openaiKey) {
           throw new Error("No OpenAI API key found. Set OPENAI_API_KEY");

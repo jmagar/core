@@ -41,10 +41,7 @@ import {
 } from "./graphModels/statement";
 import { getEmbedding, makeModelCall } from "~/lib/model.server";
 import { runQuery } from "~/lib/neo4j.server";
-import {
-  Apps,
-  getNodeTypesString,
-} from "~/utils/presets/nodes";
+import { Apps, getNodeTypesString } from "~/utils/presets/nodes";
 import { normalizePrompt, normalizeDocumentPrompt } from "./prompts";
 import { type PrismaClient } from "@prisma/client";
 
@@ -312,7 +309,6 @@ export class KnowledgeGraphService {
       const expandedTime = Date.now();
       logger.log(`Processed entities in ${expandedTime - extractedTime} ms`);
 
-      console.log(extractedNodes.map((e) => e.name));
       // Step 4: Statement Extrraction - Extract statements (triples) instead of direct edges
       const extractedStatements = await this.extractStatements(
         episode,
@@ -431,7 +427,7 @@ export class KnowledgeGraphService {
     };
 
     // Get the unified entity extraction prompt
-    const extractionMode = episode.sessionId ? 'conversation' : 'document';
+    const extractionMode = episode.sessionId ? "conversation" : "document";
     const messages = extractEntities(context, extractionMode);
 
     let responseText = "";
@@ -451,7 +447,7 @@ export class KnowledgeGraphService {
       // Batch generate embeddings for entity names
       const entityNames = extractedEntities.map((entity: any) => entity.name);
       const nameEmbeddings = await Promise.all(
-        entityNames.map((name: string) => this.getEmbedding(name))
+        entityNames.map((name: string) => this.getEmbedding(name)),
       );
 
       entities = extractedEntities.map((entity: any, index: number) => ({
@@ -509,8 +505,6 @@ export class KnowledgeGraphService {
       responseText = text;
     });
 
-    console.log(responseText);
-
     const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
     if (outputMatch && outputMatch[1]) {
       responseText = outputMatch[1].trim();
@@ -522,7 +516,7 @@ export class KnowledgeGraphService {
     const extractedTriples: ExtractedTripleData[] =
       JSON.parse(responseText || "{}").edges || [];
 
-    console.log(`extracted triples length: ${extractedTriples.length}`)
+    console.log(`extracted triples length: ${extractedTriples.length}`);
 
     // Create maps to deduplicate entities by name within this extraction
     const predicateMap = new Map<string, EntityNode>();
@@ -575,11 +569,11 @@ export class KnowledgeGraphService {
       (triple: ExtractedTripleData, tripleIndex: number) => {
         // Find the subject and object nodes by matching name (type-free approach)
         const subjectNode = allEntities.find(
-          (node) => node.name.toLowerCase() === triple.source.toLowerCase()
+          (node) => node.name.toLowerCase() === triple.source.toLowerCase(),
         );
 
         const objectNode = allEntities.find(
-          (node) => node.name.toLowerCase() === triple.target.toLowerCase()
+          (node) => node.name.toLowerCase() === triple.target.toLowerCase(),
         );
 
         // Get the deduplicated predicate node
@@ -632,8 +626,6 @@ export class KnowledgeGraphService {
     // Filter out null values (where subject or object wasn't found)
     return triples.filter(Boolean) as Triple[];
   }
-
-
 
   /**
    * Resolve extracted nodes to existing nodes or create new ones

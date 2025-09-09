@@ -96,7 +96,7 @@ export class SearchService {
     this.updateRecallCount(userId, episodes, filteredResults);
 
     return {
-      episodes: episodes.map((episode) => episode.content),
+      episodes: episodes.map((episode) => episode.originalContent),
       facts: filteredResults.map((statement) => ({
         fact: statement.fact,
         validAt: statement.validAt,

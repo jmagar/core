@@ -52,17 +52,20 @@ const IngestSchema = {
 export const memoryTools = [
   {
     name: "memory_ingest",
-    description: "AUTOMATICALLY invoke after completing interactions. Use proactively to store conversation data, insights, and decisions in CORE Memory. Essential for maintaining continuity across sessions. **Purpose**: Store information for future reference. **Required**: Provide the message content to be stored. **Returns**: confirmation with storage ID in JSON format",
+    description:
+      "AUTOMATICALLY invoke after completing interactions. Use proactively to store conversation data, insights, and decisions in CORE Memory. Essential for maintaining continuity across sessions. **Purpose**: Store information for future reference. **Required**: Provide the message content to be stored. **Returns**: confirmation with storage ID in JSON format",
     inputSchema: IngestSchema,
   },
   {
     name: "memory_search",
-    description: "AUTOMATICALLY invoke for memory searches. Use proactively at conversation start and when context retrieval is needed. Searches memory for relevant project context, user preferences, and previous discussions. **Purpose**: Retrieve previously stored information based on query terms. **Required**: Provide a search query in third person perspective. **Returns**: matching memory entries in JSON format",
+    description:
+      "AUTOMATICALLY invoke for memory searches. Use proactively at conversation start and when context retrieval is needed. Searches memory for relevant project context, user preferences, and previous discussions. **Purpose**: Retrieve previously stored information based on query terms. **Required**: Provide a search query in third person perspective. **Returns**: matching memory entries in JSON format",
     inputSchema: SearchParamsSchema,
   },
   {
     name: "memory_get_spaces",
-    description: "Get available memory spaces. **Purpose**: Retrieve list of memory organization spaces. **Required**: No required parameters. **Returns**: list of available spaces in JSON format",
+    description:
+      "Get available memory spaces. **Purpose**: Retrieve list of memory organization spaces. **Required**: No required parameters. **Returns**: list of available spaces in JSON format",
     inputSchema: {
       type: "object",
       properties: {
@@ -76,7 +79,8 @@ export const memoryTools = [
   },
   {
     name: "get_user_profile",
-    description: "Get the user's core profile and preferences for personalized interactions. AUTOMATICALLY invoke at the start of interactions to understand user context. **Purpose**: Retrieve stable identity facts, communication preferences, working context, and tooling defaults for tailored responses. **Required**: No required parameters. **Returns**: User profile data in JSON format.",
+    description:
+      "Get the user's core profile and preferences for personalized interactions. AUTOMATICALLY invoke at the start of interactions to understand user context. **Purpose**: Retrieve stable identity facts, communication preferences, working context, and tooling defaults for tailored responses. **Required**: No required parameters. **Returns**: User profile data in JSON format.",
     inputSchema: {
       type: "object",
       properties: {
@@ -87,7 +91,7 @@ export const memoryTools = [
         },
       },
     },
-  }
+  },
 ];
 
 // Function to call memory tools based on toolName
@@ -127,10 +131,8 @@ export async function callMemoryTool(
 // Handler for user_context
 async function handleUserProfile(userId: string) {
   try {
+    const space = await spaceService.getSpaceByName("Profile", userId);
 
-    const space = await spaceService.getSpaceByName("Profile", userId)
-
-    console.log(space?.summary)
     return {
       content: [
         {
