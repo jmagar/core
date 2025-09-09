@@ -11,6 +11,7 @@ import {
 import {
   Activity,
   Columns3,
+  Inbox,
   LayoutGrid,
   MessageSquare,
   Network,
@@ -24,7 +25,12 @@ import { ConversationList } from "../conversation";
 const data = {
   navMain: [
     {
-      title: "Conversation",
+      title: "Inbox",
+      url: "/home/inbox",
+      icon: Inbox,
+    },
+    {
+      title: "Chat",
       url: "/home/conversation",
       icon: MessageSquare,
     },
@@ -37,11 +43,6 @@ const data = {
       title: "Spaces",
       url: "/home/space",
       icon: Columns3,
-    },
-    {
-      title: "Activity",
-      url: "/home/logs",
-      icon: Activity,
     },
     {
       title: "Integrations",

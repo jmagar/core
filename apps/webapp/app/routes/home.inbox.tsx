@@ -11,7 +11,6 @@ import { ContributionGraph } from "~/components/activity/contribution-graph";
 export default function LogsAll() {
   const [selectedSource, setSelectedSource] = useState<string | undefined>();
   const [selectedStatus, setSelectedStatus] = useState<string | undefined>();
-  const contributionFetcher = useFetcher<any>();
 
   const {
     logs,
@@ -26,35 +25,10 @@ export default function LogsAll() {
     status: selectedStatus,
   });
 
-  // Fetch contribution data on mount
-  useEffect(() => {
-    if (contributionFetcher.state === "idle" && !contributionFetcher.data) {
-      contributionFetcher.load("/api/v1/activity/contribution");
-    }
-  }, [contributionFetcher]);
-
-  // Get contribution data from fetcher
-  const contributionData = contributionFetcher.data?.success
-    ? contributionFetcher.data.data.contributionData
-    : [];
-  const totalActivities = contributionFetcher.data?.success
-    ? contributionFetcher.data.data.totalActivities
-    : 0;
-  const isContributionLoading =
-    contributionFetcher.state === "loading" || !contributionFetcher.data;
-
   return (
     <>
-      <PageHeader title="Logs" />
+      <PageHeader title="Inbox" />
       <div className="flex h-[calc(100vh_-_56px)] w-full flex-col items-center space-y-6 py-4">
-        {/* Contribution Graph */}
-        <div className="mb-0 w-full max-w-5xl px-4">
-          {isContributionLoading ? (
-            <LoaderCircle className="text-primary h-4 w-4 animate-spin" />
-          ) : (
-            <ContributionGraph data={contributionData} />
-          )}
-        </div>
         {isInitialLoad ? (
           <>
             <LoaderCircle className="text-primary h-4 w-4 animate-spin" />
