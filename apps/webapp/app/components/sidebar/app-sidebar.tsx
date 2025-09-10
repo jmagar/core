@@ -9,7 +9,6 @@ import {
   SidebarMenuItem,
 } from "../ui/sidebar";
 import {
-  Activity,
   Columns3,
   Inbox,
   LayoutGrid,
@@ -65,7 +64,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <div className="mt-1 ml-1 flex w-full items-center justify-start gap-2">
-              <Logo width={20} height={20} />
+              <Logo size={20} />
               C.O.R.E.
             </div>
           </SidebarMenuItem>

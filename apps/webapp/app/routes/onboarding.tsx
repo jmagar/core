@@ -230,7 +230,7 @@ export default function Onboarding() {
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="#" className="flex items-center gap-2 font-medium">
             <div className="flex size-8 items-center justify-center rounded-md">
-              <Logo width={60} height={60} />
+              <Logo size={60} />
             </div>
             C.O.R.E.
           </a>
