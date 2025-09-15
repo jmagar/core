@@ -18,15 +18,15 @@ export async function performBM25Search(
 
     // Build the WHERE clause based on timeframe options
     let timeframeCondition = `
-      AND s.validAt <= $validAt 
-      AND (s.invalidAt > $validAt)
+      AND s.validAt <= $validAt
+      ${options.includeInvalidated ? '' : 'AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)'}
     `;
 
     // If startTime is provided, add condition to filter by validAt >= startTime
     if (options.startTime) {
       timeframeCondition = `
-        AND s.validAt <= $validAt 
-        AND (s.invalidAt > $validAt)
+        AND s.validAt <= $validAt
+        ${options.includeInvalidated ? '' : 'AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)'}
         AND s.validAt >= $startTime
       `;
     }
@@ -108,15 +108,15 @@ export async function performVectorSearch(
   try {
     // Build the WHERE clause based on timeframe options
     let timeframeCondition = `
-      AND s.validAt <= $validAt 
-      AND (s.invalidAt > $validAt)
+      AND s.validAt <= $validAt
+      ${options.includeInvalidated ? '' : 'AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)'}
     `;
 
     // If startTime is provided, add condition to filter by validAt >= startTime
     if (options.startTime) {
       timeframeCondition = `
-        AND s.validAt <= $validAt 
-        AND (s.invalidAt > $validAt)
+        AND s.validAt <= $validAt
+        ${options.includeInvalidated ? '' : 'AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)'}
         AND s.validAt >= $startTime
       `;
     }
@@ -135,7 +135,7 @@ export async function performVectorSearch(
     YIELD node AS s, score
     WHERE s.userId = $userId
     AND score >= 0.7
-    ${timeframeCondition.replace("AND", "AND").replace("WHERE", "AND")}
+    ${timeframeCondition}
     ${spaceCondition}
     OPTIONAL MATCH (episode:Episode)-[:HAS_PROVENANCE]->(s)
     WITH s, score, count(episode) as provenanceCount
@@ -219,14 +219,14 @@ export async function bfsTraversal(
     // Build the WHERE clause based on timeframe options
     let timeframeCondition = `
       AND s.validAt <= $validAt
-      AND (s.invalidAt > $validAt)
+      ${includeInvalidated ? '' : 'AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)'}
     `;
 
     // If startTime is provided, add condition to filter by validAt >= startTime
     if (startTime) {
       timeframeCondition = `
         AND s.validAt <= $validAt
-        AND (s.invalidAt > $validAt)
+        ${includeInvalidated ? '' : 'AND (s.invalidAt IS NULL OR s.invalidAt > $validAt)'}
         AND s.validAt >= $startTime
       `;
     }
@@ -243,10 +243,9 @@ export async function bfsTraversal(
     // This query implements BFS up to maxDepth and collects all statements along the way
     const cypher = `
       MATCH (e:Entity {uuid: $startEntityId})<-[:HAS_SUBJECT|HAS_OBJECT|HAS_PREDICATE]-(s:Statement)
-      WHERE 
+      WHERE
         (s.userId = $userId)
-        AND ($includeInvalidated OR s.invalidAt IS NULL)
-        ${timeframeCondition}
+        ${includeInvalidated ? 'AND s.validAt <= $validAt' : timeframeCondition}
         ${spaceCondition}
       RETURN s as statement
     `;
