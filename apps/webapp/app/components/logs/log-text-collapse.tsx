@@ -3,6 +3,7 @@ import { Badge, BadgeColor } from "../ui/badge";
 import { type LogItem } from "~/hooks/use-logs";
 import { getIconForAuthorise } from "../icon-utils";
 import { useNavigate, useParams } from "@remix-run/react";
+import { getStatusColor } from "./utils";
 
 interface LogTextCollapseProps {
   text?: string;
@@ -12,21 +13,6 @@ interface LogTextCollapseProps {
   id: string;
   reset?: () => void;
 }
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "PROCESSING":
-      return "bg-blue-800";
-    case "PENDING":
-      return "bg-warning";
-    case "FAILED":
-      return "bg-destructive";
-    case "CANCELLED":
-      return "bg-gray-800";
-    default:
-      return "bg-gray-800";
-  }
-};
 
 export function LogTextCollapse({ text, log }: LogTextCollapseProps) {
   const { logId } = useParams();

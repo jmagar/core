@@ -30,9 +30,10 @@ export interface UseLogsOptions {
   endpoint: string; // '/api/v1/logs/all' or '/api/v1/logs/activity'
   source?: string;
   status?: string;
+  type?: string;
 }
 
-export function useLogs({ endpoint, source, status }: UseLogsOptions) {
+export function useLogs({ endpoint, source, status, type }: UseLogsOptions) {
   const fetcher = useFetcher<LogsResponse>();
   const [logs, setLogs] = useState<LogItem[]>([]);
   const [page, setPage] = useState(1);
@@ -49,9 +50,10 @@ export function useLogs({ endpoint, source, status }: UseLogsOptions) {
       params.set("limit", "5");
       if (source) params.set("source", source);
       if (status) params.set("status", status);
+      if (type) params.set("type", type);
       return `${endpoint}?${params.toString()}`;
     },
-    [endpoint, source, status],
+    [endpoint, source, status, type],
   );
 
   const loadMore = useCallback(() => {
@@ -100,7 +102,7 @@ export function useLogs({ endpoint, source, status }: UseLogsOptions) {
     setHasMore(true);
     setIsInitialLoad(true);
     fetcher.load(buildUrl(1));
-  }, [source, status, buildUrl]); // Inline reset logic to avoid dependency issues
+  }, [source, status, type, buildUrl]); // Inline reset logic to avoid dependency issues
 
   // Initial load
   useEffect(() => {

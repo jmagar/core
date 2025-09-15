@@ -88,7 +88,7 @@ export default function Patterns() {
 
   return (
     <div className="flex h-full w-full flex-col pt-2">
-      <div className="flex h-[calc(100vh_-_140px)] w-full">
+      <div className="flex h-[calc(100vh_-_56px)] w-full">
         <ClientOnly
           fallback={<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
         >

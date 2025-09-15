@@ -1,14 +1,63 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { useFetcher } from "@remix-run/react";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Badge } from "../ui/badge";
+import { Badge, BadgeColor } from "../ui/badge";
 import { type LogItem } from "~/hooks/use-logs";
 import Markdown from "react-markdown";
+import { getIconForAuthorise } from "../icon-utils";
+import { cn } from "~/lib/utils";
+import { getStatusColor } from "./utils";
 
 interface LogDetailsProps {
-  error?: string;
   log: LogItem;
+}
+
+interface PropertyItemProps {
+  label: string;
+  value?: string | ReactNode;
+  icon?: ReactNode;
+  variant?: "default" | "secondary" | "outline" | "status";
+  statusColor?: string;
+  className?: string;
+}
+
+function PropertyItem({
+  label,
+  value,
+  icon,
+  variant = "secondary",
+  statusColor,
+  className,
+}: PropertyItemProps) {
+  if (!value) return null;
+
+  return (
+    <div className="flex items-center py-1">
+      <span className="text-muted-foreground min-w-[160px]">{label}</span>
+
+      {variant === "status" ? (
+        <Badge
+          className={cn(
+            "!bg-grayAlpha-100 text-muted-foreground h-7 rounded px-4 text-xs",
+            className,
+          )}
+        >
+          {statusColor && (
+            <BadgeColor className={cn(statusColor, "h-2.5 w-2.5")} />
+          )}
+          {typeof value === "string"
+            ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+            : value}
+        </Badge>
+      ) : (
+        <Badge variant={variant} className={cn("h-7 rounded px-4", className)}>
+          {icon}
+          {value}
+        </Badge>
+      )}
+    </div>
+  );
 }
 
 interface EpisodeFact {
@@ -24,7 +73,7 @@ interface EpisodeFactsResponse {
   invalidFacts: EpisodeFact[];
 }
 
-export function LogDetails({ error, log }: LogDetailsProps) {
+export function LogDetails({ log }: LogDetailsProps) {
   const [facts, setFacts] = useState<any[]>([]);
   const [invalidFacts, setInvalidFacts] = useState<any[]>([]);
   const [factsLoading, setFactsLoading] = useState(false);
@@ -32,11 +81,35 @@ export function LogDetails({ error, log }: LogDetailsProps) {
 
   // Fetch episode facts when dialog opens and episodeUUID exists
   useEffect(() => {
-    if (log.episodeUUID && facts.length === 0) {
-      setFactsLoading(true);
-      fetcher.load(`/api/v1/episodes/${log.episodeUUID}/facts`);
+    if (facts.length === 0) {
+      if (log.data?.type === "DOCUMENT" && log.data?.episodes?.length > 0) {
+        setFactsLoading(true);
+        // Fetch facts for all episodes in DOCUMENT type
+        Promise.all(
+          log.data.episodes.map((episodeId: string) =>
+            fetch(`/api/v1/episodes/${episodeId}/facts`).then((res) =>
+              res.json(),
+            ),
+          ),
+        )
+          .then((results) => {
+            const allFacts = results.flatMap((result) => result.facts || []);
+            const allInvalidFacts = results.flatMap(
+              (result) => result.invalidFacts || [],
+            );
+            setFacts(allFacts);
+            setInvalidFacts(allInvalidFacts);
+            setFactsLoading(false);
+          })
+          .catch(() => {
+            setFactsLoading(false);
+          });
+      } else if (log.episodeUUID) {
+        setFactsLoading(true);
+        fetcher.load(`/api/v1/episodes/${log.episodeUUID}/facts`);
+      }
     }
-  }, [log.episodeUUID, facts.length]);
+  }, [log.episodeUUID, log.data?.type, log.data?.episodes, facts.length]);
 
   // Handle fetcher response
   useEffect(() => {
@@ -49,37 +122,80 @@ export function LogDetails({ error, log }: LogDetailsProps) {
   }, [fetcher.data, fetcher.state]);
 
   return (
-    <div className="max-w-4xl">
-      <div className="px-4 pt-4">
-        <div className="mb-4 flex w-full items-center justify-between">
-          <span>Log Details</span>
-          <div className="flex gap-0.5">
-            {log.episodeUUID && (
-              <Badge variant="secondary" className="rounded text-xs">
-                Episode: {log.episodeUUID.slice(0, 8)}...
-              </Badge>
-            )}
-            {log.source && (
-              <Badge variant="secondary" className="rounded text-xs">
-                Source: {log.source}
-              </Badge>
-            )}
+    <div className="flex w-full flex-col items-center">
+      <div className="w-4xl">
+        <div className="px-4 pt-4">
+          <div className="mb-4 flex w-full items-center justify-between">
+            <span>Episode Details</span>
           </div>
         </div>
-      </div>
 
-      <div className="max-h-[90vh] overflow-auto p-4 pt-0">
-        {/* Log Content */}
-        <div className="mb-4 text-sm break-words whitespace-pre-wrap">
-          <div className="rounded-md">
-            <Markdown>{log.ingestText}</Markdown>
+        <div className="mb-10 px-4">
+          <div className="space-y-3">
+            {log.data?.type === "DOCUMENT" && log.data?.episodes ? (
+              <PropertyItem
+                label="Episodes"
+                value={
+                  <div className="flex flex-wrap gap-1">
+                    {log.data.episodes.map(
+                      (episodeId: string, index: number) => (
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          {episodeId}
+                        </Badge>
+                      ),
+                    )}
+                  </div>
+                }
+                variant="secondary"
+              />
+            ) : (
+              <PropertyItem
+                label="Episode Id"
+                value={log.episodeUUID}
+                variant="secondary"
+              />
+            )}
+            <PropertyItem
+              label="Session Id"
+              value={log.data?.sessionId?.toLowerCase()}
+              variant="secondary"
+            />
+            <PropertyItem
+              label="Type"
+              value={
+                log.data?.type ? log.data.type.toLowerCase() : "conversation"
+              }
+              variant="secondary"
+            />
+            <PropertyItem
+              label="Source"
+              value={log.source?.toLowerCase()}
+              icon={
+                log.source &&
+                getIconForAuthorise(log.source.toLowerCase(), 16, undefined)
+              }
+              variant="secondary"
+            />
+
+            <PropertyItem
+              label="Status"
+              value={log.status}
+              variant="status"
+              statusColor={log.status && getStatusColor(log.status)}
+            />
           </div>
         </div>
 
         {/* Error Details */}
         {log.error && (
-          <div className="mb-4">
-            <h3 className="mb-2 text-sm font-medium">Error Details</h3>
+          <div className="mb-6 px-4">
+            <div className="mb-2 flex w-full items-center justify-between">
+              <span>Error Details</span>
+            </div>
             <div className="bg-destructive/10 rounded-md p-3">
               <div className="flex items-start gap-2 text-red-600">
                 <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
@@ -92,68 +208,77 @@ export function LogDetails({ error, log }: LogDetailsProps) {
         )}
 
         {/* Episode Facts */}
-        {log.episodeUUID && (
-          <div className="mb-4">
-            <h3 className="text-muted-foreground mb-2 text-sm">Facts</h3>
-            <div className="rounded-md">
-              {factsLoading ? (
-                <div className="flex items-center justify-center gap-2 p-4 text-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </div>
-              ) : facts.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {facts.map((fact) => (
-                    <div
-                      key={fact.uuid}
-                      className="bg-grayAlpha-100 rounded-md p-3"
-                    >
-                      <p className="mb-1 text-sm">{fact.fact}</p>
-                      <div className="text-muted-foreground flex items-center gap-2 text-xs">
+        <div className="mb-6 px-4">
+          <div className="mb-2 flex w-full items-center justify-between">
+            <span>Facts</span>
+          </div>
+          <div className="rounded-md">
+            {factsLoading ? (
+              <div className="flex items-center justify-center gap-2 p-4 text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            ) : facts.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                {facts.map((fact) => (
+                  <div
+                    key={fact.uuid}
+                    className="bg-grayAlpha-100 rounded-md p-3"
+                  >
+                    <p className="mb-1 text-sm">{fact.fact}</p>
+                    <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                      <span>
+                        Valid: {new Date(fact.validAt).toLocaleString()}
+                      </span>
+                      {fact.invalidAt && (
                         <span>
-                          Valid: {new Date(fact.validAt).toLocaleString()}
+                          Invalid: {new Date(fact.invalidAt).toLocaleString()}
                         </span>
-                        {fact.invalidAt && (
-                          <span>
-                            Invalid: {new Date(fact.invalidAt).toLocaleString()}
-                          </span>
-                        )}
-                        {Object.keys(fact.attributes).length > 0 && (
-                          <Badge variant="secondary" className="text-xs">
-                            {Object.keys(fact.attributes).length} attributes
-                          </Badge>
-                        )}
-                      </div>
+                      )}
+                      {Object.keys(fact.attributes).length > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {Object.keys(fact.attributes).length} attributes
+                        </Badge>
+                      )}
                     </div>
-                  ))}
-                  {invalidFacts.map((fact) => (
-                    <div
-                      key={fact.uuid}
-                      className="bg-grayAlpha-100 rounded-md p-3"
-                    >
-                      <p className="mb-1 text-sm">{fact.fact}</p>
-                      <div className="text-muted-foreground flex items-center gap-2 text-xs">
-                        {fact.invalidAt && (
-                          <span>
-                            Invalid: {new Date(fact.invalidAt).toLocaleString()}
-                          </span>
-                        )}
-                        {Object.keys(fact.attributes).length > 0 && (
-                          <Badge variant="secondary" className="text-xs">
-                            {Object.keys(fact.attributes).length} attributes
-                          </Badge>
-                        )}
-                      </div>
+                  </div>
+                ))}
+                {invalidFacts.map((fact) => (
+                  <div
+                    key={fact.uuid}
+                    className="bg-grayAlpha-100 rounded-md p-3"
+                  >
+                    <p className="mb-1 text-sm">{fact.fact}</p>
+                    <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                      {fact.invalidAt && (
+                        <span>
+                          Invalid: {new Date(fact.invalidAt).toLocaleString()}
+                        </span>
+                      )}
+                      {Object.keys(fact.attributes).length > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {Object.keys(fact.attributes).length} attributes
+                        </Badge>
+                      )}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-muted-foreground p-4 text-center text-sm">
-                  No facts found for this episode
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-muted-foreground p-4 text-center text-sm">
+                No facts found for this episode
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex max-h-[88vh] flex-col items-center overflow-auto p-4 pt-0">
+          {/* Log Content */}
+          <div className="mb-4 text-sm break-words whitespace-pre-wrap">
+            <div className="rounded-md">
+              <Markdown>{log.ingestText}</Markdown>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

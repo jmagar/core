@@ -16,6 +16,7 @@ import { cn } from "~/lib/utils";
 export default function LogsAll() {
   const [selectedSource, setSelectedSource] = useState<string | undefined>();
   const [selectedStatus, setSelectedStatus] = useState<string | undefined>();
+  const [selectedType, setSelectedType] = useState<string | undefined>();
 
   const { logId } = useParams();
 
@@ -30,6 +31,7 @@ export default function LogsAll() {
     endpoint: "/api/v1/logs",
     source: selectedSource,
     status: selectedStatus,
+    type: selectedType,
   });
 
   return (
@@ -37,15 +39,15 @@ export default function LogsAll() {
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel
           maxSize={50}
-          defaultSize={35}
-          minSize={35}
+          defaultSize={30}
+          minSize={30}
           collapsible
-          collapsedSize={35}
+          collapsedSize={30}
         >
           <div className="flex h-full flex-col">
             <PageHeader title="Inbox" />
 
-            <div className="flex h-[calc(100vh_-_56px)] w-full flex-col items-center space-y-6 pt-3 pb-4">
+            <div className="flex h-[calc(100vh_-_56px)] w-full flex-col items-center space-y-6 pt-3">
               {isInitialLoad ? (
                 <>
                   <LoaderCircle className="text-primary h-4 w-4 animate-spin" />
@@ -58,12 +60,14 @@ export default function LogsAll() {
                     availableSources={availableSources}
                     selectedSource={selectedSource}
                     selectedStatus={selectedStatus}
+                    selectedType={selectedType}
                     onSourceChange={setSelectedSource}
                     onStatusChange={setSelectedStatus}
+                    onTypeChange={setSelectedType}
                   />
 
                   {/* Logs List */}
-                  <div className="flex h-full w-full space-y-4">
+                  <div className="flex h-full w-full space-y-4 pb-2">
                     {logs.length === 0 ? (
                       <Card className="bg-background-2 w-full">
                         <CardContent className="bg-background-2 flex w-full items-center justify-center py-16">
@@ -73,7 +77,7 @@ export default function LogsAll() {
                               No logs found
                             </h3>
                             <p className="text-muted-foreground">
-                              {selectedSource || selectedStatus
+                              {selectedSource || selectedStatus || selectedType
                                 ? "Try adjusting your filters to see more results."
                                 : "No ingestion logs are available yet."}
                             </p>

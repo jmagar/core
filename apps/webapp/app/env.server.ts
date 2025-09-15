@@ -67,7 +67,7 @@ const EnvironmentSchema = z.object({
   //OpenAI
   OPENAI_API_KEY: z.string(),
 
-  EMAIL_TRANSPORT: z.enum(["resend", "smtp", "aws-ses"]).optional(),
+  EMAIL_TRANSPORT: z.string().optional(),
   FROM_EMAIL: z.string().optional(),
   REPLY_TO_EMAIL: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),

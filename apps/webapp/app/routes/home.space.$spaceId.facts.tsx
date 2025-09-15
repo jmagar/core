@@ -88,7 +88,7 @@ export default function Facts() {
         onSpaceFilterChange={setSelectedSpaceFilter}
       />
 
-      <div className="flex h-[calc(100vh_-_140px)] w-full">
+      <div className="flex h-[calc(100vh_-_56px)] w-full">
         <ClientOnly
           fallback={<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
         >

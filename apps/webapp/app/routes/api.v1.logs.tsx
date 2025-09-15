@@ -18,6 +18,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const limit = parseInt(url.searchParams.get("limit") || "20");
   const source = url.searchParams.get("source");
   const status = url.searchParams.get("status");
+  const type = url.searchParams.get("type");
   const skip = (page - 1) * limit;
 
   // Get user and workspace in one query
@@ -37,6 +38,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   if (status) {
     whereClause.status = status;
+  }
+
+  if (type) {
+    whereClause.data = {
+      path: ["type"],
+      equals: type,
+    };
   }
 
   // If source filter is provided, filter by integration source
