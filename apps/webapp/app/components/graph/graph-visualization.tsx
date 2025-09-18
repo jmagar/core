@@ -114,36 +114,6 @@ export const GraphVisualization = forwardRef<GraphRef, GraphVisualizationProps>(
     return (
       <div className={className}>
         {/* Entity Types Legend Button */}
-        <div className="absolute top-4 left-4 z-50">
-          {/* <HoverCard>
-            <HoverCardTrigger asChild>
-              <button className="bg-primary/10 text-primary hover:bg-primary/20 rounded-md px-2.5 py-1 text-xs transition-colors">
-                Entity Types
-              </button>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-40" side="bottom" align="start">
-              <div className="space-y-2">
-                <div className="max-h-[300px] space-y-1.5 overflow-y-auto pr-2">
-                  {allLabels.map((label) => (
-                    <div key={label} className="flex items-center gap-2">
-                      <div
-                        className="h-4 w-4 flex-shrink-0 rounded-full"
-                        style={{
-                          backgroundColor: getNodeColor(
-                            label,
-                            isDarkMode,
-                            sharedLabelColorMap,
-                          ),
-                        }}
-                      />
-                      <span className="text-xs">{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </HoverCardContent>
-          </HoverCard> */}
-        </div>
 
         {triplets.length > 0 ? (
           <Graph

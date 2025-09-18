@@ -1,13 +1,13 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { useFetcher } from "@remix-run/react";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Badge, BadgeColor } from "../ui/badge";
 import { type LogItem } from "~/hooks/use-logs";
 import Markdown from "react-markdown";
 import { getIconForAuthorise } from "../icon-utils";
-import { cn } from "~/lib/utils";
+import { cn, formatString } from "~/lib/utils";
 import { getStatusColor } from "./utils";
+import { format } from "date-fns";
 
 interface LogDetailsProps {
   log: LogItem;
@@ -46,9 +46,7 @@ function PropertyItem({
           {statusColor && (
             <BadgeColor className={cn(statusColor, "h-2.5 w-2.5")} />
           )}
-          {typeof value === "string"
-            ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
-            : value}
+          {value}
         </Badge>
       ) : (
         <Badge variant={variant} className={cn("h-7 rounded px-4", className)}>
@@ -71,6 +69,14 @@ interface EpisodeFact {
 interface EpisodeFactsResponse {
   facts: EpisodeFact[];
   invalidFacts: EpisodeFact[];
+}
+
+function getStatusValue(status: string) {
+  if (status === "PENDING") {
+    return "In Queue";
+  }
+
+  return status;
 }
 
 export function LogDetails({ log }: LogDetailsProps) {
@@ -122,8 +128,8 @@ export function LogDetails({ log }: LogDetailsProps) {
   }, [fetcher.data, fetcher.state]);
 
   return (
-    <div className="flex w-full flex-col items-center">
-      <div className="w-4xl">
+    <div className="flex h-full w-full flex-col items-center overflow-auto">
+      <div className="max-w-4xl">
         <div className="px-4 pt-4">
           <div className="mb-4 flex w-full items-center justify-between">
             <span>Episode Details</span>
@@ -131,7 +137,7 @@ export function LogDetails({ log }: LogDetailsProps) {
         </div>
 
         <div className="mb-10 px-4">
-          <div className="space-y-3">
+          <div className="space-y-1">
             {log.data?.type === "DOCUMENT" && log.data?.episodes ? (
               <PropertyItem
                 label="Episodes"
@@ -166,14 +172,14 @@ export function LogDetails({ log }: LogDetailsProps) {
             />
             <PropertyItem
               label="Type"
-              value={
-                log.data?.type ? log.data.type.toLowerCase() : "conversation"
-              }
+              value={formatString(
+                log.data?.type ? log.data.type.toLowerCase() : "conversation",
+              )}
               variant="secondary"
             />
             <PropertyItem
               label="Source"
-              value={log.source?.toLowerCase()}
+              value={formatString(log.source?.toLowerCase())}
               icon={
                 log.source &&
                 getIconForAuthorise(log.source.toLowerCase(), 16, undefined)
@@ -183,7 +189,7 @@ export function LogDetails({ log }: LogDetailsProps) {
 
             <PropertyItem
               label="Status"
-              value={log.status}
+              value={getStatusValue(log.status)}
               variant="status"
               statusColor={log.status && getStatusColor(log.status)}
             />
@@ -207,6 +213,18 @@ export function LogDetails({ log }: LogDetailsProps) {
           </div>
         )}
 
+        <div className="flex flex-col items-center p-4 pt-0">
+          <div className="mb-2 flex w-full items-center justify-between">
+            <span>Content</span>
+          </div>
+          {/* Log Content */}
+          <div className="mb-4 text-sm break-words whitespace-pre-wrap">
+            <div className="rounded-md">
+              <Markdown>{log.ingestText}</Markdown>
+            </div>
+          </div>
+        </div>
+
         {/* Episode Facts */}
         <div className="mb-6 px-4">
           <div className="mb-2 flex w-full items-center justify-between">
@@ -218,20 +236,21 @@ export function LogDetails({ log }: LogDetailsProps) {
                 <Loader2 className="h-4 w-4 animate-spin" />
               </div>
             ) : facts.length > 0 ? (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
                 {facts.map((fact) => (
                   <div
                     key={fact.uuid}
-                    className="bg-grayAlpha-100 rounded-md p-3"
+                    className="bg-grayAlpha-100 flex items-center justify-between gap-2 rounded-md p-3"
                   >
-                    <p className="mb-1 text-sm">{fact.fact}</p>
-                    <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                    <p className="text-sm">{fact.fact}</p>
+                    <div className="text-muted-foreground flex shrink-0 items-center gap-2 text-xs">
                       <span>
-                        Valid: {new Date(fact.validAt).toLocaleString()}
+                        Valid: {format(new Date(fact.validAt), "dd/MM/yyyy")}
                       </span>
                       {fact.invalidAt && (
                         <span>
-                          Invalid: {new Date(fact.invalidAt).toLocaleString()}
+                          Invalid:{" "}
+                          {format(new Date(fact.invalidAt), "dd/MM/yyyy")}
                         </span>
                       )}
                       {Object.keys(fact.attributes).length > 0 && (
@@ -268,15 +287,6 @@ export function LogDetails({ log }: LogDetailsProps) {
                 No facts found for this episode
               </div>
             )}
-          </div>
-        </div>
-
-        <div className="flex max-h-[88vh] flex-col items-center overflow-auto p-4 pt-0">
-          {/* Log Content */}
-          <div className="mb-4 text-sm break-words whitespace-pre-wrap">
-            <div className="rounded-md">
-              <Markdown>{log.ingestText}</Markdown>
-            </div>
           </div>
         </div>
       </div>

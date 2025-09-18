@@ -86,6 +86,7 @@ const EnvironmentSchema = z.object({
   // Model envs
   MODEL: z.string().default(LLMModelEnum.GPT41),
   EMBEDDING_MODEL: z.string().default("mxbai-embed-large"),
+  EMBEDDING_MODEL_SIZE: z.string().default("1024"),
   OLLAMA_URL: z.string().optional(),
   COHERE_API_KEY: z.string().optional(),
 });

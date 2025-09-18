@@ -1,78 +1,122 @@
-import { type LoaderFunctionArgs, json } from "@remix-run/node";
-import { prisma } from "~/db.server";
-import { requireUserId } from "~/services/session.server";
+import { json } from "@remix-run/node";
+import { runs } from "@trigger.dev/sdk";
+import { z } from "zod";
+import { deleteEpisodeWithRelatedNodes } from "~/services/graphModels/episode";
+import {
+  deleteIngestionQueue,
+  getIngestionQueue,
+  getIngestionQueueForFrontend,
+} from "~/services/ingestionLogs.server";
+import {
+  createHybridActionApiRoute,
+  createHybridLoaderApiRoute,
+} from "~/services/routeBuilders/apiBuilder.server";
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
-  const userId = await requireUserId(request);
-  const logId = params.logId;
+// Schema for space ID parameter
+const LogParamsSchema = z.object({
+  logId: z.string(),
+});
 
-  // Get user and workspace in one query
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { Workspace: { select: { id: true } } },
-  });
+const loader = createHybridLoaderApiRoute(
+  {
+    params: LogParamsSchema,
+    findResource: async () => 1,
+    corsStrategy: "all",
+    allowJWT: true,
+  },
+  async ({ params, authentication }) => {
+    const formattedLog = await getIngestionQueueForFrontend(params.logId);
 
-  if (!user?.Workspace) {
-    throw new Response("Workspace not found", { status: 404 });
-  }
+    return json({ log: formattedLog });
+  },
+);
 
-  // Fetch the specific log by logId
-  const log = await prisma.ingestionQueue.findUnique({
-    where: { id: logId },
-    select: {
-      id: true,
-      createdAt: true,
-      processedAt: true,
-      status: true,
-      error: true,
-      type: true,
-      output: true,
-      data: true,
-      activity: {
-        select: {
-          text: true,
-          sourceURL: true,
-          integrationAccount: {
-            select: {
-              integrationDefinition: {
-                select: {
-                  name: true,
-                  slug: true,
-                },
-              },
-            },
-          },
-        },
-      },
+export const DeleteEpisodeBodyRequest = z.object({
+  id: z.string(),
+});
+
+const { action } = createHybridActionApiRoute(
+  {
+    body: DeleteEpisodeBodyRequest,
+    allowJWT: true,
+    method: "DELETE",
+    authorization: {
+      action: "delete",
     },
-  });
+    corsStrategy: "all",
+  },
+  async ({ body, authentication }) => {
+    try {
+      const ingestionQueue = await getIngestionQueue(body.id);
 
-  if (!log) {
-    throw new Response("Log not found", { status: 404 });
-  }
+      if (!ingestionQueue) {
+        return json(
+          {
+            error: "Episode not found or unauthorized",
+            code: "not_found",
+          },
+          { status: 404 },
+        );
+      }
 
-  // Format the response
-  const integrationDef =
-    log.activity?.integrationAccount?.integrationDefinition;
-  const logData = log.data as any;
+      const output = ingestionQueue.output as any;
+      const runningTasks = await runs.list({
+        tag: [authentication.userId, ingestionQueue.id],
+        taskIdentifier: "ingest-episode",
+      });
 
-  const formattedLog = {
-    id: log.id,
-    source: integrationDef?.name || logData?.source || "Unknown",
-    ingestText:
-      log.activity?.text ||
-      logData?.episodeBody ||
-      logData?.text ||
-      "No content",
-    time: log.createdAt,
-    processedAt: log.processedAt,
-    episodeUUID: (log.output as any)?.episodeUuid,
-    status: log.status,
-    error: log.error,
-    sourceURL: log.activity?.sourceURL,
-    integrationSlug: integrationDef?.slug,
-    data: log.data,
-  };
+      const latestTask = runningTasks.data.find(
+        (task) =>
+          task.tags.includes(authentication.userId) &&
+          task.tags.includes(ingestionQueue.id),
+      );
 
-  return json({ log: formattedLog });
-}
+      if (latestTask && !latestTask?.isCompleted) {
+        runs.cancel(latestTask?.id);
+      }
+
+      let result;
+
+      if (output?.episodeUuid) {
+        result = await deleteEpisodeWithRelatedNodes({
+          episodeUuid: output?.episodeUuid,
+          userId: authentication.userId,
+        });
+
+        if (!result.episodeDeleted) {
+          return json(
+            {
+              error: "Episode not found or unauthorized",
+              code: "not_found",
+            },
+            { status: 404 },
+          );
+        }
+      }
+
+      await deleteIngestionQueue(ingestionQueue.id);
+
+      return json({
+        success: true,
+        message: "Episode deleted successfully",
+        deleted: {
+          episode: result?.episodeDeleted,
+          statements: result?.statementsDeleted,
+          entities: result?.entitiesDeleted,
+          facts: result?.factsDeleted,
+        },
+      });
+    } catch (error) {
+      console.error("Error deleting episode:", error);
+      return json(
+        {
+          error: "Failed to delete episode",
+          code: "internal_error",
+        },
+        { status: 500 },
+      );
+    }
+  },
+);
+
+export { action, loader };

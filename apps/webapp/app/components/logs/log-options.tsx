@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
 } from "../ui/alert-dialog";
 import { useState, useEffect } from "react";
-import { redirect, useFetcher } from "@remix-run/react";
+import { useFetcher, useNavigate } from "@remix-run/react";
 
 interface LogOptionsProps {
   id: string;
@@ -26,6 +26,7 @@ interface LogOptionsProps {
 export const LogOptions = ({ id }: LogOptionsProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const deleteFetcher = useFetcher<{ success: boolean }>();
+  const navigate = useNavigate();
 
   const handleDelete = () => {
     deleteFetcher.submit(
@@ -40,8 +41,9 @@ export const LogOptions = ({ id }: LogOptionsProps) => {
   };
 
   useEffect(() => {
+    console.log(deleteFetcher.state, deleteFetcher.data);
     if (deleteFetcher.state === "idle" && deleteFetcher.data?.success) {
-      redirect(`/home/inbox`);
+      navigate(`/home/inbox`);
     }
   }, [deleteFetcher.state, deleteFetcher.data]);
 

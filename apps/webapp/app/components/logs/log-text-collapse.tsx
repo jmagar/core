@@ -3,7 +3,7 @@ import { Badge, BadgeColor } from "../ui/badge";
 import { type LogItem } from "~/hooks/use-logs";
 import { getIconForAuthorise } from "../icon-utils";
 import { useNavigate, useParams } from "@remix-run/react";
-import { getStatusColor } from "./utils";
+import { getStatusColor, getStatusValue } from "./utils";
 
 interface LogTextCollapseProps {
   text?: string;
@@ -83,8 +83,7 @@ export function LogTextCollapse({ text, log }: LogTextCollapseProps) {
                       )}
                     >
                       <BadgeColor className={cn(getStatusColor(log.status))} />
-                      {log.status.charAt(0).toUpperCase() +
-                        log.status.slice(1).toLowerCase()}
+                      {getStatusValue(log.status)}
                     </Badge>
                   </div>
                 </div>

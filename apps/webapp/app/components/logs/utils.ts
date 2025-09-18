@@ -1,3 +1,5 @@
+import { formatString } from "~/lib/utils";
+
 export const getStatusColor = (status: string) => {
   switch (status) {
     case "PROCESSING":
@@ -14,3 +16,11 @@ export const getStatusColor = (status: string) => {
       return "bg-gray-800";
   }
 };
+
+export function getStatusValue(status: string) {
+  if (status === "PENDING") {
+    return formatString("In Queue");
+  }
+
+  return status;
+}

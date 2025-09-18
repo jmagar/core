@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { json } from "@remix-run/node";
 import { createHybridActionApiRoute } from "~/services/routeBuilders/apiBuilder.server";
 import { uploadFileToS3 } from "~/lib/storage.server";
@@ -13,15 +12,6 @@ const { action, loader } = createHybridActionApiRoute(
     let buffer: Buffer;
     let fileName = "unnamed-file";
     let contentType = "application/octet-stream";
-
-    return json({
-      success: true,
-
-      url: "http://localhost:3033/api/v1/storage/69bd1e11-552b-4708-91b0-bad006f41ddb",
-      filename: fileName,
-
-      contentType: contentType,
-    });
 
     try {
       const contentTypeHeader = request.headers.get("Content-Type") || "";

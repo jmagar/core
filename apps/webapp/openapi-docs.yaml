@@ -459,6 +459,81 @@ components:
           type: string
           format: date-time
 
+    Log:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Log identifier
+        source:
+          type: string
+          description: Log source name
+        ingestText:
+          type: string
+          description: Text content that was ingested
+        time:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        processedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Processing completion timestamp
+        episodeUUID:
+          type: string
+          nullable: true
+          description: Associated episode UUID if processed
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          description: Processing status
+        error:
+          type: string
+          nullable: true
+          description: Error message if processing failed
+        sourceURL:
+          type: string
+          format: uri
+          nullable: true
+          description: Source URL if applicable
+        integrationSlug:
+          type: string
+          nullable: true
+          description: Integration slug identifier
+        data:
+          type: object
+          nullable: true
+          description: Additional log data
+
+    DeleteLogRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Log ID to delete
+
+    DeleteLogResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        deleted:
+          type: object
+          properties:
+            episode:
+              type: boolean
+            statements:
+              type: integer
+            entities:
+              type: integer
+            facts:
+              type: integer
+
 paths:
   # OAuth2 & Authentication
   /oauth/authorize:
@@ -1185,6 +1260,80 @@ paths:
                           format: date-time
                   pagination:
                     type: object
+
+  /api/v1/logs/{logId}:
+    parameters:
+      - name: logId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Log identifier
+
+    get:
+      summary: Get Specific Log
+      description: Retrieve detailed information about a specific ingestion log
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Log details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  log:
+                    $ref: "#/components/schemas/Log"
+        "404":
+          description: Log not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      summary: Delete Log Entry
+      description: Delete a specific log entry and associated episode if it exists
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteLogRequest"
+      responses:
+        "200":
+          description: Log deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteLogResponse"
+        "404":
+          description: Log not found or unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /api/v1/ingestion-queue/status:
     get:

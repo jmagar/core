@@ -15,7 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
 
   const page = parseInt(url.searchParams.get("page") || "1");
-  const limit = parseInt(url.searchParams.get("limit") || "20");
+  const limit = parseInt(url.searchParams.get("limit") || "100");
   const source = url.searchParams.get("source");
   const status = url.searchParams.get("status");
   const type = url.searchParams.get("type");
@@ -92,6 +92,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         createdAt: "desc",
       },
       skip,
+      take: limit,
     }),
 
     prisma.ingestionQueue.count({

@@ -57,9 +57,7 @@ export const ConversationList = ({
         limit: "5", // Increased for better density
       });
 
-      fetcher.load(`/api/v1/conversations?${searchParams}`, {
-        flushSync: true,
-      });
+      fetcher.load(`/api/v1/conversations?${searchParams}`);
     },
     [isLoading, fetcher],
   );
