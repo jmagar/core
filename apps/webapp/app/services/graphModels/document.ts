@@ -248,3 +248,75 @@ export async function getDocumentVersions(
     };
   });
 }
+
+/**
+ * Delete a document and all its related episodes, statements, and entities efficiently
+ * Uses optimized Cypher patterns for bulk deletion
+ */
+export async function deleteDocument(documentUuid: string): Promise<{
+  documentsDeleted: number;
+  episodesDeleted: number;
+  statementsDeleted: number;
+  entitiesDeleted: number;
+}> {
+  const query = `
+    MATCH (d:Document {uuid: $documentUuid})
+
+    // Get all related data first
+    OPTIONAL MATCH (d)-[:CONTAINS_CHUNK]->(e:Episode)
+    OPTIONAL MATCH (e)-[:CONTAINS]->(s:Statement)
+    OPTIONAL MATCH (s)-[:REFERENCES]->(entity:Entity)
+
+    // Count entities that will become orphaned
+    WITH d, collect(DISTINCT e) as episodes, collect(DISTINCT s) as statements, collect(DISTINCT entity) as entities
+    UNWIND entities as entity
+    OPTIONAL MATCH (entity)<-[:REFERENCES]-(otherStmt:Statement)
+    WHERE NOT otherStmt IN statements
+
+    WITH d, episodes, statements,
+         collect(CASE WHEN otherStmt IS NULL THEN entity ELSE null END) as orphanedEntities
+
+    // Delete statements (breaks references to entities)
+    FOREACH (stmt IN statements | DETACH DELETE stmt)
+
+    // Delete orphaned entities only (filter nulls first)
+    WITH d, episodes, statements, [entity IN orphanedEntities WHERE entity IS NOT NULL] as validOrphanedEntities
+    FOREACH (entity IN validOrphanedEntities | DETACH DELETE entity)
+
+    // Delete episodes
+    FOREACH (episode IN episodes | DETACH DELETE episode)
+
+    // Delete document
+    DETACH DELETE d
+
+    RETURN
+      1 as documentsDeleted,
+      size(episodes) as episodesDeleted,
+      size(statements) as statementsDeleted,
+      size(validOrphanedEntities) as entitiesDeleted
+  `;
+
+  try {
+    const result = await runQuery(query, { documentUuid });
+
+    if (result.length === 0) {
+      return {
+        documentsDeleted: 0,
+        episodesDeleted: 0,
+        statementsDeleted: 0,
+        entitiesDeleted: 0,
+      };
+    }
+
+    const record = result[0];
+    return {
+      documentsDeleted: record.get("documentsDeleted") || 0,
+      episodesDeleted: record.get("episodesDeleted") || 0,
+      statementsDeleted: record.get("statementsDeleted") || 0,
+      entitiesDeleted: record.get("entitiesDeleted") || 0,
+    };
+  } catch (error) {
+    console.error("Error deleting document:", error);
+    throw error;
+  }
+}

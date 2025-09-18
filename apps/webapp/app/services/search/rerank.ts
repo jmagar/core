@@ -512,7 +512,7 @@ export async function applyCohereReranking(
         cohereScore: result.relevanceScore,
         cohereRank: index + 1,
       }))
-      .filter((result) => result.cohereScore > 0.3);
+      .filter((result) => result.cohereScore >= 0.1);
 
     const responseTime = Date.now() - startTime;
     logger.info(

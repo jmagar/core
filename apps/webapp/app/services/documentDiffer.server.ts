@@ -4,7 +4,7 @@ import type { DocumentNode } from "@core/types";
 
 export interface DifferentialDecision {
   shouldUseDifferential: boolean;
-  strategy: "full_reingest" | "chunk_level_diff" | "new_document";
+  strategy: "full_reingest" | "chunk_level_diff" | "new_document" | "skip_processing";
   reason: string;
   changedChunkIndices: number[];
   changePercentage: number;
@@ -59,7 +59,7 @@ export class DocumentDifferentialService {
     if (existingDocument.contentHash === newChunkedDocument.contentHash) {
       return {
         shouldUseDifferential: false,
-        strategy: "full_reingest", // No changes detected
+        strategy: "skip_processing", // No changes detected
         reason: "Document content unchanged",
         changedChunkIndices: [],
         changePercentage: 0,

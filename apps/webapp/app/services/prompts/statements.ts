@@ -12,7 +12,65 @@ export const extractStatements = (
   return [
     {
       role: "system",
-      content: `You are a knowledge graph expert who extracts NEW factual statements from text as subject-predicate-object triples.
+      content: `You are a knowledge graph expert who extracts factual statements from text as subject-predicate-object triples.
+
+## PHASE 1: FOUNDATIONAL RELATIONSHIPS (HIGHEST PRIORITY)
+Extract the basic semantic backbone that answers: WHO, WHAT, WHERE, WHEN, WHY, HOW
+
+### 1A: ACTOR-ACTION RELATIONSHIPS
+- Subject performs action: "Entity" "performed" "Action"
+- Subject experiences state: "Entity" "experienced" "State"
+- Subject has attribute: "Entity" "has" "Property"
+- Subject creates/produces: "Entity" "created" "Object"
+
+### 1B: SPATIAL & HIERARCHICAL RELATIONSHIPS
+- Location membership: "Entity" "located_in" "Location"
+- Categorical membership: "Entity" "is_a" "Category"
+- Hierarchical structure: "Entity" "part_of" "System"
+- Containment: "Container" "contains" "Item"
+
+### 1C: TEMPORAL & SEQUENTIAL RELATIONSHIPS
+- Duration facts: "Event" "lasted" "Duration"
+- Sequence facts: "Event" "occurred_before" "Event"
+- Temporal anchoring: "Event" "occurred_during" "Period"
+- Timing: "Action" "happened_on" "Date"
+
+### 1D: SUBJECTIVE & EVALUATIVE RELATIONSHIPS
+- Opinions: "Subject" "opinion_about" "Object"
+- Preferences: "Subject" "prefers" "Object"
+- Evaluations: "Subject" "rated" "Object"
+- Desires: "Subject" "wants" "Object"
+
+## SYSTEMATIC EXTRACTION METHODOLOGY
+For each entity, systematically check these common patterns:
+
+**Type/Category Patterns**: Entity → is_a → Type
+**Ownership Patterns**: Actor → owns/controls → Resource
+**Participation Patterns**: Actor → participates_in → Event
+**Location Patterns**: Entity → located_in/part_of → Place
+**Temporal Patterns**: Event → occurred_during → TimeFrame
+**Rating/Measurement Patterns**: Subject → rated/measured → Object
+**Reference Patterns**: Document → references → Entity
+**Employment Patterns**: Person → works_for → Organization
+
+## RELATIONSHIP QUALITY HIERARCHY
+
+**ESSENTIAL (Extract Always)**:
+- Categorical membership (is_a, type_of)
+- Spatial relationships (located_in, part_of)
+- Actor-action relationships (performed, experienced, created)
+- Ownership/control relationships (owns, controls, manages)
+- Employment relationships (works_for, employed_by)
+
+**VALUABLE (Extract When Present)**:
+- Temporal sequences and durations
+- Subjective opinions and evaluations
+- Cross-references and citations
+- Participation and attendance
+
+**CONTEXTUAL (Extract If Space Permits)**:
+- Complex multi-hop inferences
+- Implicit relationships requiring interpretation
 
 CRITICAL REQUIREMENT:
 - You MUST ONLY use entities from the AVAILABLE ENTITIES list as subjects and objects.
@@ -30,53 +88,19 @@ RELATIONSHIP FORMATION RULES:
 2. **PRIMARY-EXPANDED**: Only if the expanded entity is mentioned in the episode content
 3. **EXPANDED-EXPANDED**: Avoid unless there's explicit connection in the episode
 
-FOCUS: Create relationships that ADD VALUE to understanding the current episode, not just because entities are available.
-
-## PRIMARY MISSION: EXTRACT NEW RELATIONSHIPS
-Focus on extracting factual statements that ADD NEW VALUE to the knowledge graph:
-- **PRIORITIZE**: New relationships not already captured in previous episodes
-- **EMPHASIZE**: Connections between entities with same names but different types
-- **FILTER**: Avoid extracting facts already present in previous episodes
-- **EVOLVE**: Form relationships that enhance the existing knowledge structure
-
-Your task is to identify NEW important facts from the provided text and represent them in a knowledge graph format.
+Your task is to identify important facts from the provided text and represent them in a knowledge graph format.
 
 Follow these instructions:
 
-1. **ANALYZE PREVIOUS EPISODES**: Review previous episodes to understand what relationships already exist
-2. **REVIEW AVAILABLE ENTITIES**: Carefully examine the AVAILABLE ENTITIES list - these are the ONLY entities you can use as subjects and objects
-3. **IDENTIFY SAME-NAME ENTITIES**: Look for entities with identical names but different types - these often represent natural relationships that should be explicitly connected
-4. **EXTRACT NEW RELATIONSHIPS**: Identify factual statements that can be expressed using ONLY available entities AND are NOT already captured in previous episodes
-5. For each NEW valid statement, provide:
+1. **SYSTEMATIC ENTITY ANALYSIS**: For each available entity, check all foundational relationship patterns
+2. **PATTERN COMPLETION**: If pattern appears for one entity, verify coverage for all applicable entities
+3. **STRUCTURAL FOUNDATION**: Ensure basic "backbone" relationships exist before adding nuanced ones
+4. **REVIEW AVAILABLE ENTITIES**: Carefully examine the AVAILABLE ENTITIES list - these are the ONLY entities you can use as subjects and objects
+5. **IDENTIFY SAME-NAME ENTITIES**: Look for entities with identical names but different types - these often represent natural relationships that should be explicitly connected
+6. For each valid statement, provide:
    - source: The subject entity (MUST be from AVAILABLE ENTITIES)
    - predicate: The relationship type (can be a descriptive phrase)
    - target: The object entity (MUST be from AVAILABLE ENTITIES)
-
-EXTRACT NEW MEANINGFUL RELATIONSHIPS AND CHARACTERISTICS:
-- Extract meaningful relationships between available entities that are NOT already captured in previous episodes
-- Extract individual entity characteristics, roles, and properties as standalone facts
-- Use predicates that accurately describe new relationships between entities
-- Be creative but precise in identifying NEW relationships - focus on value-adding connections
-- **HIGHEST PRIORITY**: Entities with identical names but different types MUST be connected with explicit relationship statements
-- **MANDATORY**: When you find entities like "John (Person)" and "John (Company)", create explicit relationships such as "John" "owns" "John" or "John" "founded" "John"
-- **ROLE/CHARACTERISTIC EXTRACTION**: Always extract roles, professions, titles, and key characteristics as separate statements
-- Look for both explicit and implicit NEW relationships mentioned in the text
-- **FILTER OUT**: Relationships already established in previous episodes unless they represent updates or changes
-- Common relationship types include (but are not limited to):
-  * **Roles and professions** (e.g., "Person" "is" "Role", "Individual" "works as" "Position", "Entity" "has role" "Profession")
-  * **Identity and characteristics** (e.g., "System" "is" "Characteristic", "Person" "is" "Quality", "Organization" "is" "Type")
-  * Ownership or association (e.g., "Alice" "owns" "Restaurant")
-  * Participation or attendance (e.g., "Team" "participates in" "Tournament")
-  * Personal connections (e.g., "Sarah" "works with" "Michael")
-  * Aliases and alternative names (e.g., "Robert" "is also known as" "Bob")
-  * Locations and spatial relationships (e.g., "Office" "located in" "Building")
-  * Characteristics and properties (e.g., "System" "has property" "Scalability")
-  * Product-organization relationships (e.g., "Software" "developed by" "Company")
-  * Technical dependencies and usage (e.g., "Application" "uses" "Database")
-  * Hierarchical relationships (e.g., "Manager" "supervises" "Employee")
-  * Duration relationships (e.g., "Caroline" "has known" "friends" [duration: "4 years"])
-  * Temporal sequence relationships (e.g., "Caroline" "met" "friends" [context: "since moving"])
-  * Contextual support relationships (e.g., "friends" "supported" "Caroline" [context: "during breakup"])
 
 ## SAME-NAME ENTITY RELATIONSHIP FORMATION
 When entities share identical names but have different types, CREATE explicit relationship statements:
@@ -100,12 +124,12 @@ EXAMPLES of correct Duration/TemporalContext usage:
   * DO NOT CREATE: "Caroline" "relates to" "4 years" (Duration as object)
   * DO NOT CREATE: "since moving" "describes" "friendship" (TemporalContext as subject)
 
-## PREVIOUS EPISODE FILTERING
-Before creating any relationship statement:
-- **CHECK**: Review previous episodes to see if this exact relationship already exists
-- **SKIP**: Do not create statements that duplicate existing relationships
-- **ENHANCE**: Only create statements if they add new information or represent updates
-- **FOCUS**: Prioritize completely new connections not represented in the knowledge graph
+## EXTRACTION COMPLETENESS MANDATE
+- **EXTRACT OBVIOUS FACTS**: Basic relationships are STRUCTURAL FOUNDATIONS, not redundant noise
+- **PRIORITIZE SIMPLE OVER COMPLEX**: "X is_in Y" is more valuable than "X contextually_relates_to Y"
+- **QUANTITY OVER NOVELTY**: Comprehensive coverage beats selective "interesting" facts
+- **SYSTEMATIC ENUMERATION**: If pattern exists for one entity, check ALL entities for same pattern
+- Only skip exact duplicate statements, not similar relationship types
 
 CRITICAL TEMPORAL INFORMATION HANDLING:
 - For events with specific dates/times, ALWAYS capture temporal information in statement attributes

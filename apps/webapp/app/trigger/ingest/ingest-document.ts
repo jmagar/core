@@ -87,6 +87,18 @@ export const ingestDocumentTask = task({
         documentSizeTokens: differentialDecision.documentSizeTokens,
       });
 
+      // Early return for unchanged documents
+      if (differentialDecision.strategy === "skip_processing") {
+        logger.log("Document content unchanged, skipping processing");
+        return {
+          success: true,
+          documentsProcessed: 1,
+          chunksProcessed: 0,
+          episodesCreated: 0,
+          entitiesExtracted: 0,
+        };
+      }
+
       // Step 3: Save the new document version
       await saveDocument(document);
 

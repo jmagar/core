@@ -31,19 +31,33 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
    - For pronouns that refer to named entities, extract them as separate Alias entities.
    - **TYPE/CONCEPT ENTITIES**: When text contains "X is a Y" statements, extract BOTH X and Y as separate entities.
 
-2. **Type and Concept Entity Extraction**:
+2. **IMPLICIT ACTOR EXTRACTION**:
+   - **EXPERIENCE AGENTS**: Extract the entity who performs actions, makes decisions, or has subjective experiences
+   - **PERSPECTIVE HOLDERS**: Extract entities behind opinions, preferences, memories, and evaluations
+   - **DOCUMENT ACTORS**: For personal content (journals, notes, reports), extract the implied author/creator
+   - **PRONOUN RESOLUTION**: Extract the entity represented by first-person pronouns in narrative content
+   - **ACTION SUBJECTS**: When actions are described without explicit subjects, infer and extract the acting entity
+
+   **Detection Signals**:
+   - Action descriptions without explicit subjects
+   - Opinion/evaluation expressions
+   - Decision-making language
+   - Personal experience descriptions
+   - Memory/reflection statements
+
+3. **Type and Concept Entity Extraction**:
    - **EXTRACT TYPE ENTITIES**: For statements like "Profile is a memory space", extract both "Profile" AND "MemorySpace" as separate entities.
    - **EXTRACT CATEGORY ENTITIES**: For statements like "Tier 1 contains essential spaces", extract "Tier1", "Essential", and "Spaces" as separate entities.
    - **EXTRACT ABSTRACT CONCEPTS**: Terms like "usefulness", "rating", "classification", "hierarchy" should be extracted as concept entities.
    - **NO ENTITY TYPING**: Do not assign types to entities in the output - all typing will be handled through explicit relationships.
 
-3. **Exclusions**:
+4. **Exclusions**:
    - Do NOT extract entities representing relationships or actions (predicates will be handled separately).
    - **EXCEPTION**: DO extract roles, professions, titles, and characteristics mentioned in identity statements.
    - Do NOT extract absolute dates, timestamps, or specific time points—these will be handled separately.
    - Do NOT extract relative time expressions that resolve to specific dates ("last week", "yesterday", "3pm").
 
-4. **Entity Name Extraction**:
+5. **Entity Name Extraction**:
    - Extract ONLY the core entity name, WITHOUT any descriptors or qualifiers
    - When text mentions "Tesla car", extract TWO entities: "Tesla" AND "Car" 
    - When text mentions "memory space system", extract "Memory", "Space", AND "System" as separate entities
@@ -52,7 +66,7 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
    - **FULL NAMES**: Use complete names when available (e.g., "John Smith" not "John")
    - **CONCEPT NORMALIZATION**: Convert to singular form where appropriate ("spaces" → "Space")
 
-5. **Temporal and Relationship Context Extraction**:
+6. **Temporal and Relationship Context Extraction**:
    - EXTRACT duration expressions that describe relationship spans ("4 years", "2 months", "5 years")
    - EXTRACT temporal context that anchors relationships ("since moving", "after graduation", "during college")
    - EXTRACT relationship qualifiers ("close friends", "support system", "work team", "family members")

@@ -384,8 +384,10 @@ export class KnowledgeGraphService {
         };
       }
 
-      // Save triples in parallel for better performance
-      await Promise.all(updatedTriples.map((triple) => saveTriple(triple)));
+      // Process triples sequentially to avoid race conditions
+      for (const triple of updatedTriples) {
+        await saveTriple(triple);
+      }
 
       const saveTriplesTime = Date.now();
       logger.log(`Saved triples in ${saveTriplesTime - updatedTriplesTime} ms`);
