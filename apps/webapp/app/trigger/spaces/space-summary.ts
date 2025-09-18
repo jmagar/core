@@ -8,6 +8,9 @@ import type { CoreMessage } from "ai";
 import { z } from "zod";
 import { triggerSpacePattern } from "./space-pattern";
 import { getSpace, updateSpace } from "../utils/space-utils";
+import { addToQueue } from "~/lib/ingest.server";
+import { EpisodeType } from "@core/types";
+import { getSpaceStatementCount } from "~/services/graphModels/space";
 
 interface SpaceSummaryPayload {
   userId: string;
@@ -16,14 +19,15 @@ interface SpaceSummaryPayload {
   triggerSource?: "assignment" | "manual" | "scheduled";
 }
 
-interface SpaceStatementData {
+interface SpaceEpisodeData {
   uuid: string;
-  fact: string;
-  subject: string;
-  predicate: string;
-  object: string;
+  content: string;
+  originalContent: string;
+  source: string;
   createdAt: Date;
   validAt: Date;
+  metadata: any;
+  sessionId: string | null;
 }
 
 interface SpaceSummaryData {
@@ -48,8 +52,8 @@ const SummaryResultSchema = z.object({
 });
 
 const CONFIG = {
-  maxStatementsForSummary: 200, // Limit statements for performance
-  minStatementsForSummary: 3, // Minimum statements to generate summary
+  maxEpisodesForSummary: 20, // Limit episodes for performance
+  minEpisodesForSummary: 1, // Minimum episodes to generate summary
   summaryPromptTokenLimit: 4000, // Approximate token limit for prompt
 };
 
@@ -105,11 +109,14 @@ export const spaceSummaryTask = task({
           triggerSource,
         });
 
+        // Ingest summary as document if it exists and continue with patterns
         if (!summaryResult.isIncremental && summaryResult.statementCount > 0) {
-          await triggerSpacePattern({
+          await processSpaceSummarySequentially({
             userId,
             workspaceId,
             spaceId,
+            spaceName: summaryResult.spaceName,
+            summaryContent: summaryResult.summary,
             triggerSource: "summary_complete",
           });
         }
@@ -125,23 +132,25 @@ export const spaceSummaryTask = task({
           },
         };
       } else {
-        // Update status to error if summary generation fails
-        await updateSpaceStatus(spaceId, SPACE_STATUS.ERROR, {
+        // No summary generated - this could be due to insufficient episodes or no new episodes
+        // This is not an error state, so update status to ready
+        await updateSpaceStatus(spaceId, SPACE_STATUS.READY, {
           userId,
           operation: "space-summary",
           metadata: {
             triggerSource,
-            phase: "failed_summary",
-            error: "Failed to generate summary",
+            phase: "no_summary_needed",
+            reason: "Insufficient episodes or no new episodes to summarize",
           },
         });
 
-        logger.warn(`Failed to generate summary for space ${spaceId}`);
+        logger.info(`No summary generated for space ${spaceId} - insufficient or no new episodes`);
         return {
-          success: false,
+          success: true,
           spaceId,
           triggerSource,
-          error: "Failed to generate summary",
+          summary: null,
+          reason: "No episodes to summarize",
         };
       }
     } catch (error) {
@@ -189,45 +198,45 @@ async function generateSpaceSummary(
     const existingSummary = await getExistingSummary(spaceId);
     const isIncremental = existingSummary !== null;
 
-    // 3. Get statements (all or new ones based on existing summary)
-    const statements = await getSpaceStatements(
+    // 3. Get episodes (all or new ones based on existing summary)
+    const episodes = await getSpaceEpisodes(
       spaceId,
       userId,
       isIncremental ? existingSummary?.lastUpdated : undefined,
     );
 
-    // Handle case where no new statements exist for incremental update
-    if (isIncremental && statements.length === 0) {
+    // Handle case where no new episodes exist for incremental update
+    if (isIncremental && episodes.length === 0) {
       logger.info(
-        `No new statements found for space ${spaceId}, skipping summary update`,
+        `No new episodes found for space ${spaceId}, skipping summary update`,
       );
       return null;
     }
 
-    // Check minimum statement requirement for new summaries only
-    if (!isIncremental && statements.length < CONFIG.minStatementsForSummary) {
+    // Check minimum episode requirement for new summaries only
+    if (!isIncremental && episodes.length < CONFIG.minEpisodesForSummary) {
       logger.info(
-        `Space ${spaceId} has insufficient statements (${statements.length}) for new summary`,
+        `Space ${spaceId} has insufficient episodes (${episodes.length}) for new summary`,
       );
       return null;
     }
 
-    // 4. Process statements using unified approach
+    // 4. Process episodes using unified approach
     let summaryResult;
 
-    if (statements.length > CONFIG.maxStatementsForSummary) {
+    if (episodes.length > CONFIG.maxEpisodesForSummary) {
       logger.info(
-        `Large space detected (${statements.length} statements). Processing in batches.`,
+        `Large space detected (${episodes.length} episodes). Processing in batches.`,
       );
 
       // Process in batches, each building on previous result
-      const batches: SpaceStatementData[][] = [];
+      const batches: SpaceEpisodeData[][] = [];
       for (
         let i = 0;
-        i < statements.length;
-        i += CONFIG.maxStatementsForSummary
+        i < episodes.length;
+        i += CONFIG.maxEpisodesForSummary
       ) {
-        batches.push(statements.slice(i, i + CONFIG.maxStatementsForSummary));
+        batches.push(episodes.slice(i, i + CONFIG.maxEpisodesForSummary));
       }
 
       let currentSummary = existingSummary?.summary || null;
@@ -236,7 +245,7 @@ async function generateSpaceSummary(
 
       for (const [batchIndex, batch] of batches.entries()) {
         logger.info(
-          `Processing batch ${batchIndex + 1}/${batches.length} with ${batch.length} statements`,
+          `Processing batch ${batchIndex + 1}/${batches.length} with ${batch.length} episodes`,
         );
 
         const batchResult = await generateUnifiedSummary(
@@ -270,14 +279,14 @@ async function generateSpaceSummary(
         : null;
     } else {
       logger.info(
-        `Processing ${statements.length} statements with unified approach`,
+        `Processing ${episodes.length} episodes with unified approach`,
       );
 
       // Use unified approach for smaller spaces
       summaryResult = await generateUnifiedSummary(
         space.name,
         space.description as string,
-        statements,
+        episodes,
         existingSummary?.summary || null,
         existingSummary?.themes || [],
       );
@@ -288,13 +297,14 @@ async function generateSpaceSummary(
       return null;
     }
 
+    // Get the actual current statement count from Neo4j
+    const currentStatementCount = await getSpaceStatementCount(spaceId, userId);
+
     return {
       spaceId: space.uuid,
       spaceName: space.name,
       spaceDescription: space.description as string,
-      statementCount: existingSummary?.statementCount
-        ? existingSummary?.statementCount + statements.length
-        : statements.length,
+      statementCount: currentStatementCount,
       summary: summaryResult.summary,
       keyEntities: summaryResult.keyEntities || [],
       themes: summaryResult.themes,
@@ -314,7 +324,7 @@ async function generateSpaceSummary(
 async function generateUnifiedSummary(
   spaceName: string,
   spaceDescription: string | undefined,
-  statements: SpaceStatementData[],
+  episodes: SpaceEpisodeData[],
   previousSummary: string | null = null,
   previousThemes: string[] = [],
 ): Promise<{
@@ -327,7 +337,7 @@ async function generateUnifiedSummary(
     const prompt = createUnifiedSummaryPrompt(
       spaceName,
       spaceDescription,
-      statements,
+      episodes,
       previousSummary,
       previousThemes,
     );
@@ -350,70 +360,78 @@ async function generateUnifiedSummary(
 function createUnifiedSummaryPrompt(
   spaceName: string,
   spaceDescription: string | undefined,
-  statements: SpaceStatementData[],
+  episodes: SpaceEpisodeData[],
   previousSummary: string | null,
   previousThemes: string[],
 ): CoreMessage[] {
-  // If there are no statements and no previous summary, we cannot generate a meaningful summary
-  if (statements.length === 0 && previousSummary === null) {
+  // If there are no episodes and no previous summary, we cannot generate a meaningful summary
+  if (episodes.length === 0 && previousSummary === null) {
     throw new Error(
-      "Cannot generate summary without statements or existing summary",
+      "Cannot generate summary without episodes or existing summary",
     );
   }
 
-  const statementsText = statements
+  const episodesText = episodes
     .map(
-      (stmt) =>
-        `- ${stmt.fact} (${stmt.subject} → ${stmt.predicate} → ${stmt.object})`,
+      (episode) =>
+        `- ${episode.content} (Source: ${episode.source}, Session: ${episode.sessionId || 'N/A'})`,
     )
     .join("\n");
 
-  const entityFrequency = new Map<string, number>();
-  statements.forEach((stmt) => {
-    [stmt.subject, stmt.object].forEach((entity) => {
-      entityFrequency.set(entity, (entityFrequency.get(entity) || 0) + 1);
-    });
+  // Extract key entities and themes from episode content
+  const contentWords = episodes
+    .map(ep => ep.content.toLowerCase())
+    .join(' ')
+    .split(/\s+/)
+    .filter(word => word.length > 3);
+
+  const wordFrequency = new Map<string, number>();
+  contentWords.forEach((word) => {
+    wordFrequency.set(word, (wordFrequency.get(word) || 0) + 1);
   });
 
-  const topEntities = Array.from(entityFrequency.entries())
+  const topEntities = Array.from(wordFrequency.entries())
     .sort(([, a], [, b]) => b - a)
     .slice(0, 10)
-    .map(([entity]) => entity);
+    .map(([word]) => word);
 
   const isUpdate = previousSummary !== null;
 
   return [
     {
       role: "system",
-      content: `You are an expert at analyzing and summarizing structured knowledge within semantic spaces. Your task is to ${isUpdate ? "update an existing summary by integrating new statements" : "create a comprehensive summary of statements"}.
+      content: `You are an expert at analyzing and summarizing structured knowledge within semantic spaces. Your task is to ${isUpdate ? "update an existing summary by integrating new episodes" : "create a comprehensive summary of episodes"}.
 
-CRITICAL RULES: 
-1. Base your summary ONLY on insights derived from the actual facts/statements provided
+CRITICAL RULES:
+1. Base your summary ONLY on insights derived from the actual content/episodes provided
 2. Use the space description only as contextual guidance, never copy or paraphrase it
 3. Write in a factual, neutral tone - avoid promotional language ("pivotal", "invaluable", "cutting-edge")
-4. Be specific and concrete - reference actual entities, relationships, and patterns found in the data
-5. If statements are insufficient for meaningful insights, state that more data is needed
+4. Be specific and concrete - reference actual content, patterns, and themes found in the episodes
+5. If episodes are insufficient for meaningful insights, state that more data is needed
 
 INSTRUCTIONS:
 ${
   isUpdate
     ? `1. Review the existing summary and themes carefully
-2. Analyze the new statements for patterns and insights  
-3. Identify connecting points between existing knowledge and new statements
+2. Analyze the new episodes for patterns and insights
+3. Identify connecting points between existing knowledge and new episodes
 4. Update the summary to seamlessly integrate new information while preserving valuable existing insights
-5. Evolve themes by adding new ones or refining existing ones based on connections found`
-    : `1. Analyze the semantic content and relationships within the statements
-2. Identify the main themes and patterns across all statements
-3. Create a coherent summary that captures the essence of this knowledge domain`
+5. Evolve themes by adding new ones or refining existing ones based on connections found
+6. Update the markdown summary to reflect the enhanced themes and new insights`
+    : `1. Analyze the semantic content and relationships within the episodes
+2. Identify the main themes and patterns across all episodes (themes must have at least 3 supporting episodes)
+3. Create a coherent summary that captures the essence of this knowledge domain
+4. Generate a well-structured markdown summary organized by the identified themes`
 }
-6. Assess your confidence in the ${isUpdate ? "updated" : ""} summary quality (0.0-1.0)
+${isUpdate ? '7' : '6'}. Assess your confidence in the ${isUpdate ? "updated" : ""} summary quality (0.0-1.0)
 
 THEME IDENTIFICATION RULES:
-- A theme must be supported by AT LEAST 5 related statements to be considered valid
+- A theme must be supported by AT LEAST 3 related episodes to be considered valid
 - Themes should represent substantial, meaningful patterns rather than minor occurrences
 - Each theme must capture a distinct semantic domain or conceptual area
 - Only identify themes that have sufficient evidence in the data
-- If fewer than 5 statements support a potential theme, do not include it
+- If fewer than 3 episodes support a potential theme, do not include it
+- Themes will be used to organize the markdown summary into logical sections
 
 ${
   isUpdate
@@ -427,7 +445,7 @@ ${
 }
 
 RESPONSE FORMAT:
-Provide your response inside <output></output> tags with valid JSON. The summary should be formatted as HTML for better presentation.
+Provide your response inside <output></output> tags with valid JSON. Include both HTML summary and markdown format.
 
 <output>
 {
@@ -450,14 +468,14 @@ ${
   isUpdate
     ? `- Preserve valuable insights from existing summary
 - Integrate new information by highlighting connections
-- Themes should evolve naturally, don't replace wholesale  
+- Themes should evolve naturally, don't replace wholesale
 - The updated summary should read as a coherent whole
 - Make the summary user-friendly and explain what value this space provides`
-    : `- Report only what the statements actually reveal - be specific and concrete
-- Cite actual entities and relationships found in the data
+    : `- Report only what the episodes actually reveal - be specific and concrete
+- Cite actual content and patterns found in the episodes
 - Avoid generic descriptions that could apply to any space
 - Use neutral, factual language - no "comprehensive", "robust", "cutting-edge" etc.
-- Themes must be backed by at least 5 supporting statements with clear evidence
+- Themes must be backed by at least 3 supporting episodes with clear evidence
 - Better to have fewer, well-supported themes than many weak ones
 - Confidence should reflect actual data quality and coverage, not aspirational goals`
 }`,
@@ -476,22 +494,22 @@ ${previousSummary}
 EXISTING THEMES:
 ${previousThemes.join(", ")}
 
-NEW STATEMENTS TO INTEGRATE (${statements.length} statements):`
-    : `STATEMENTS IN THIS SPACE (${statements.length} statements):`
+NEW EPISODES TO INTEGRATE (${episodes.length} episodes):`
+    : `EPISODES IN THIS SPACE (${episodes.length} episodes):`
 }
-${statementsText}
+${episodesText}
 
 ${
-  statements.length > 0
-    ? `TOP ENTITIES BY FREQUENCY:
+  episodes.length > 0
+    ? `TOP WORDS BY FREQUENCY:
 ${topEntities.join(", ")}`
     : ""
 }
 
 ${
   isUpdate
-    ? "Please identify connections between the existing summary and new statements, then update the summary to integrate the new insights coherently. Remember: only summarize insights from the actual statements, not the space description."
-    : "Please analyze the statements and provide a comprehensive summary that captures insights derived from the facts provided. Use the description only as context. If there are too few statements to generate meaningful insights, indicate that more data is needed rather than falling back on the description."
+    ? "Please identify connections between the existing summary and new episodes, then update the summary to integrate the new insights coherently. Remember: only summarize insights from the actual episode content, not the space description."
+    : "Please analyze the episodes and provide a comprehensive summary that captures insights derived from the episode content provided. Use the description only as context. If there are too few episodes to generate meaningful insights, indicate that more data is needed rather than falling back on the description."
 }`,
     },
   ];
@@ -510,8 +528,8 @@ async function getExistingSummary(spaceId: string): Promise<{
       return {
         summary: existingSummary.summary,
         themes: existingSummary.themes,
-        lastUpdated: existingSummary.lastPatternTrigger as Date,
-        statementCount: existingSummary.statementCount as number,
+        lastUpdated: existingSummary.lastPatternTrigger || new Date(),
+        statementCount: existingSummary.statementCount || 0,
       };
     }
 
@@ -524,44 +542,46 @@ async function getExistingSummary(spaceId: string): Promise<{
   }
 }
 
-async function getSpaceStatements(
+async function getSpaceEpisodes(
   spaceId: string,
   userId: string,
   sinceDate?: Date,
-): Promise<SpaceStatementData[]> {
-  // Build query with optional date filter for incremental updates
+): Promise<SpaceEpisodeData[]> {
+  // Build query to get distinct episodes that have statements in the space
   let whereClause =
-    "s.userId = $userId AND s.spaceIds IS NOT NULL AND $spaceId IN s.spaceIds AND s.invalidAt IS NULL";
+    "s.spaceIds IS NOT NULL AND $spaceId IN s.spaceIds AND s.invalidAt IS NULL";
   const params: any = { spaceId, userId };
 
+  // Store the sinceDate condition separately to apply after e is defined
+  let dateCondition = "";
   if (sinceDate) {
-    whereClause += " AND s.createdAt > $sinceDate";
+    dateCondition = "e.createdAt > $sinceDate";
     params.sinceDate = sinceDate.toISOString();
   }
 
   const query = `
-    MATCH (s:Statement)
+    MATCH (s:Statement{userId: $userId})
     WHERE ${whereClause}
-    MATCH (s)-[:HAS_SUBJECT]->(subj:Entity)
-    MATCH (s)-[:HAS_PREDICATE]->(pred:Entity)
-    MATCH (s)-[:HAS_OBJECT]->(obj:Entity)
-    RETURN s, subj.name as subject, pred.name as predicate, obj.name as object
-    ORDER BY s.createdAt DESC
+    OPTIONAL MATCH (e:Episode{userId: $userId})-[:HAS_PROVENANCE]->(s)
+    WITH e
+    WHERE e IS NOT NULL ${dateCondition ? `AND ${dateCondition}` : ''}
+    RETURN DISTINCT e
+    ORDER BY e.createdAt DESC
   `;
 
   const result = await runQuery(query, params);
 
   return result.map((record) => {
-    const statement = record.get("s").properties;
+    const episode = record.get("e").properties;
     return {
-      uuid: statement.uuid,
-      fact: statement.fact,
-      subject: record.get("subject"),
-      predicate: record.get("predicate"),
-      object: record.get("object"),
-      createdAt: new Date(statement.createdAt),
-      validAt: new Date(statement.validAt),
-      invalidAt: new Date(statement.invalidAt),
+      uuid: episode.uuid,
+      content: episode.content,
+      originalContent: episode.originalContent,
+      source: episode.source,
+      createdAt: new Date(episode.createdAt),
+      validAt: new Date(episode.validAt),
+      metadata: JSON.parse(episode.metadata || "{}"),
+      sessionId: episode.sessionId,
     };
   });
 }
@@ -661,6 +681,85 @@ async function storeSummary(summaryData: SpaceSummaryData): Promise<void> {
     );
     throw error;
   }
+}
+
+/**
+ * Process space summary sequentially: ingest document then trigger patterns
+ */
+async function processSpaceSummarySequentially({
+  userId,
+  workspaceId,
+  spaceId,
+  spaceName,
+  summaryContent,
+  triggerSource,
+}: {
+  userId: string;
+  workspaceId: string;
+  spaceId: string;
+  spaceName: string;
+  summaryContent: string;
+  triggerSource:
+  | "summary_complete"
+  | "manual"
+  | "assignment"
+  | "scheduled"
+  | "new_space"
+  | "growth_threshold"
+  | "ingestion_complete";
+}): Promise<void> {
+    // Step 1: Ingest summary as document synchronously
+    await ingestSpaceSummaryDocument(
+      spaceId,
+      userId,
+      spaceName,
+      summaryContent
+    );
+
+    logger.info(`Successfully ingested space summary document for space ${spaceId}`);
+
+    // Step 2: Now trigger space patterns (patterns will have access to the ingested summary)
+    await triggerSpacePattern({
+      userId,
+      workspaceId,
+      spaceId,
+      triggerSource,
+    });
+
+    logger.info(`Sequential processing completed for space ${spaceId}: summary ingested → patterns triggered`);
+}
+
+/**
+ * Ingest space summary as document synchronously
+ */
+async function ingestSpaceSummaryDocument(
+  spaceId: string,
+  userId: string,
+  spaceName: string,
+  summaryContent: string
+): Promise<void> {
+  // Create the ingest body
+  const ingestBody = {
+    episodeBody: summaryContent,
+    referenceTime: new Date().toISOString(),
+    metadata: {
+      documentType: "space_summary",
+      spaceId,
+      spaceName,
+      generatedAt: new Date().toISOString(),
+    },
+    source: "space",
+    spaceId,
+    sessionId: spaceId,
+    type: EpisodeType.DOCUMENT,
+  };
+
+  // Add to queue
+  await addToQueue(ingestBody, userId);
+  
+  logger.info(`Queued space summary for synchronous ingestion`);
+  
+  return;
 }
 
 // Helper function to trigger the task

@@ -19,6 +19,7 @@ interface SpacePatternPayload {
   triggerSource?:
     | "summary_complete"
     | "manual"
+    | "assignment"
     | "scheduled"
     | "new_space"
     | "growth_threshold"

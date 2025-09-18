@@ -60,7 +60,7 @@ async function createMcpServer(
     const { name, arguments: args } = request.params;
 
     // Handle memory tools
-    if (name.startsWith("memory_") || name.startsWith("get_user_profile")) {
+    if (name.startsWith("memory_") || name.startsWith("get_")) {
       return await callMemoryTool(name, args, userId, source);
     }
 

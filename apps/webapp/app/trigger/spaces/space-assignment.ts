@@ -463,7 +463,7 @@ async function getStatementsToAnalyze(
     // For new space: analyze all statements (or recent ones)
     query = `
       MATCH (s:Statement)
-      WHERE s.userId = $userId AND s.invalidAt IS NULL
+      WHERE s.userId = $userId
       MATCH (s)-[:HAS_SUBJECT]->(subj:Entity)
       MATCH (s)-[:HAS_PREDICATE]->(pred:Entity)
       MATCH (s)-[:HAS_OBJECT]->(obj:Entity)
@@ -476,7 +476,6 @@ async function getStatementsToAnalyze(
     query = `
       UNWIND $episodeIds AS episodeId
       MATCH (e:Episode {uuid: episodeId, userId: $userId})-[:HAS_PROVENANCE]->(s:Statement)
-      WHERE s.invalidAt IS NULL
       MATCH (s)-[:HAS_SUBJECT]->(subj:Entity),
             (s)-[:HAS_PREDICATE]->(pred:Entity),
             (s)-[:HAS_OBJECT]->(obj:Entity)

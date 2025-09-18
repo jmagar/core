@@ -36,7 +36,7 @@ export class SearchService {
     query: string,
     userId: string,
     options: SearchOptions = {},
-  ): Promise<{ episodes: string[]; facts: { fact: string; validAt: Date }[] }> {
+  ): Promise<{ episodes: string[]; facts: { fact: string; validAt: Date; invalidAt: Date | null; relevantScore: number }[] }> {
     const startTime = Date.now();
     // Default options
 
@@ -52,6 +52,7 @@ export class SearchService {
       scoreThreshold: options.scoreThreshold || 0.7,
       minResults: options.minResults || 10,
       spaceIds: options.spaceIds || [],
+      adaptiveFiltering: options.adaptiveFiltering || false,
     };
 
     const queryVector = await this.getEmbedding(query);
@@ -79,27 +80,29 @@ export class SearchService {
     // const filteredResults = rankedStatements;
 
     // 3. Return top results
-    const episodes = await getEpisodesByStatements(filteredResults);
+    const episodes = await getEpisodesByStatements(filteredResults.map((item) => item.statement));
 
     // Log recall asynchronously (don't await to avoid blocking response)
     const responseTime = Date.now() - startTime;
     this.logRecallAsync(
       query,
       userId,
-      filteredResults,
+      filteredResults.map((item) => item.statement),
       opts,
       responseTime,
     ).catch((error) => {
       logger.error("Failed to log recall event:", error);
     });
 
-    this.updateRecallCount(userId, episodes, filteredResults);
+    this.updateRecallCount(userId, episodes, filteredResults.map((item) => item.statement));
 
     return {
       episodes: episodes.map((episode) => episode.originalContent),
       facts: filteredResults.map((statement) => ({
-        fact: statement.fact,
-        validAt: statement.validAt,
+        fact: statement.statement.fact,
+        validAt: statement.statement.validAt,
+        invalidAt: statement.statement.invalidAt || null,
+        relevantScore: statement.score,
       })),
     };
   }
@@ -111,11 +114,8 @@ export class SearchService {
   private applyAdaptiveFiltering(
     results: StatementNode[],
     options: Required<SearchOptions>,
-  ): StatementNode[] {
+  ): { statement: StatementNode, score: number }[] {
     if (results.length === 0) return [];
-    if (results.length <= 5) {
-      return results;
-    }
 
     let isRRF = false;
     // Extract scores from results
@@ -141,14 +141,18 @@ export class SearchService {
         score = (result as any).cohereScore;
       }
 
-      return { result, score };
+      return { statement: result, score };
     });
+
+    if (!options.adaptiveFiltering || results.length <= 5) {
+      return scoredResults;
+    }
 
     const hasScores = scoredResults.some((item) => item.score > 0);
     // If no scores are available, return the original results
     if (!hasScores) {
       logger.info("No scores found in results, skipping adaptive filtering");
-      return options.limit > 0 ? results.slice(0, options.limit) : results;
+      return options.limit > 0 ? results.slice(0, options.limit).map((item) => ({ statement: item, score: 0 })) : results.map((item) => ({ statement: item, score: 0 }));
     }
 
     // Sort by score (descending)
@@ -197,15 +201,15 @@ export class SearchService {
     // Filter out low-quality results
     const filteredResults = scoredResults
       .filter((item) => item.score >= threshold)
-      .map((item) => item.result);
+      .map((item) => ({ statement: item.statement, score: item.score }));
 
     // Apply limit if specified
     const limitedResults =
       options.limit > 0
         ? filteredResults.slice(
-            0,
-            Math.min(filteredResults.length, options.limit),
-          )
+          0,
+          Math.min(filteredResults.length, options.limit),
+        )
         : filteredResults;
 
     logger.info(
@@ -367,4 +371,5 @@ export interface SearchOptions {
   scoreThreshold?: number;
   minResults?: number;
   spaceIds?: string[]; // Filter results by specific spaces
+  adaptiveFiltering?: boolean;
 }
