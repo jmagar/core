@@ -89,6 +89,7 @@ const EnvironmentSchema = z.object({
   EMBEDDING_MODEL_SIZE: z.string().default("1024"),
   OLLAMA_URL: z.string().optional(),
   COHERE_API_KEY: z.string().optional(),
+  COHERE_SCORE_THRESHOLD: z.string().default("0.3"),
 });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;

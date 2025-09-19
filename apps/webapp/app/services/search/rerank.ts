@@ -4,6 +4,7 @@ import { type CoreMessage } from "ai";
 import { makeModelCall } from "~/lib/model.server";
 import { logger } from "../logger.service";
 import { CohereClientV2 } from "cohere-ai";
+import { env } from "~/env.server";
 
 // Utility function to safely convert BigInt values to Number
 function safeNumber(value: any): number {
@@ -512,7 +513,7 @@ export async function applyCohereReranking(
         cohereScore: result.relevanceScore,
         cohereRank: index + 1,
       }))
-      .filter((result) => result.cohereScore >= 0.1);
+      .filter((result) => result.cohereScore >= Number(env.COHERE_SCORE_THRESHOLD));
 
     const responseTime = Date.now() - startTime;
     logger.info(
