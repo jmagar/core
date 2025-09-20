@@ -8,9 +8,10 @@ import type { CoreMessage } from "ai";
 import { z } from "zod";
 import { triggerSpacePattern } from "./space-pattern";
 import { getSpace, updateSpace } from "../utils/space-utils";
-import { addToQueue } from "~/lib/ingest.server";
+
 import { EpisodeType } from "@core/types";
 import { getSpaceStatementCount } from "~/services/graphModels/space";
+import { addToQueue } from "../utils/queue";
 
 interface SpaceSummaryPayload {
   userId: string;
@@ -144,7 +145,9 @@ export const spaceSummaryTask = task({
           },
         });
 
-        logger.info(`No summary generated for space ${spaceId} - insufficient or no new episodes`);
+        logger.info(
+          `No summary generated for space ${spaceId} - insufficient or no new episodes`,
+        );
         return {
           success: true,
           spaceId,
@@ -231,11 +234,7 @@ async function generateSpaceSummary(
 
       // Process in batches, each building on previous result
       const batches: SpaceEpisodeData[][] = [];
-      for (
-        let i = 0;
-        i < episodes.length;
-        i += CONFIG.maxEpisodesForSummary
-      ) {
+      for (let i = 0; i < episodes.length; i += CONFIG.maxEpisodesForSummary) {
         batches.push(episodes.slice(i, i + CONFIG.maxEpisodesForSummary));
       }
 
@@ -374,16 +373,16 @@ function createUnifiedSummaryPrompt(
   const episodesText = episodes
     .map(
       (episode) =>
-        `- ${episode.content} (Source: ${episode.source}, Session: ${episode.sessionId || 'N/A'})`,
+        `- ${episode.content} (Source: ${episode.source}, Session: ${episode.sessionId || "N/A"})`,
     )
     .join("\n");
 
   // Extract key entities and themes from episode content
   const contentWords = episodes
-    .map(ep => ep.content.toLowerCase())
-    .join(' ')
+    .map((ep) => ep.content.toLowerCase())
+    .join(" ")
     .split(/\s+/)
-    .filter(word => word.length > 3);
+    .filter((word) => word.length > 3);
 
   const wordFrequency = new Map<string, number>();
   contentWords.forEach((word) => {
@@ -423,7 +422,7 @@ ${
 3. Create a coherent summary that captures the essence of this knowledge domain
 4. Generate a well-structured markdown summary organized by the identified themes`
 }
-${isUpdate ? '7' : '6'}. Assess your confidence in the ${isUpdate ? "updated" : ""} summary quality (0.0-1.0)
+${isUpdate ? "7" : "6"}. Assess your confidence in the ${isUpdate ? "updated" : ""} summary quality (0.0-1.0)
 
 THEME IDENTIFICATION RULES:
 - A theme must be supported by AT LEAST 3 related episodes to be considered valid
@@ -564,7 +563,7 @@ async function getSpaceEpisodes(
     WHERE ${whereClause}
     OPTIONAL MATCH (e:Episode{userId: $userId})-[:HAS_PROVENANCE]->(s)
     WITH e
-    WHERE e IS NOT NULL ${dateCondition ? `AND ${dateCondition}` : ''}
+    WHERE e IS NOT NULL ${dateCondition ? `AND ${dateCondition}` : ""}
     RETURN DISTINCT e
     ORDER BY e.createdAt DESC
   `;
@@ -700,33 +699,32 @@ async function processSpaceSummarySequentially({
   spaceName: string;
   summaryContent: string;
   triggerSource:
-  | "summary_complete"
-  | "manual"
-  | "assignment"
-  | "scheduled"
-  | "new_space"
-  | "growth_threshold"
-  | "ingestion_complete";
+    | "summary_complete"
+    | "manual"
+    | "assignment"
+    | "scheduled"
+    | "new_space"
+    | "growth_threshold"
+    | "ingestion_complete";
 }): Promise<void> {
-    // Step 1: Ingest summary as document synchronously
-    await ingestSpaceSummaryDocument(
-      spaceId,
-      userId,
-      spaceName,
-      summaryContent
-    );
+  // Step 1: Ingest summary as document synchronously
+  await ingestSpaceSummaryDocument(spaceId, userId, spaceName, summaryContent);
 
-    logger.info(`Successfully ingested space summary document for space ${spaceId}`);
+  logger.info(
+    `Successfully ingested space summary document for space ${spaceId}`,
+  );
 
-    // Step 2: Now trigger space patterns (patterns will have access to the ingested summary)
-    await triggerSpacePattern({
-      userId,
-      workspaceId,
-      spaceId,
-      triggerSource,
-    });
+  // Step 2: Now trigger space patterns (patterns will have access to the ingested summary)
+  await triggerSpacePattern({
+    userId,
+    workspaceId,
+    spaceId,
+    triggerSource,
+  });
 
-    logger.info(`Sequential processing completed for space ${spaceId}: summary ingested → patterns triggered`);
+  logger.info(
+    `Sequential processing completed for space ${spaceId}: summary ingested → patterns triggered`,
+  );
 }
 
 /**
@@ -736,7 +734,7 @@ async function ingestSpaceSummaryDocument(
   spaceId: string,
   userId: string,
   spaceName: string,
-  summaryContent: string
+  summaryContent: string,
 ): Promise<void> {
   // Create the ingest body
   const ingestBody = {
@@ -756,9 +754,9 @@ async function ingestSpaceSummaryDocument(
 
   // Add to queue
   await addToQueue(ingestBody, userId);
-  
+
   logger.info(`Queued space summary for synchronous ingestion`);
-  
+
   return;
 }
 

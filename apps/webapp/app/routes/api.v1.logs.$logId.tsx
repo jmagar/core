@@ -24,20 +24,16 @@ const loader = createHybridLoaderApiRoute(
     corsStrategy: "all",
     allowJWT: true,
   },
-  async ({ params, authentication }) => {
+  async ({ params }) => {
     const formattedLog = await getIngestionQueueForFrontend(params.logId);
 
     return json({ log: formattedLog });
   },
 );
 
-export const DeleteEpisodeBodyRequest = z.object({
-  id: z.string(),
-});
-
 const { action } = createHybridActionApiRoute(
   {
-    body: DeleteEpisodeBodyRequest,
+    params: LogParamsSchema,
     allowJWT: true,
     method: "DELETE",
     authorization: {
@@ -45,9 +41,9 @@ const { action } = createHybridActionApiRoute(
     },
     corsStrategy: "all",
   },
-  async ({ body, authentication }) => {
+  async ({ params, authentication }) => {
     try {
-      const ingestionQueue = await getIngestionQueue(body.id);
+      const ingestionQueue = await getIngestionQueue(params.logId);
 
       if (!ingestionQueue) {
         return json(
