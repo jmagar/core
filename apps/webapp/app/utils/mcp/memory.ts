@@ -17,15 +17,18 @@ const SearchParamsSchema = {
     },
     validAt: {
       type: "string",
-      description: "The valid at time in ISO format",
+      description:
+        "Point-in-time reference for temporal queries (ISO format). Returns facts valid at this timestamp. Defaults to current time if not specified.",
     },
     startTime: {
       type: "string",
-      description: "The start time in ISO format",
+      description:
+        "Filter memories created/valid from this time onwards (ISO format). Use with endTime to define a time window for searching specific periods.",
     },
     endTime: {
       type: "string",
-      description: "The end time in ISO format",
+      description:
+        "Upper bound for temporal filtering (ISO format). Combined with startTime creates a time range. Defaults to current time if not specified.",
     },
     spaceIds: {
       type: "array",
@@ -59,7 +62,7 @@ export const memoryTools = [
   {
     name: "memory_search",
     description:
-      "AUTOMATICALLY invoke for memory searches. Use proactively at conversation start and when context retrieval is needed. Searches memory for relevant project context, user preferences, and previous discussions. **Purpose**: Retrieve previously stored information based on query terms. **Required**: Provide a search query in third person perspective. **Returns**: matching memory entries in JSON format",
+      "AUTOMATICALLY invoke for memory searches. Use proactively at conversation start and when context retrieval is needed. Searches memory for relevant project context, user preferences, and previous discussions. **Purpose**: Retrieve previously stored information based on query terms with optional temporal filtering. **Required**: Provide a search query in third person perspective. **Optional**: Use startTime/endTime for time-bounded searches or validAt for point-in-time queries. **Returns**: matching memory entries in JSON format",
     inputSchema: SearchParamsSchema,
   },
   {

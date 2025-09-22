@@ -195,7 +195,8 @@ export async function deleteEpisodeWithRelatedNodes(params: {
 
   if (!episodeCheck || episodeCheck.length === 0) {
     return {
-      episodeDeleted: false,
+      // Return true if no episode exist
+      episodeDeleted: true,
       statementsDeleted: 0,
       entitiesDeleted: 0,
       factsDeleted: 0,
