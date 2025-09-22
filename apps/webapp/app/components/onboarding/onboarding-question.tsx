@@ -15,6 +15,7 @@ interface OnboardingQuestionProps {
   isLast: boolean;
   currentStep: number;
   totalSteps: number;
+  loading?: boolean;
 }
 
 export default function OnboardingQuestionComponent({
@@ -27,6 +28,7 @@ export default function OnboardingQuestionComponent({
   isLast,
   currentStep,
   totalSteps,
+  loading,
 }: OnboardingQuestionProps) {
   const [selectedValue, setSelectedValue] = useState<string | string[]>(
     answer || (question.type === "multi-select" ? [] : ""),
@@ -148,6 +150,7 @@ export default function OnboardingQuestionComponent({
                 variant="secondary"
                 size="xl"
                 onClick={onNext}
+                isLoading={!!loading}
                 disabled={!isValid()}
                 className="rounded-lg px-4 py-2"
               >

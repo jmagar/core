@@ -85,7 +85,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function Onboarding() {
   const { user } = useLoaderData<typeof loader>();
   const submit = useSubmit();
-
+  const [loading, setLoading] = useState(false); // Add loading state
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<OnboardingAnswer[]>([]);
   // Initialize with default identity statement converted to triplets
@@ -152,6 +152,7 @@ export default function Onboarding() {
     if (currentQuestion < ONBOARDING_QUESTIONS.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
+      setLoading(true);
       // Submit all answers
       submitAnswers();
     }
@@ -164,12 +165,17 @@ export default function Onboarding() {
   };
 
   const submitAnswers = async () => {
-    const formData = new FormData();
-    formData.append("answers", JSON.stringify(answers));
+    try {
+      const formData = new FormData();
+      formData.append("answers", JSON.stringify(answers));
 
-    submit(formData, {
-      method: "POST",
-    });
+      submit(formData, {
+        method: "POST",
+      });
+      setLoading(false);
+    } catch (e) {
+      setLoading(false);
+    }
   };
 
   // Convert episode and statements structure to triplets for visualization
@@ -243,6 +249,7 @@ export default function Onboarding() {
               onAnswer={handleAnswer}
               onNext={handleNext}
               onPrevious={handlePrevious}
+              loading={loading}
               isFirst={currentQuestion === 0}
               isLast={currentQuestion === ONBOARDING_QUESTIONS.length - 1}
               currentStep={currentQuestion + 1}
