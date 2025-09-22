@@ -1,19 +1,21 @@
-# Echo SDK
+# Core SDK
 
-The Echo SDK provides tools and utilities for building integrations with the Echo platform.
+The Core SDK provides tools and utilities for building integrations with the Core platform.
 
 ## Integration System
 
-The Echo integration system uses a CLI-based approach where each integration is a command-line tool that responds to specific events. This makes integrations portable, testable, and easy to debug.
+The Core integration system uses a CLI-based approach where each integration is a command-line tool that responds to specific events. This makes integrations portable, testable, and easy to debug.
 
 ### Integration Event Types
 
 Each integration CLI handles 5 core event types:
 
 #### 1. `spec`
+
 Returns the integration's metadata and configuration.
 
 **Usage:**
+
 ```bash
 my-integration spec
 ```
@@ -21,9 +23,11 @@ my-integration spec
 **Returns:** Integration specification including name, description, auth config, etc.
 
 #### 2. `setup`
+
 Processes authentication data and returns tokens/credentials to be saved.
 
 **Usage:**
+
 ```bash
 my-integration setup --event-body '{"code":"oauth_code","state":"state"}' --integration-definition '{}'
 ```
@@ -31,9 +35,11 @@ my-integration setup --event-body '{"code":"oauth_code","state":"state"}' --inte
 **Returns:** Configuration data (tokens, credentials) to be stored for the account.
 
 #### 3. `identify`
+
 Extracts accountId from webhook data to route webhooks to the correct account.
 
 **Usage:**
+
 ```bash
 my-integration identify --webhook-data '{"team_id":"T123","event":{}}'
 ```
@@ -41,9 +47,11 @@ my-integration identify --webhook-data '{"team_id":"T123","event":{}}'
 **Returns:** Account identifier for webhook routing.
 
 #### 4. `process`
+
 Handles webhook events and returns activity data.
 
 **Usage:**
+
 ```bash
 my-integration process --event-data '{"type":"reaction_added","reaction":"=M"}' --config '{"access_token":"token"}'
 ```
@@ -51,9 +59,11 @@ my-integration process --event-data '{"type":"reaction_added","reaction":"=M"}' 
 **Returns:** Activity messages representing user actions.
 
 #### 5. `sync`
+
 Performs scheduled data synchronization for integrations that don't support webhooks.
 
 **Usage:**
+
 ```bash
 my-integration sync --config '{"access_token":"token","last_sync":"2023-01-01T00:00:00Z"}'
 ```
@@ -72,20 +82,24 @@ All integration responses are wrapped in a `Message` object with a `type` field:
 ### Building an Integration
 
 1. **Install the SDK:**
+
 ```bash
-npm install @echo/core-sdk
+npm install @Core/core-sdk
 ```
 
 2. **Create your integration class:**
+
 ```typescript
-import { IntegrationCLI } from '@echo/core-sdk';
+import { IntegrationCLI } from '@Core/core-sdk';
 
 class MyIntegration extends IntegrationCLI {
   constructor() {
     super('my-integration', '1.0.0');
   }
 
-  protected async handleEvent(eventPayload: IntegrationEventPayload): Promise<any> {
+  protected async handleEvent(
+    eventPayload: IntegrationEventPayload,
+  ): Promise<any> {
     switch (eventPayload.event) {
       case 'SETUP':
         return this.handleSetup(eventPayload);
@@ -110,24 +124,28 @@ class MyIntegration extends IntegrationCLI {
         OAuth2: {
           token_url: 'https://api.example.com/oauth/token',
           authorization_url: 'https://api.example.com/oauth/authorize',
-          scopes: ['read', 'write']
-        }
-      }
+          scopes: ['read', 'write'],
+        },
+      },
     };
   }
 
-  private async handleSetup(eventPayload: IntegrationEventPayload): Promise<any> {
+  private async handleSetup(
+    eventPayload: IntegrationEventPayload,
+  ): Promise<any> {
     // Process OAuth response and return tokens to save
     const { code } = eventPayload.eventBody;
     // Exchange code for tokens...
     return {
       access_token: 'token',
       refresh_token: 'refresh_token',
-      expires_at: Date.now() + 3600000
+      expires_at: Date.now() + 3600000,
     };
   }
 
-  private async handleProcess(eventPayload: IntegrationEventPayload): Promise<any> {
+  private async handleProcess(
+    eventPayload: IntegrationEventPayload,
+  ): Promise<any> {
     // Handle webhook events
     const { eventData } = eventPayload.eventBody;
     // Process event and return activity...
@@ -135,23 +153,29 @@ class MyIntegration extends IntegrationCLI {
       type: 'message',
       user: 'user123',
       content: 'Hello world',
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 
-  private async handleIdentify(eventPayload: IntegrationEventPayload): Promise<any> {
+  private async handleIdentify(
+    eventPayload: IntegrationEventPayload,
+  ): Promise<any> {
     // Extract account ID from webhook
     const { team_id } = eventPayload.eventBody;
     return { id: team_id };
   }
 
-  private async handleSync(eventPayload: IntegrationEventPayload): Promise<any> {
+  private async handleSync(
+    eventPayload: IntegrationEventPayload,
+  ): Promise<any> {
     // Perform scheduled sync
     const { config } = eventPayload;
     // Fetch data since last sync...
     return {
-      activities: [/* activity data */],
-      state: { last_sync: new Date().toISOString() }
+      activities: [
+        /* activity data */
+      ],
+      state: { last_sync: new Date().toISOString() },
     };
   }
 }
@@ -162,6 +186,7 @@ integration.parse();
 ```
 
 3. **Build and package your integration:**
+
 ```bash
 npm run build
 npm pack

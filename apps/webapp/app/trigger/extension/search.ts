@@ -50,7 +50,7 @@ export const extensionSearch = task({
             { query },
             {
               headers: {
-                Authorization: `Bearer rc_pat_v41311t6trhr3c8sc7ap4hsbhp6pwsstzyunaazq`,
+                Authorization: `Bearer ${pat.token}`,
               },
             },
           );

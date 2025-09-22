@@ -47,7 +47,7 @@ export function useLogs({ endpoint, source, status, type }: UseLogsOptions) {
     (pageNum: number) => {
       const params = new URLSearchParams();
       params.set("page", pageNum.toString());
-      params.set("limit", "5");
+      params.set("limit", "50");
       if (source) params.set("source", source);
       if (status) params.set("status", status);
       if (type) params.set("type", type);
