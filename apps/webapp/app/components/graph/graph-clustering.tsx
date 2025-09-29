@@ -689,7 +689,7 @@ export const GraphClustering = forwardRef<
         defaultDrawNodeHover: drawHover,
 
         maxCameraRatio: 2,
-        allowInvalidContainer: false,
+        allowInvalidContainer: true,
       });
 
       sigmaRef.current = sigma;

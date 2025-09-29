@@ -407,6 +407,7 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
         enableEdgeEvents: true,
         minCameraRatio: 0.1,
         maxCameraRatio: 2,
+        allowInvalidContainer: true,
       });
 
       sigmaRef.current = sigma;
