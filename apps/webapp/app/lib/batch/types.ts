@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export type BatchStatus = "pending" | "processing" | "completed" | "failed" | "cancelled";
 
+export type ModelComplexity = 'high' | 'low';
 export interface BatchRequest {
   customId: string;
   messages: CoreMessage[];
@@ -39,6 +40,7 @@ export interface CreateBatchParams<T = any> {
   outputSchema?: z.ZodSchema<T>;
   maxRetries?: number;
   timeoutMs?: number;
+  modelComplexity?: ModelComplexity;
 }
 
 export interface GetBatchParams {

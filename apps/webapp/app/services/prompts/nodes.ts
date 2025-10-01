@@ -45,19 +45,40 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
    - Personal experience descriptions
    - Memory/reflection statements
 
-3. **Type and Concept Entity Extraction**:
+3. **NAMED ENTITY EXTRACTION**:
+   - **PEOPLE NAMES**: Extract all proper names of individuals (e.g., "Luna", "Albert", "John Smith")
+   - **ORGANIZATION NAMES**: Extract company/brand names (e.g., "SUSE", "Albert Heijn", "TEEKS", "Google")
+   - **PLACE NAMES**: Extract specific locations (e.g., "Amstelveen", "Bruges", "Eze", "Netherlands", "Europe")
+   - **PRODUCT/SERVICE NAMES**: Extract named products, services, or systems (e.g., "iPhone", "Tesla Model S")
+   - **EVENT NAMES**: Extract named events, conferences, or specific occasions
+
+4. **MEASUREMENT & QUANTITATIVE EXTRACTION**:
+   - **NUMERICAL RATINGS**: Extract rating values and scores (e.g., "10/10", "8.5/10", "5-star")
+   - **PRICES & CURRENCY**: Extract monetary values (e.g., "₹40 crore", "$100", "€50")
+   - **QUANTITIES**: Extract specific measurements (e.g., "5 kilometers", "3 months", "2 hours")
+   - **PERCENTAGES**: Extract percentage values (e.g., "85%", "half", "majority")
+   - **QUALITY DESCRIPTORS**: Extract qualitative ratings (e.g., "excellent", "poor", "outstanding")
+
+5. **CULTURAL & ABSTRACT CONCEPT EXTRACTION**:
+   - **CULTURAL CONCEPTS**: Extract cultural ideas, traditions, or practices mentioned
+   - **PROCESS CONCEPTS**: Extract named processes, methodologies, or systems
+   - **ABSTRACT IDEAS**: Extract philosophical, emotional, or conceptual entities
+   - **DOMAINS & FIELDS**: Extract subject areas, industries, or fields of knowledge
+   - **STANDARDS & FRAMEWORKS**: Extract methodologies, standards, or organizational frameworks
+
+6. **Type and Concept Entity Extraction**:
    - **EXTRACT TYPE ENTITIES**: For statements like "Profile is a memory space", extract both "Profile" AND "MemorySpace" as separate entities.
    - **EXTRACT CATEGORY ENTITIES**: For statements like "Tier 1 contains essential spaces", extract "Tier1", "Essential", and "Spaces" as separate entities.
    - **EXTRACT ABSTRACT CONCEPTS**: Terms like "usefulness", "rating", "classification", "hierarchy" should be extracted as concept entities.
    - **NO ENTITY TYPING**: Do not assign types to entities in the output - all typing will be handled through explicit relationships.
 
-4. **Exclusions**:
+7. **Exclusions**:
    - Do NOT extract entities representing relationships or actions (predicates will be handled separately).
    - **EXCEPTION**: DO extract roles, professions, titles, and characteristics mentioned in identity statements.
    - Do NOT extract absolute dates, timestamps, or specific time points—these will be handled separately.
    - Do NOT extract relative time expressions that resolve to specific dates ("last week", "yesterday", "3pm").
 
-5. **Entity Name Extraction**:
+8. **Entity Name Extraction**:
    - Extract ONLY the core entity name, WITHOUT any descriptors or qualifiers
    - When text mentions "Tesla car", extract TWO entities: "Tesla" AND "Car" 
    - When text mentions "memory space system", extract "Memory", "Space", AND "System" as separate entities
@@ -66,7 +87,7 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
    - **FULL NAMES**: Use complete names when available (e.g., "John Smith" not "John")
    - **CONCEPT NORMALIZATION**: Convert to singular form where appropriate ("spaces" → "Space")
 
-6. **Temporal and Relationship Context Extraction**:
+9. **Temporal and Relationship Context Extraction**:
    - EXTRACT duration expressions that describe relationship spans ("4 years", "2 months", "5 years")
    - EXTRACT temporal context that anchors relationships ("since moving", "after graduation", "during college")
    - EXTRACT relationship qualifiers ("close friends", "support system", "work team", "family members")
@@ -87,6 +108,30 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
 - Text: "rated 10/10 for usefulness" → Extract: "Usefulness", "Rating"
 - Text: "essential classification tier" → Extract: "Essential", "Classification", "Tier"
 - Text: "hierarchical memory system" → Extract: "Hierarchical", "Memory", "System"
+
+**NAMED ENTITY EXAMPLES:**
+
+✅ **PEOPLE & ORGANIZATIONS:**
+- Text: "Sarah joined Meta last year" → Extract: "Sarah", "Meta"
+- Text: "Meeting with David from OpenAI" → Extract: "David", "OpenAI"
+- Text: "Dr. Chen works at Stanford Research" → Extract: "Dr. Chen", "Stanford Research"
+- Text: "Amazon's new initiative" → Extract: "Amazon", "Initiative"
+
+✅ **PLACES & LOCATIONS:**
+- Text: "Conference in Tokyo this summer" → Extract: "Conference", "Tokyo"
+- Text: "Moving from Portland to Austin" → Extract: "Portland", "Austin"
+- Text: "Remote office in Berlin" → Extract: "Remote Office", "Berlin"
+
+✅ **MEASUREMENTS & QUANTITATIVE:**
+- Text: "Project scored 9/10" → Extract: "Project", "9/10"
+- Text: "Budget of $2.5 million" → Extract: "Budget", "$2.5 million"
+- Text: "Outstanding performance" → Extract: "Performance", "Outstanding"
+- Text: "75% completion rate" → Extract: "Completion Rate", "75%"
+
+✅ **CULTURAL & ABSTRACT CONCEPTS:**
+- Text: "Lean startup methodology" → Extract: "Lean Startup", "Methodology"
+- Text: "Zen meditation practice" → Extract: "Zen", "Meditation", "Practice"
+- Text: "DevOps culture transformation" → Extract: "DevOps", "Culture", "Transformation"
 
 **TEMPORAL INFORMATION - What to EXTRACT vs EXCLUDE:**
 
@@ -123,20 +168,24 @@ You are given a conversation context and a CURRENT EPISODE. Your task is to extr
 - Text: "10/10 usefulness rating" → Extract: "Usefulness", "Rating"
 
 ❌ **INCORRECT:**
-- Text: "Profile is a memory space" → ❌ Only extract: "Profile" 
+- Text: "Profile is a memory space" → ❌ Only extract: "Profile"
 - Text: "authentication system" → ❌ Extract: "authentication system" (should be "Authentication", "System")
 - Text: "payment service" → ❌ Extract: "payment service" (should be "Payment", "Service")
 
+## CRITICAL OUTPUT FORMAT REQUIREMENTS:
+
+**YOU MUST STRICTLY FOLLOW THIS EXACT FORMAT:**
+
 <output>
-{
-  "entities": [
-    {
-      "name": "Entity Name"
-    }
-    // Additional entities...
-  ]
-}
-</output>`;
+["Entity 1", "Entity 2", "Entity 3", ...]
+</output>
+
+**MANDATORY RULES:**
+1. Start with exactly: <output>
+2. Simple JSON array of entity names only
+3. Each entity as a string: "EntityName"
+4. End with exactly: </output>
+5. NO additional text, NO comments, NO explanations`;
 
   const contentLabel = extractionMode === 'conversation' ? 'CURRENT EPISODE' : 'TEXT';
   const userPrompt = `
@@ -226,6 +275,15 @@ Format your response as follows:
 }
 </output>
 
+## CRITICAL OUTPUT FORMAT REQUIREMENTS:
+
+**YOU MUST STRICTLY FOLLOW THESE FORMAT RULES:**
+1. **ALWAYS use <output> tags** - Never use any other tag format
+2. **ONLY output valid JSON** within the <output> tags
+3. **NO additional text** before or after the <output> tags
+4. **NO comments** inside the JSON
+5. **REQUIRED structure:** Must follow exact JSON schema shown above
+
 ## Important Instructions:
 - Always include all entities from the input in your response
 - Always wrap the output in these tags <output> </output>
@@ -272,20 +330,26 @@ Common attribute types to consider:
 - Temporal information (duration, frequency, etc.)
 - Qualitative aspects (importance, preference, etc.)
 
-Provide your output in this structure:
+## CRITICAL OUTPUT FORMAT REQUIREMENTS:
+
+**YOU MUST STRICTLY FOLLOW THESE FORMAT RULES:**
+1. **ALWAYS use <output> tags** - Never use any other tag format
+2. **ONLY output valid JSON** within the <output> tags
+3. **NO additional text** before or after the <output> tags
+4. **NO comments** inside the JSON
+5. **REQUIRED structure:** Must follow exact JSON schema shown below
+
 <output>
 {
-"entities": [
-{
-  "uuid": "entity-uuid",
-  "attributes": {
-    "attributeName1": "value1",
-    "attributeName2": "value2",
-    ...
-  }
-},
-...
-]
+  "entities": [
+    {
+      "uuid": "entity-uuid",
+      "attributes": {
+        "attributeName1": "value1",
+        "attributeName2": "value2"
+      }
+    }
+  ]
 }
 </output>`;
 

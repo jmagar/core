@@ -265,10 +265,11 @@ async function extractExplicitPatterns(
 
   const prompt = createExplicitPatternPrompt(themes, summary, statements);
 
+  // Pattern extraction requires HIGH complexity (insight synthesis, pattern recognition)
   let responseText = "";
   await makeModelCall(false, prompt, (text: string) => {
     responseText = text;
-  });
+  }, undefined, 'high');
 
   const patterns = parseExplicitPatternResponse(responseText);
 
@@ -290,10 +291,11 @@ async function extractImplicitPatterns(
 
   const prompt = createImplicitPatternPrompt(statements);
 
+  // Implicit pattern discovery requires HIGH complexity (pattern recognition from statements)
   let responseText = "";
   await makeModelCall(false, prompt, (text: string) => {
     responseText = text;
-  });
+  }, undefined, 'high');
 
   const patterns = parseImplicitPatternResponse(responseText);
 

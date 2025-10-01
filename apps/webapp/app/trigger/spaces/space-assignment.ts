@@ -829,11 +829,11 @@ async function processBatch(
       userId,
     );
 
-    // Call LLM for space assignments
+    // Space assignment is LOW complexity (rule-based classification with confidence scores)
     let responseText = "";
     await makeModelCall(false, prompt, (text: string) => {
       responseText = text;
-    });
+    }, undefined, 'low');
 
     // Response text is now set by the callback
 

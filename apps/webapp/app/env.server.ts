@@ -90,6 +90,10 @@ const EnvironmentSchema = z.object({
   OLLAMA_URL: z.string().optional(),
   COHERE_API_KEY: z.string().optional(),
   COHERE_SCORE_THRESHOLD: z.string().default("0.3"),
+
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_REGION: z.string().optional(),
 });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;

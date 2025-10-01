@@ -341,10 +341,11 @@ async function generateUnifiedSummary(
       previousThemes,
     );
 
+    // Space summary generation requires HIGH complexity (creative synthesis, narrative generation)
     let responseText = "";
     await makeModelCall(false, prompt, (text: string) => {
       responseText = text;
-    });
+    }, undefined, 'high');
 
     return parseSummaryResponse(responseText);
   } catch (error) {
