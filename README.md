@@ -76,7 +76,7 @@ CORE is an open-source unified, persistent memory layer for all your AI tools. Y
 5. **Test it out** - ask "What do you know about me?" in conversatio section
 6. Connect to your tools:
    - [Claude](https://docs.heysol.ai/providers/claude) & [Cursor](https://docs.heysol.ai/providers/cursor) - coding with context
-   - [CLaude Code CLI](https://docs.heysol.ai/providers/claude-code) & [Gemini CLI](https://docs.heysol.ai/providers/claude-code) - terminal-based coding with memory
+   - [CLaude Code CLI](https://docs.heysol.ai/providers/claude-code) & [Codex CLI](https://docs.heysol.ai/providers/codex) - terminal-based coding with memory
    - [Add Browser Extension](https://docs.heysol.ai/providers/browser-extension) - bring your memory to any website
    - [Linear](https://docs.heysol.ai/integrations/linear), [Github](https://docs.heysol.ai/integrations/github) - add project context automatically
 
@@ -170,6 +170,8 @@ Explore our documentation to get the most out of CORE
 - [Self Hosting](https://docs.heysol.ai/self-hosting/overview)
 - [Connect Core MCP with Claude](https://docs.heysol.ai/providers/claude)
 - [Connect Core MCP with Cursor](https://docs.heysol.ai/providers/cursor)
+- [Connect Core MCP with Claude Code](https://docs.heysol.ai/providers/claude-code)
+- [Connect Core MCP with Codex](https://docs.heysol.ai/providers/codex) 
 
 - [Basic Concepts](https://docs.heysol.ai/overview)
 - [API Reference](https://docs.heysol.ai/local-setup)
@@ -214,6 +216,7 @@ Have questions or feedback? We're here to help:
 <a href="https://github.com/RedPlanetHQ/core/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=RedPlanetHQ/core" />
 </a>
+
 
 
 
