@@ -41,7 +41,7 @@
     </a>
 </p>
 <p align="center">
-    <a href="https://docs.heysol.ai/core/overview"><b>Documentation</b></a> •
+    <a href="https://docs.heysol.ai/introduction"><b>Documentation</b></a> •
     <a href="https://discord.gg/YGUZcvDjUa"><b>Discord</b></a>
 </p>
 </div>
@@ -174,7 +174,7 @@ Explore our documentation to get the most out of CORE
 - [Connect Core MCP with Codex](https://docs.heysol.ai/providers/codex) 
 
 - [Basic Concepts](https://docs.heysol.ai/overview)
-- [API Reference](https://docs.heysol.ai/local-setup)
+- [API Reference](https://docs.heysol.ai/api-reference/get-user-profile)
 
 ## 🔒 Security
 
@@ -216,6 +216,7 @@ Have questions or feedback? We're here to help:
 <a href="https://github.com/RedPlanetHQ/core/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=RedPlanetHQ/core" />
 </a>
+
 
 
 
