@@ -48,7 +48,7 @@
 
 ## 🔥 Research Highlights
 
-CORE memory achieves **88.24%** average accuracy in Locomo dataset across all reasoning tasks, significantly outperforming other memory providers. Check out this [blog](https://blog.heysol.ai/we-built-memory-for-individuals-and-achieved-sota-on-locomo-benchmark/) for more info.
+CORE memory achieves **88.24%** average accuracy in Locomo dataset across all reasoning tasks, significantly outperforming other memory providers. Check out this [blog](https://blog.heysol.ai/core-build-memory-knowledge-graph-for-individuals-and-achieved-sota-on-locomo-benchmark/) for more info.
 
 <img width="6048" height="3428" alt="benchmark" src="https://github.com/user-attachments/assets/2e5fdac5-02ed-4d00-9312-c21d09974e1f" />
 (1) Single-hop questions require answers based on a single session; (2) Multi-hop questions require synthesizing information from multiple different sessions; (3) Open-domain knowledge questions can be answered by integrating a speaker’s provided information with external knowledge such as commonsense or world facts; (4) Temporal reasoning questions can be answered through temporal reasoning and capturing time-related data cues within the conversation;
@@ -214,6 +214,7 @@ Have questions or feedback? We're here to help:
 <a href="https://github.com/RedPlanetHQ/core/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=RedPlanetHQ/core" />
 </a>
+
 
 
 
