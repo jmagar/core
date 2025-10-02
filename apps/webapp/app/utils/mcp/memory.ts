@@ -80,7 +80,7 @@ export const memoryTools = [
     },
   },
   {
-    name: "get_user_profile",
+    name: "memory_about_user",
     description:
       "Get the user's core profile and preferences for personalized interactions. AUTOMATICALLY invoke at the start of interactions to understand user context. **Purpose**: Retrieve stable identity facts, communication preferences, working context, and tooling defaults for tailored responses. **Required**: No required parameters. **Returns**: User profile data in JSON format.",
     inputSchema: {
@@ -110,7 +110,7 @@ export async function callMemoryTool(
         return await handleMemorySearch({ ...args, userId, source });
       case "memory_get_spaces":
         return await handleMemoryGetSpaces(userId);
-      case "get_user_profile":
+      case "memory_about_user":
         return await handleUserProfile(userId);
       default:
         throw new Error(`Unknown memory tool: ${toolName}`);

@@ -8,8 +8,7 @@
  * - Usage metering for overage billing
  */
 
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import { type ActionFunctionArgs , json } from "@remix-run/node";
 import Stripe from "stripe";
 import { prisma } from "~/db.server";
 import { BILLING_CONFIG, getPlanConfig } from "~/config/billing.server";
