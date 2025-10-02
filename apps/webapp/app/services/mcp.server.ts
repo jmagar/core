@@ -14,6 +14,7 @@ import { callMemoryTool, memoryTools } from "~/utils/mcp/memory";
 import { logger } from "~/services/logger.service";
 import { type Response, type Request } from "express";
 import { getWorkspaceByUser } from "~/models/workspace.server";
+import { ensureBillingInitialized } from "./billing.server";
 
 const QueryParams = z.object({
   source: z.string().optional(),
@@ -195,6 +196,8 @@ export const handleMCPRequest = async (
   const workspace = await getWorkspaceByUser(userId);
   const workspaceId = workspace?.id as string;
 
+  await ensureBillingInitialized(workspaceId);
+
   try {
     let transport: StreamableHTTPServerTransport;
     let currentSessionId = sessionId;
@@ -263,6 +266,8 @@ export const handleSessionRequest = async (
       workspace?.id as string,
     ))
   ) {
+    await ensureBillingInitialized(workspace?.id as string);
+
     const sessionData = TransportManager.getSessionInfo(sessionId);
 
     if (sessionData.exists) {
