@@ -1,5 +1,5 @@
 import { runQuery } from "~/lib/neo4j.server";
-import { type EntityNode, type EpisodicNode } from "@core/types";
+import { StatementNode, type EntityNode, type EpisodicNode } from "@core/types";
 
 export async function saveEpisode(episode: EpisodicNode): Promise<string> {
   const query = `
@@ -308,7 +308,7 @@ export async function getRelatedEpisodesEntities(params: {
 export async function getEpisodeStatements(params: {
   episodeUuid: string;
   userId: string;
-}) {
+}): Promise<Omit<StatementNode, "factEmbedding">[]> {
   const query = `
   MATCH (episode:Episode {uuid: $episodeUuid, userId: $userId})-[:HAS_PROVENANCE]->(stmt:Statement)
   WHERE stmt.invalidAt IS NULL
@@ -326,7 +326,6 @@ export async function getEpisodeStatements(params: {
     return {
       uuid: stmt.uuid,
       fact: stmt.fact,
-      factEmbedding: stmt.factEmbedding,
       createdAt: new Date(stmt.createdAt),
       validAt: new Date(stmt.validAt),
       invalidAt: stmt.invalidAt ? new Date(stmt.invalidAt) : null,

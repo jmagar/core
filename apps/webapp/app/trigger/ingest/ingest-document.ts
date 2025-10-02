@@ -15,7 +15,7 @@ import { ingestTask } from "./ingest";
 
 const documentIngestionQueue = queue({
   name: "document-ingestion-queue",
-  concurrencyLimit: 5,
+  concurrencyLimit: 1,
 });
 
 // Register the Document Ingestion Trigger.dev task

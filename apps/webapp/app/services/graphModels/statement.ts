@@ -111,7 +111,7 @@ export async function findContradictoryStatements({
   subjectId: string;
   predicateId: string;
   userId: string;
-}): Promise<StatementNode[]> {
+}): Promise<Omit<StatementNode, "factEmbedding">[]> {
   const query = `
       MATCH (subject:Entity {uuid: $subjectId}), (predicate:Entity {uuid: $predicateId})
       MATCH (subject)<-[:HAS_SUBJECT]-(statement:Statement)-[:HAS_PREDICATE]->(predicate)
@@ -131,7 +131,6 @@ export async function findContradictoryStatements({
     return {
       uuid: statement.uuid,
       fact: statement.fact,
-      factEmbedding: statement.factEmbedding,
       createdAt: new Date(statement.createdAt),
       validAt: new Date(statement.validAt),
       invalidAt: statement.invalidAt ? new Date(statement.invalidAt) : null,
@@ -158,7 +157,7 @@ export async function findStatementsWithSameSubjectObject({
   objectId: string;
   excludePredicateId?: string;
   userId: string;
-}): Promise<StatementNode[]> {
+}): Promise<Omit<StatementNode, "factEmbedding">[]> {
   const query = `
       MATCH (subject:Entity {uuid: $subjectId}), (object:Entity {uuid: $objectId})
       MATCH (subject)<-[:HAS_SUBJECT]-(statement:Statement)-[:HAS_OBJECT]->(object)
@@ -186,7 +185,6 @@ export async function findStatementsWithSameSubjectObject({
     return {
       uuid: statement.uuid,
       fact: statement.fact,
-      factEmbedding: statement.factEmbedding,
       createdAt: new Date(statement.createdAt),
       validAt: new Date(statement.validAt),
       invalidAt: statement.invalidAt ? new Date(statement.invalidAt) : null,
@@ -212,7 +210,7 @@ export async function findSimilarStatements({
   threshold?: number;
   excludeIds?: string[];
   userId: string;
-}): Promise<StatementNode[]> {
+}): Promise<Omit<StatementNode, "factEmbedding">[]> {
   const query = `
       CALL db.index.vector.queryNodes('statement_embedding', $topK, $factEmbedding)
       YIELD node AS statement, score
@@ -242,7 +240,6 @@ export async function findSimilarStatements({
     return {
       uuid: statement.uuid,
       fact: statement.fact,
-      factEmbedding: statement.factEmbedding,
       createdAt: new Date(statement.createdAt),
       validAt: new Date(statement.validAt),
       invalidAt: statement.invalidAt ? new Date(statement.invalidAt) : null,

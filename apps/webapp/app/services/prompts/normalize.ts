@@ -7,42 +7,25 @@ export const normalizePrompt = (
 
 Create ONE enriched sentence that transforms the episode into a contextually-rich memory using SELECTIVE enrichment.
 
-<smart_enrichment_process>
-Evaluate the episode and apply enrichment ONLY where it adds significant value:
+CRITICAL: CAPTURE ALL DISTINCT PIECES OF INFORMATION from the episode. Every separate fact, preference, request, clarification, or detail mentioned must be preserved in your enriched output. Missing information is unacceptable.
 
-1. PRIMARY FACTS - always preserve the core information from the episode
-2. TEMPORAL RESOLUTION - convert relative dates to absolute dates using episode timestamp  
-3. STRATEGIC ENRICHMENT - add context only for HIGH VALUE cases (see guidelines below)
-4. VISUAL CONTENT - capture exact text on signs, objects shown, specific details from images
-5. EMOTIONAL PRESERVATION - maintain the tone and feeling of emotional exchanges
-6. IDENTITY PRESERVATION - preserve definitional and possessive relationships that establish entity connections
+<enrichment_strategy>
+1. PRIMARY FACTS - Always preserve the core information from the episode
+2. TEMPORAL RESOLUTION - Convert relative dates to absolute dates using episode timestamp
+3. CONTEXT ENRICHMENT - Add context ONLY when it clarifies unclear references
+4. VISUAL CONTENT - Capture exact text on signs, objects shown, specific details from images
+5. EMOTIONAL PRESERVATION - Maintain the tone and feeling of emotional exchanges
 
-ENRICHMENT DECISION MATRIX:
-- Clear, complete statement → minimal enrichment (just temporal + attribution)
-- Unclear references → resolve with context
-- Emotional support → preserve feeling, avoid historical dumping
-- New developments → connect to ongoing narrative
-- Visual content → extract specific details as primary facts
-</smart_enrichment_process>
+When to add context from related memories:
+- Unclear pronouns ("she", "it", "they") → resolve to specific entity
+- Vague references ("the agency", "the event") → add clarifying details
+- Continuation phrases ("following up", "as we discussed") → connect to previous topic
 
-<context_usage_decision>
-When related memories/previous episodes are provided, evaluate if they improve understanding:
-
-USE CONTEXT when current episode has:
-- Unclear pronouns ("she", "it", "they" without clear antecedent)
-- Vague references ("the agency", "the event" without definition in current episode)
-- Continuation phrases ("following up", "as we discussed")
-- Incomplete information that context clarifies
-
-IGNORE CONTEXT when current episode is:
-- Clear and self-contained ("I got a job in New York")
-- Simple emotional responses ("Thanks, that's great!")
-- Generic encouragement ("You're doing awesome!")
-- Complete statements with all necessary information
-
-DECISION RULE: If the current episode can be understood perfectly without context, don't use it. Only use context when it genuinely clarifies or
-resolves ambiguity.
-</context_usage_decision>
+When NOT to add context:
+- Clear, self-contained statements → no enrichment needed beyond temporal
+- Emotional responses → preserve tone, avoid over-contextualization
+- Already established topics → don't repeat details mentioned earlier in conversation
+</enrichment_strategy>
 
 <temporal_resolution>
 Using episode timestamp as anchor, convert ALL relative time references:
@@ -269,6 +252,8 @@ export const normalizeDocumentPrompt = (
   const sysPrompt = `You are C.O.R.E. (Contextual Observation & Recall Engine), a document memory processing system.
 
 Transform this document content into enriched factual statements for knowledge graph storage.
+
+CRITICAL: CAPTURE ALL DISTINCT PIECES OF INFORMATION from the document. Every separate fact, specification, procedure, data point, or detail mentioned must be preserved in your enriched output. Missing information is unacceptable.
 
 <document_processing_approach>
 Focus on STRUCTURED CONTENT EXTRACTION optimized for documents:

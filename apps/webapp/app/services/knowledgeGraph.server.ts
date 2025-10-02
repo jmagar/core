@@ -418,10 +418,15 @@ export class KnowledgeGraphService {
       const processingTimeMs = endTime - startTime;
       logger.log(`Processing time: ${processingTimeMs} ms`);
 
+      // Count only truly new statements (exclude duplicates)
+      const newStatementsCount = updatedTriples.filter(triple =>
+        triple.statement.createdAt >= episode.createdAt
+      ).length;
+
       return {
         episodeUuid: episode.uuid,
         // nodesCreated: hydratedNodes.length,
-        statementsCreated: resolvedStatements.length,
+        statementsCreated: newStatementsCount,
         processingTimeMs,
         tokenUsage: tokenMetrics,
       };
@@ -529,6 +534,7 @@ export class KnowledgeGraphService {
       referenceTime: episode.validAt.toISOString(),
     };
 
+    console.log("proprietary model", isProprietaryModel(undefined, 'high'));
     // Statement extraction requires HIGH complexity (causal reasoning, emotional context)
     // Choose between proprietary and OSS prompts based on model type
     const messages = isProprietaryModel(undefined, 'high')
@@ -905,7 +911,7 @@ export class KnowledgeGraphService {
     }
 
     // Step 1: Collect all potential matches for all triples at once
-    const allPotentialMatches: Map<string, StatementNode[]> = new Map();
+    const allPotentialMatches: Map<string, Omit<StatementNode, "factEmbedding">[]> = new Map();
     const allExistingTripleData: Map<string, Triple> = new Map();
 
     // For preparing the LLM context
@@ -915,7 +921,7 @@ export class KnowledgeGraphService {
     for (const triple of triples) {
       // Track IDs of statements we've already checked to avoid duplicates
       const checkedStatementIds: string[] = [];
-      let potentialMatches: StatementNode[] = [];
+      let potentialMatches: Omit<StatementNode, "factEmbedding">[] = [];
 
       // Phase 1a: Find statements with exact subject-predicate match
       // Example: "John lives_in New York" vs "John lives_in San Francisco"
@@ -965,7 +971,7 @@ export class KnowledgeGraphService {
       }
 
       // Phase 3: Check related memories for contradictory statements
-      const previousEpisodesStatements: StatementNode[] = [];
+      const previousEpisodesStatements: Omit<StatementNode, "factEmbedding">[] = [];
 
       await Promise.all(
         previousEpisodes.map(async (episode) => {
@@ -1264,7 +1270,7 @@ export class KnowledgeGraphService {
         tokenMetrics.low.output += usage.completionTokens;
         tokenMetrics.low.total += usage.totalTokens;
       }
-    }, undefined, 'low');
+    }, undefined, 'high');
     let normalizedEpisodeBody = "";
     const outputMatch = responseText.match(/<output>([\s\S]*?)<\/output>/);
     if (outputMatch && outputMatch[1]) {
