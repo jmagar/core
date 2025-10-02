@@ -760,7 +760,7 @@ export async function hasCredits(
   }
 
   const userUsage = workspace.user.UserUsage;
-  const subscription = workspace.Subscription;
+  // const subscription = workspace.Subscription;
 
   // If has available credits, return true
   if (userUsage.availableCredits >= creditCost) {
@@ -768,9 +768,9 @@ export async function hasCredits(
   }
 
   // If overage is enabled (Pro/Max), return true
-  if (subscription.enableUsageBilling) {
-    return true;
-  }
+  // if (subscription.enableUsageBilling) {
+  //   return true;
+  // }
 
   // Free plan with no credits left
   return false;

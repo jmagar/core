@@ -6,11 +6,7 @@
  */
 
 import { prisma } from "~/db.server";
-import {
-  BILLING_CONFIG,
-  isBillingEnabled,
-  getPlanConfig,
-} from "~/config/billing.server";
+import { getPlanConfig } from "~/config/billing.server";
 import type { PlanType, Subscription } from "@prisma/client";
 
 export type CreditOperation = "addEpisode" | "search" | "chatMessage";
@@ -114,7 +110,7 @@ export async function initializeSubscription(
 /**
  * Ensure workspace has billing records initialized
  */
-async function ensureBillingInitialized(workspaceId: string) {
+export async function ensureBillingInitialized(workspaceId: string) {
   const workspace = await prisma.workspace.findUnique({
     where: { id: workspaceId },
     include: {

@@ -1,5 +1,6 @@
 import { type Workspace } from "@core/database";
 import { prisma } from "~/db.server";
+import { ensureBillingInitialized } from "~/services/billing.server";
 import { sendEmail } from "~/services/email.server";
 import { logger } from "~/services/logger.service";
 import { SpaceService } from "~/services/space.server";
@@ -39,6 +40,8 @@ export async function createWorkspace(
       confirmedBasicDetails: true,
     },
   });
+
+  await ensureBillingInitialized(workspace.id);
 
   await spaceService.createSpace({
     name: "Profile",

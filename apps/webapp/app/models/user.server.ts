@@ -2,6 +2,7 @@ import type { Prisma, User } from "@core/database";
 import type { GoogleProfile } from "@coji/remix-auth-google";
 import { prisma } from "~/db.server";
 import { env } from "~/env.server";
+import { ensureBillingInitialized } from "~/services/billing.server";
 export type { User } from "@core/database";
 
 type FindOrCreateMagicLink = {
@@ -156,11 +157,6 @@ export async function findOrCreateGoogleUser({
       authIdentifier,
       email,
       authenticationMethod: "GOOGLE",
-      UserUsage: {
-        create: {
-          availableCredits: 200,
-        },
-      },
     },
   });
 

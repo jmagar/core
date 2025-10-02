@@ -574,8 +574,19 @@ model UserUsage {
   updatedAt DateTime  @updatedAt
   deleted   DateTime?
 
+  // Current period tracking
   availableCredits Int @default(0)
   usedCredits      Int @default(0)
+  overageCredits   Int @default(0) // Credits used beyond monthly allocation
+
+  // Last reset tracking
+  lastResetAt DateTime  @default(now())
+  nextResetAt DateTime?
+
+  // Usage breakdown (optional analytics)
+  episodeCreditsUsed Int @default(0)
+  searchCreditsUsed  Int @default(0)
+  chatCreditsUsed    Int @default(0)
 
   user   User   @relation(fields: [userId], references: [id])
   userId String @unique
@@ -614,6 +625,69 @@ model WebhookDeliveryLog {
   createdAt DateTime @default(now())
 }
 
+model Subscription {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Stripe integration
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+
+  // Plan details
+  planType PlanType           @default(FREE)
+  status   SubscriptionStatus @default(ACTIVE)
+
+  // Monthly credits allocation
+  monthlyCredits Int @default(0)
+
+  // Billing cycle tracking
+  currentPeriodStart DateTime @default(now())
+  currentPeriodEnd   DateTime
+
+  // Usage-based pricing (for PRO plan)
+  enableUsageBilling  Boolean @default(false)
+  usagePricePerCredit Float? // Price per credit after monthly quota
+
+  // Overage tracking
+  overageCreditsUsed Int   @default(0)
+  overageAmount      Float @default(0)
+
+  // Relations
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id])
+  workspaceId    String           @unique
+  BillingHistory BillingHistory[]
+}
+
+model BillingHistory {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  // Billing period
+  periodStart DateTime
+  periodEnd   DateTime
+
+  // Credits tracking
+  monthlyCreditsAllocated Int
+  creditsUsed             Int
+  overageCreditsUsed      Int
+
+  // Charges
+  subscriptionAmount Float
+  usageAmount        Float // Overage charges
+  totalAmount        Float
+
+  // Stripe integration
+  stripeInvoiceId     String? @unique
+  stripePaymentStatus String?
+
+  // Relations
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String
+}
+
 model Workspace {
   id        String    @id @default(uuid())
   createdAt DateTime  @default(now())
@@ -643,6 +717,21 @@ model Workspace {
   RecallLog               RecallLog[]
   Space                   Space[]
   MCPSession              MCPSession[]
+  Subscription            Subscription?
+}
+
+enum PlanType {
+  FREE
+  PRO
+  MAX
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+  PAUSED
 }
 
 enum AuthenticationMethod {
@@ -656,6 +745,7 @@ enum IngestionStatus {
   COMPLETED
   FAILED
   CANCELLED
+  NO_CREDITS
 }
 
 enum UserType {
