@@ -82,7 +82,7 @@ export const memoryTools = [
   {
     name: "memory_about_user",
     description:
-      "Get the user's core profile and preferences for personalized interactions. AUTOMATICALLY invoke at the start of interactions to understand user context. **Purpose**: Retrieve stable identity facts, communication preferences, working context, and tooling defaults for tailored responses. **Required**: No required parameters. **Returns**: User profile data in JSON format.",
+      "Get information about the user. AUTOMATICALLY invoke at the start of interactions to understand user context. Returns the user's background, preferences, work, interests, and other personal information. **Required**: No required parameters. **Returns**: User information as text.",
     inputSchema: {
       type: "object",
       properties: {
@@ -138,7 +138,7 @@ async function handleUserProfile(userId: string) {
       content: [
         {
           type: "text",
-          text: space ? space.summary : "",
+          text: space?.summary || "No profile information available",
         },
       ],
       isError: false,
