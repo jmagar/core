@@ -467,7 +467,7 @@ export default function BillingSettings() {
               </div>
               <ul className="mb-6 space-y-2 text-sm">
                 <li className="flex items-start gap-2">
-                  <span>Memory facts: 5k/mo</span>
+                  <span>Memory facts: 3k/mo</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span>NO USAGE BASED</span>
@@ -504,7 +504,7 @@ export default function BillingSettings() {
               </div>
               <ul className="mb-6 space-y-2 text-sm">
                 <li className="flex items-start gap-2">
-                  <span>Memory facts: 25k/mo</span>
+                  <span>Memory facts: 15k/mo</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span>$0.299 /1K ADDITIONAL FACTS</span>
@@ -540,7 +540,7 @@ export default function BillingSettings() {
               </div>
               <ul className="mb-6 space-y-2 text-sm">
                 <li className="flex items-start gap-2">
-                  <span>Memory facts: 150k/mo</span>
+                  <span>Memory facts: 100k/mo</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span>$0.249 /1K ADDITIONAL FACTS</span>
