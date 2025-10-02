@@ -87,33 +87,32 @@ export function LogDetails({ log }: LogDetailsProps) {
 
   // Fetch episode facts when dialog opens and episodeUUID exists
   useEffect(() => {
-    if (facts.length === 0) {
-      if (log.data?.type === "DOCUMENT" && log.data?.episodes?.length > 0) {
-        setFactsLoading(true);
-        // Fetch facts for all episodes in DOCUMENT type
-        Promise.all(
-          log.data.episodes.map((episodeId: string) =>
-            fetch(`/api/v1/episodes/${episodeId}/facts`).then((res) =>
-              res.json(),
-            ),
+    if (log.data?.type === "DOCUMENT" && log.data?.episodes?.length > 0) {
+      setFactsLoading(true);
+      setFacts([]);
+      // Fetch facts for all episodes in DOCUMENT type
+      Promise.all(
+        log.data.episodes.map((episodeId: string) =>
+          fetch(`/api/v1/episodes/${episodeId}/facts`).then((res) =>
+            res.json(),
           ),
-        )
-          .then((results) => {
-            const allFacts = results.flatMap((result) => result.facts || []);
-            const allInvalidFacts = results.flatMap(
-              (result) => result.invalidFacts || [],
-            );
-            setFacts(allFacts);
-            setInvalidFacts(allInvalidFacts);
-            setFactsLoading(false);
-          })
-          .catch(() => {
-            setFactsLoading(false);
-          });
-      } else if (log.episodeUUID) {
-        setFactsLoading(true);
-        fetcher.load(`/api/v1/episodes/${log.episodeUUID}/facts`);
-      }
+        ),
+      )
+        .then((results) => {
+          const allFacts = results.flatMap((result) => result.facts || []);
+          const allInvalidFacts = results.flatMap(
+            (result) => result.invalidFacts || [],
+          );
+          setFacts(allFacts);
+          setInvalidFacts(allInvalidFacts);
+          setFactsLoading(false);
+        })
+        .catch(() => {
+          setFactsLoading(false);
+        });
+    } else if (log.episodeUUID) {
+      setFactsLoading(true);
+      fetcher.load(`/api/v1/episodes/${log.episodeUUID}/facts`);
     }
   }, [log.episodeUUID, log.data?.type, log.data?.episodes, facts.length]);
 
@@ -218,7 +217,7 @@ export function LogDetails({ log }: LogDetailsProps) {
             <span>Content</span>
           </div>
           {/* Log Content */}
-          <div className="mb-4 text-sm break-words whitespace-pre-wrap">
+          <div className="mb-4 w-full text-sm break-words whitespace-pre-wrap">
             <div className="rounded-md">
               <Markdown>{log.ingestText}</Markdown>
             </div>

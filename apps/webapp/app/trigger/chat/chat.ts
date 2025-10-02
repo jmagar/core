@@ -6,15 +6,16 @@ import { MCP } from "../utils/mcp";
 import { type HistoryStep } from "../utils/types";
 import {
   createConversationHistoryForAgent,
+  deductCredits,
   deletePersonalAccessToken,
-  getCreditsForUser,
   getPreviousExecutionHistory,
+  hasCredits,
+  InsufficientCreditsError,
   init,
   type RunChatPayload,
   updateConversationHistoryMessage,
   updateConversationStatus,
   updateExecutionStep,
-  updateUserCredits,
 } from "../utils/utils";
 
 const chatQueue = queue({
@@ -32,11 +33,23 @@ export const chat = task({
   queue: chatQueue,
   init,
   run: async (payload: RunChatPayload, { init }) => {
-    const usageCredits = await getCreditsForUser(init?.userId as string);
-
     await updateConversationStatus("running", payload.conversationId);
 
     try {
+      // Check if workspace has sufficient credits before processing
+      if (init?.conversation.workspaceId) {
+        const hasSufficientCredits = await hasCredits(
+          init.conversation.workspaceId,
+          "chatMessage",
+        );
+
+        if (!hasSufficientCredits) {
+          throw new InsufficientCreditsError(
+            "Insufficient credits to process chat message. Please upgrade your plan or wait for your credits to reset.",
+          );
+        }
+      }
+
       const { previousHistory, ...otherData } = payload.context;
 
       const { agents = [] } = payload.context;
@@ -120,7 +133,10 @@ export const chat = task({
         payload.conversationId,
       );
 
-      usageCredits && (await updateUserCredits(usageCredits, 1));
+      // Deduct credits for chat message
+      if (init?.conversation.workspaceId) {
+        await deductCredits(init.conversation.workspaceId, "chatMessage");
+      }
 
       if (init?.tokenId) {
         await deletePersonalAccessToken(init.tokenId);

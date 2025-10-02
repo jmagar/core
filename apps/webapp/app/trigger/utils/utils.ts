@@ -22,6 +22,7 @@ import nodeCrypto from "node:crypto";
 import { customAlphabet, nanoid } from "nanoid";
 import { Exa } from "exa-js";
 import { prisma } from "./prisma";
+import { BILLING_CONFIG, isBillingEnabled } from "~/config/billing.server";
 
 // Token generation utilities
 const tokenValueLength = 40;
@@ -561,27 +562,216 @@ export async function webSearch(args: WebSearchArgs): Promise<WebSearchResult> {
   }
 }
 
-export const getCreditsForUser = async (
-  userId: string,
-): Promise<UserUsage | null> => {
-  return await prisma.userUsage.findUnique({
-    where: {
-      userId,
-    },
-  });
-};
+// Credit management functions have been moved to ~/services/billing.server.ts
+// Use deductCredits() instead of these functions
+export type CreditOperation = "addEpisode" | "search" | "chatMessage";
 
-export const updateUserCredits = async (
-  userUsage: UserUsage,
-  usedCredits: number,
-) => {
-  return await prisma.userUsage.update({
-    where: {
-      id: userUsage.id,
-    },
-    data: {
-      availableCredits: userUsage.availableCredits - usedCredits,
-      usedCredits: userUsage.usedCredits + usedCredits,
+export class InsufficientCreditsError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InsufficientCreditsError";
+  }
+}
+
+/**
+ * Track usage analytics without enforcing limits (for self-hosted)
+ */
+async function trackUsageAnalytics(
+  workspaceId: string,
+  operation: CreditOperation,
+  amount?: number,
+): Promise<void> {
+  const creditCost = amount || BILLING_CONFIG.creditCosts[operation];
+
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    include: {
+      user: {
+        include: {
+          UserUsage: true,
+        },
+      },
     },
   });
-};
+
+  if (!workspace?.user?.UserUsage) {
+    return; // Silently fail for analytics
+  }
+
+  const userUsage = workspace.user.UserUsage;
+
+  // Just track usage, don't enforce limits
+  await prisma.userUsage.update({
+    where: { id: userUsage.id },
+    data: {
+      usedCredits: userUsage.usedCredits + creditCost,
+      ...(operation === "addEpisode" && {
+        episodeCreditsUsed: userUsage.episodeCreditsUsed + creditCost,
+      }),
+      ...(operation === "search" && {
+        searchCreditsUsed: userUsage.searchCreditsUsed + creditCost,
+      }),
+      ...(operation === "chatMessage" && {
+        chatCreditsUsed: userUsage.chatCreditsUsed + creditCost,
+      }),
+    },
+  });
+}
+
+/**
+ * Deduct credits for a specific operation
+ */
+export async function deductCredits(
+  workspaceId: string,
+  operation: CreditOperation,
+  amount?: number,
+): Promise<void> {
+  // If billing is disabled (self-hosted), allow unlimited usage
+  if (!isBillingEnabled()) {
+    // Still track usage for analytics
+    await trackUsageAnalytics(workspaceId, operation, amount);
+    return;
+  }
+
+  // Get the actual credit cost
+  const creditCost = amount || BILLING_CONFIG.creditCosts[operation];
+
+  // Get workspace with subscription and usage
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    include: {
+      Subscription: true,
+      user: {
+        include: {
+          UserUsage: true,
+        },
+      },
+    },
+  });
+
+  if (!workspace || !workspace.user) {
+    throw new Error("Workspace or user not found");
+  }
+
+  const subscription = workspace.Subscription;
+  const userUsage = workspace.user.UserUsage;
+
+  if (!subscription) {
+    throw new Error("No subscription found for workspace");
+  }
+
+  if (!userUsage) {
+    throw new Error("No user usage record found");
+  }
+
+  // Check if user has available credits
+  if (userUsage.availableCredits >= creditCost) {
+    // Deduct from available credits
+    await prisma.userUsage.update({
+      where: { id: userUsage.id },
+      data: {
+        availableCredits: userUsage.availableCredits - creditCost,
+        usedCredits: userUsage.usedCredits + creditCost,
+        // Update usage breakdown
+        ...(operation === "addEpisode" && {
+          episodeCreditsUsed: userUsage.episodeCreditsUsed + creditCost,
+        }),
+        ...(operation === "search" && {
+          searchCreditsUsed: userUsage.searchCreditsUsed + creditCost,
+        }),
+        ...(operation === "chatMessage" && {
+          chatCreditsUsed: userUsage.chatCreditsUsed + creditCost,
+        }),
+      },
+    });
+  } else {
+    // Check if usage billing is enabled (Pro/Max plan)
+    if (subscription.enableUsageBilling) {
+      // Calculate overage
+      const overageAmount = creditCost - userUsage.availableCredits;
+      const cost = overageAmount * (subscription.usagePricePerCredit || 0);
+
+      // Deduct remaining available credits and track overage
+      await prisma.$transaction([
+        prisma.userUsage.update({
+          where: { id: userUsage.id },
+          data: {
+            availableCredits: 0,
+            usedCredits: userUsage.usedCredits + creditCost,
+            overageCredits: userUsage.overageCredits + overageAmount,
+            // Update usage breakdown
+            ...(operation === "addEpisode" && {
+              episodeCreditsUsed: userUsage.episodeCreditsUsed + creditCost,
+            }),
+            ...(operation === "search" && {
+              searchCreditsUsed: userUsage.searchCreditsUsed + creditCost,
+            }),
+            ...(operation === "chatMessage" && {
+              chatCreditsUsed: userUsage.chatCreditsUsed + creditCost,
+            }),
+          },
+        }),
+        prisma.subscription.update({
+          where: { id: subscription.id },
+          data: {
+            overageCreditsUsed: subscription.overageCreditsUsed + overageAmount,
+            overageAmount: subscription.overageAmount + cost,
+          },
+        }),
+      ]);
+    } else {
+      // Free plan - throw error
+      throw new InsufficientCreditsError(
+        "Insufficient credits. Please upgrade to Pro or Max plan to continue.",
+      );
+    }
+  }
+}
+
+/**
+ * Check if workspace has sufficient credits
+ */
+export async function hasCredits(
+  workspaceId: string,
+  operation: CreditOperation,
+  amount?: number,
+): Promise<boolean> {
+  // If billing is disabled, always return true
+  if (!isBillingEnabled()) {
+    return true;
+  }
+
+  const creditCost = amount || BILLING_CONFIG.creditCosts[operation];
+
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    include: {
+      Subscription: true,
+      user: {
+        include: {
+          UserUsage: true,
+        },
+      },
+    },
+  });
+
+  if (!workspace?.user?.UserUsage || !workspace.Subscription) {
+    return false;
+  }
+
+  const userUsage = workspace.user.UserUsage;
+  const subscription = workspace.Subscription;
+
+  // If has available credits, return true
+  if (userUsage.availableCredits >= creditCost) {
+    return true;
+  }
+
+  // If overage is enabled (Pro/Max), return true
+  if (subscription.enableUsageBilling) {
+    return true;
+  }
+
+  // Free plan with no credits left
+  return false;
+}

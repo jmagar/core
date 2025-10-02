@@ -75,7 +75,6 @@ export const memoryTools = [
         all: {
           type: "boolean",
           description: "Get all spaces",
-          default: true,
         },
       },
     },
@@ -90,7 +89,6 @@ export const memoryTools = [
         profile: {
           type: "boolean",
           description: "Get user profile",
-          default: true,
         },
       },
     },

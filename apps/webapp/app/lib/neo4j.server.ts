@@ -112,48 +112,45 @@ export const getNodeLinks = async (userId: string) => {
 export const getClusteredGraphData = async (userId: string) => {
   const session = driver.session();
   try {
-    // Get the proper reified graph structure: Entity -> Statement -> Entity
+    // Get the simplified graph structure: Episode, Subject, Object with Predicate as edge
     const result = await session.run(
-      `// Get all statements and their entity connections for reified graph
-       MATCH (s:Statement)
+      `// Get all statements with their episode and entity connections
+       MATCH (e:Episode)-[:HAS_PROVENANCE]->(s:Statement)
        WHERE s.userId = $userId
-       
-       // Get all entities connected to each statement
+
+       // Get subject and object entities
        MATCH (s)-[:HAS_SUBJECT]->(subj:Entity)
-       MATCH (s)-[:HAS_PREDICATE]->(pred:Entity)  
+       MATCH (s)-[:HAS_PREDICATE]->(pred:Entity)
        MATCH (s)-[:HAS_OBJECT]->(obj:Entity)
-       
-       // Return both Entity->Statement and Statement->Entity relationships
-       WITH s, subj, pred, obj
+
+       // Return Episode, Subject, and Object as nodes with Predicate as edge label
+       WITH e, s, subj, pred, obj
        UNWIND [
-         // Subject Entity -> Statement
-         {source: subj, target: s, type: 'HAS_SUBJECT', isEntityToStatement: true},
-         // Statement -> Predicate Entity  
-         {source: s, target: pred, type: 'HAS_PREDICATE', isStatementToEntity: true},
-         // Statement -> Object Entity
-         {source: s, target: obj, type: 'HAS_OBJECT', isStatementToEntity: true}
+         // Episode -> Subject
+         {source: e, sourceType: 'Episode', target: subj, targetType: 'Entity', predicate: null},
+         // Episode -> Object
+         {source: e, sourceType: 'Episode', target: obj, targetType: 'Entity', predicate: null},
+         // Subject -> Object (with Predicate as edge)
+         {source: subj, sourceType: 'Entity', target: obj, targetType: 'Entity', predicate: pred.name}
        ] AS rel
-       
-       RETURN DISTINCT 
+
+       RETURN DISTINCT
          rel.source.uuid as sourceUuid,
          rel.source.name as sourceName,
-         rel.source.labels as sourceLabels,
-         rel.source.type as sourceType,
-         rel.source.properties as sourceProperties,
+         rel.source.content as sourceContent,
+         rel.sourceType as sourceNodeType,
          rel.target.uuid as targetUuid,
          rel.target.name as targetName,
-         rel.target.type as targetType,
-         rel.target.labels as targetLabels,
-         rel.target.properties as targetProperties,
-         rel.type as relationshipType,
+         rel.targetType as targetNodeType,
+         rel.predicate as predicateLabel,
+         e.uuid as episodeUuid,
+         e.content as episodeContent,
          s.uuid as statementUuid,
          s.spaceIds as spaceIds,
-         s.fact as fact, 
+         s.fact as fact,
          s.invalidAt as invalidAt,
          s.validAt as validAt,
-         s.createdAt as createdAt,
-         rel.isEntityToStatement as isEntityToStatement,
-         rel.isStatementToEntity as isStatementToEntity`,
+         s.createdAt as createdAt`,
       { userId },
     );
 
@@ -163,17 +160,16 @@ export const getClusteredGraphData = async (userId: string) => {
     result.records.forEach((record) => {
       const sourceUuid = record.get("sourceUuid");
       const sourceName = record.get("sourceName");
-      const sourceType = record.get("sourceType");
-      const sourceLabels = record.get("sourceLabels") || [];
-      const sourceProperties = record.get("sourceProperties") || {};
+      const sourceContent = record.get("sourceContent");
+      const sourceNodeType = record.get("sourceNodeType");
 
       const targetUuid = record.get("targetUuid");
       const targetName = record.get("targetName");
-      const targetLabels = record.get("targetLabels") || [];
-      const targetProperties = record.get("targetProperties") || {};
-      const targetType = record.get("targetType");
+      const targetNodeType = record.get("targetNodeType");
 
-      const relationshipType = record.get("relationshipType");
+      const predicateLabel = record.get("predicateLabel");
+      const episodeUuid = record.get("episodeUuid");
+      const episodeContent = record.get("episodeContent");
       const statementUuid = record.get("statementUuid");
       const clusterIds = record.get("spaceIds");
       const clusterId = clusterIds ? clusterIds[0] : undefined;
@@ -183,71 +179,73 @@ export const getClusteredGraphData = async (userId: string) => {
       const createdAt = record.get("createdAt");
 
       // Create unique edge identifier to avoid duplicates
-      const edgeKey = `${sourceUuid}-${targetUuid}-${relationshipType}`;
+      // For Episode->Subject edges, use generic type; for Subject->Object use predicate
+      const edgeType = predicateLabel || "HAS_SUBJECT";
+      const edgeKey = `${sourceUuid}-${targetUuid}-${edgeType}`;
       if (processedEdges.has(edgeKey)) return;
       processedEdges.add(edgeKey);
 
-      // Determine node types and add appropriate cluster information
-      const isSourceStatement =
-        sourceLabels.includes("Statement") || sourceUuid === statementUuid;
-      const isTargetStatement =
-        targetLabels.includes("Statement") || targetUuid === statementUuid;
+      // Build node attributes based on type
+      const sourceAttributes =
+        sourceNodeType === "Episode"
+          ? {
+              nodeType: "Episode",
+              content: sourceContent,
+              episodeUuid: sourceUuid,
+              clusterId,
+            }
+          : {
+              nodeType: "Entity",
+              name: sourceName,
+              clusterId,
+            };
 
-      // Statement nodes get cluster info, Entity nodes get default attributes
-      const sourceAttributes = isSourceStatement
-        ? {
-            ...sourceProperties,
-            clusterId,
-            nodeType: "Statement",
-            fact,
-            invalidAt,
-            validAt,
-          }
-        : {
-            ...sourceProperties,
-            nodeType: "Entity",
-            type: sourceType,
-            name: sourceName,
-          };
+      const targetAttributes =
+        targetNodeType === "Episode"
+          ? {
+              nodeType: "Episode",
+              content: sourceContent,
+              episodeUuid: targetUuid,
+              clusterId,
+            }
+          : {
+              nodeType: "Entity",
+              name: targetName,
+              clusterId,
+            };
 
-      const targetAttributes = isTargetStatement
-        ? {
-            ...targetProperties,
-            clusterId,
-            nodeType: "Statement",
-            fact,
-            invalidAt,
-            validAt,
-          }
-        : {
-            ...targetProperties,
-            nodeType: "Entity",
-            type: targetType,
-            name: targetName,
-          };
+      // Build display name
+      const sourceDisplayName =
+        sourceNodeType === "Episode"
+          ? sourceContent || episodeUuid
+          : sourceName || sourceUuid;
+      const targetDisplayName =
+        targetNodeType === "Episode"
+          ? sourceContent || episodeUuid
+          : targetName || targetUuid;
 
       triplets.push({
         sourceNode: {
           uuid: sourceUuid,
-          labels: sourceLabels,
+          labels: [sourceNodeType],
           attributes: sourceAttributes,
-          name: isSourceStatement ? fact : sourceName || sourceUuid,
+          name: sourceDisplayName,
           clusterId,
           createdAt: createdAt || "",
         },
         edge: {
-          uuid: `${sourceUuid}-${targetUuid}-${relationshipType}`,
-          type: relationshipType,
+          uuid: `${sourceUuid}-${targetUuid}-${edgeType}`,
+          type: edgeType,
           source_node_uuid: sourceUuid,
           target_node_uuid: targetUuid,
           createdAt: createdAt || "",
         },
         targetNode: {
           uuid: targetUuid,
-          labels: targetLabels,
+          labels: [targetNodeType],
           attributes: targetAttributes,
           clusterId,
-          name: isTargetStatement ? fact : targetName || targetUuid,
+          name: targetDisplayName,
           createdAt: createdAt || "",
         },
       });

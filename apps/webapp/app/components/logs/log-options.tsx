@@ -49,35 +49,17 @@ export const LogOptions = ({ id }: LogOptionsProps) => {
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          asChild
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        >
-          <Button
-            variant="ghost"
-            className="mr-0.5 h-8 shrink items-center justify-between gap-2 px-1.5"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <EllipsisVertical size={16} />
-            </div>
-          </Button>
-        </DropdownMenuTrigger>
+      <Button
+        variant="secondary"
+        size="sm"
+        className="gap-2 rounded"
+        onClick={(e) => {
+          setDeleteDialogOpen(true);
+        }}
+      >
+        <Trash size={15} /> Delete
+      </Button>
 
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={(e) => {
-              setDeleteDialogOpen(true);
-            }}
-          >
-            <Button variant="link" size="sm" className="gap-2 rounded">
-              <Trash size={15} /> Delete
-            </Button>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

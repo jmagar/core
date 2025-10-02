@@ -1,4 +1,4 @@
-import { IngestionStatus, PrismaClient } from "@prisma/client";
+import { IngestionStatus } from "@prisma/client";
 import { type z } from "zod";
 import { type IngestBodyRequest, ingestTask } from "../ingest/ingest";
 import { prisma } from "./prisma";

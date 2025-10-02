@@ -1,4 +1,4 @@
-import { ArrowLeft, Code, Webhook, Cable } from "lucide-react";
+import { ArrowLeft, Code, Webhook, Cable, CreditCard } from "lucide-react";
 
 import {
   Sidebar,
@@ -41,6 +41,7 @@ export default function Settings() {
   const data = {
     nav: [
       // { name: "Workspace", icon: Building },
+      { name: "Billing", icon: CreditCard },
       { name: "API", icon: Code },
       { name: "Webhooks", icon: Webhook },
       { name: "MCP", icon: Cable },

@@ -16,7 +16,7 @@ export function SpaceSearch({
   triplets,
   searchQuery,
   onSearchChange,
-  placeholder = "Search in statement facts...",
+  placeholder = "Search in episodes...",
 }: SpaceSearchProps) {
   const [inputValue, setInputValue] = useState(searchQuery);
 
@@ -30,41 +30,42 @@ export function SpaceSearch({
     }
   }, [debouncedSearchQuery, searchQuery, onSearchChange]);
 
-  // Helper to determine if a node is a statement
-  const isStatementNode = useCallback((node: any) => {
-    // Check if node has a fact attribute (indicates it's a statement)
+  // Helper to determine if a node is an episode
+  const isEpisodeNode = useCallback((node: any) => {
+    // Check if node has content attribute (indicates it's an episode)
     return (
-      node.attributes?.fact ||
-      (node.labels && node.labels.includes("Statement"))
+      node.attributes?.content ||
+      node.attributes?.episodeUuid ||
+      (node.labels && node.labels.includes("Episode"))
     );
   }, []);
 
-  // Count statement nodes that match the search
-  const matchingStatements = useMemo(() => {
+  // Count episode nodes that match the search
+  const matchingEpisodes = useMemo(() => {
     if (!debouncedSearchQuery.trim()) return 0;
 
     const query = debouncedSearchQuery.toLowerCase();
-    const statements: Record<string, number> = {};
+    const episodes: Record<string, number> = {};
 
     triplets.forEach((triplet) => {
-      // Check if source node is a statement and matches
+      // Check if source node is an episode and matches
       if (
-        isStatementNode(triplet.sourceNode) &&
-        triplet.sourceNode.attributes?.fact?.toLowerCase().includes(query)
+        isEpisodeNode(triplet.sourceNode) &&
+        triplet.sourceNode.attributes?.content?.toLowerCase().includes(query)
       ) {
-        statements[triplet.sourceNode.uuid] = 1;
+        episodes[triplet.sourceNode.uuid] = 1;
       }
 
-      // Check if target node is a statement and matches
+      // Check if target node is an episode and matches
       if (
-        isStatementNode(triplet.targetNode) &&
-        triplet.targetNode.attributes?.fact?.toLowerCase().includes(query)
+        isEpisodeNode(triplet.targetNode) &&
+        triplet.targetNode.attributes?.content?.toLowerCase().includes(query)
       ) {
-        statements[triplet.targetNode.uuid] = 1;
+        episodes[triplet.targetNode.uuid] = 1;
       }
     });
 
-    return Object.keys(statements).length;
+    return Object.keys(episodes).length;
   }, [triplets, debouncedSearchQuery]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,7 +105,7 @@ export function SpaceSearch({
       {/* Show search results count */}
       {debouncedSearchQuery.trim() && (
         <div className="text-muted-foreground shrink-0 text-sm">
-          {matchingStatements} statement{matchingStatements !== 1 ? "s" : ""}
+          {matchingEpisodes} episode{matchingEpisodes !== 1 ? "s" : ""}
         </div>
       )}
     </div>

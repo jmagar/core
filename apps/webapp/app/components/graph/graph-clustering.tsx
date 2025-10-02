@@ -192,13 +192,13 @@ export const GraphClustering = forwardRef<
 
         const nodeData = nodeDataMap.get(node.id) || node;
 
-        // Check if this is a Statement node
-        const isStatementNode =
-          nodeData.attributes.nodeType === "Statement" ||
-          (nodeData.labels && nodeData.labels.includes("Statement"));
+        // Check if this is an Episode node
+        const isEpisodeNode =
+          nodeData.attributes.nodeType === "Episode" ||
+          (nodeData.labels && nodeData.labels.includes("Episode"));
 
-        if (isStatementNode) {
-          // Statement nodes with cluster IDs use cluster colors
+        if (isEpisodeNode) {
+          // Episode nodes with cluster IDs use cluster colors
           if (
             enableClusterColors &&
             nodeData.clusterId &&
@@ -207,7 +207,7 @@ export const GraphClustering = forwardRef<
             return clusterColorMap.get(nodeData.clusterId)!;
           }
 
-          // Unclustered statement nodes use a specific light color
+          // Unclustered episode nodes use a specific light color
           return themeMode === "dark" ? "#2b9684" : "#54935b"; // Teal/Green from palette
         }
 
@@ -229,10 +229,10 @@ export const GraphClustering = forwardRef<
       triplets.forEach((triplet) => {
         if (!nodeMap.has(triplet.source.id)) {
           const nodeColor = getNodeColor(triplet.source);
-          const isStatementNode =
-            triplet.source.attributes?.nodeType === "Statement" ||
+          const isEpisodeNode =
+            triplet.source.attributes?.nodeType === "Episode" ||
             (triplet.source.labels &&
-              triplet.source.labels.includes("Statement"));
+              triplet.source.labels.includes("Episode"));
 
           nodeMap.set(triplet.source.id, {
             id: triplet.source.id,
@@ -240,23 +240,23 @@ export const GraphClustering = forwardRef<
               ? triplet.source.value.split(/\s+/).slice(0, 4).join(" ") +
                 (triplet.source.value.split(/\s+/).length > 4 ? " ..." : "")
               : "",
-            size: isStatementNode ? size : size / 2, // Statement nodes slightly larger
+            size: isEpisodeNode ? size : size / 2, // Episode nodes slightly larger
             color: nodeColor,
             x: width,
             y: height,
             nodeData: triplet.source,
             clusterId: triplet.source.clusterId,
-            // Enhanced border for visual appeal, thicker for Statement nodes
+            // Enhanced border for visual appeal, thicker for Episode nodes
             borderSize: 1,
             borderColor: nodeColor,
           });
         }
         if (!nodeMap.has(triplet.target.id)) {
           const nodeColor = getNodeColor(triplet.target);
-          const isStatementNode =
-            triplet.target.attributes?.nodeType === "Statement" ||
+          const isEpisodeNode =
+            triplet.target.attributes?.nodeType === "Episode" ||
             (triplet.target.labels &&
-              triplet.target.labels.includes("Statement"));
+              triplet.target.labels.includes("Episode"));
 
           nodeMap.set(triplet.target.id, {
             id: triplet.target.id,
@@ -264,13 +264,13 @@ export const GraphClustering = forwardRef<
               ? triplet.target.value.split(/\s+/).slice(0, 4).join(" ") +
                 (triplet.target.value.split(/\s+/).length > 4 ? " ..." : "")
               : "",
-            size: isStatementNode ? size : size / 2, // Statement nodes slightly larger
+            size: isEpisodeNode ? size : size / 2, // Episode nodes slightly larger
             color: nodeColor,
             x: width,
             y: height,
             nodeData: triplet.target,
             clusterId: triplet.target.clusterId,
-            // Enhanced border for visual appeal, thicker for Statement nodes
+            // Enhanced border for visual appeal, thicker for Episode nodes
             borderSize: 1,
             borderColor: nodeColor,
           });
@@ -294,9 +294,9 @@ export const GraphClustering = forwardRef<
               target: triplet.target.id,
               relations: [],
               relationData: [],
-              label: "",
+              label: triplet.relation.value, // Show edge type (predicate for Subject->Object)
               color: "#0000001A",
-              labelColor: "#0000001A",
+              labelColor: "#000000",
               size: 1,
             };
           }
@@ -327,13 +327,13 @@ export const GraphClustering = forwardRef<
       graph.forEachNode((node) => {
         const nodeData = graph.getNodeAttribute(node, "nodeData");
         const originalColor = getNodeColor(nodeData);
-        const isStatementNode =
-          nodeData?.attributes.nodeType === "Statement" ||
-          (nodeData?.labels && nodeData.labels.includes("Statement"));
+        const isEpisodeNode =
+          nodeData?.attributes.nodeType === "Episode" ||
+          (nodeData?.labels && nodeData.labels.includes("Episode"));
 
         graph.setNodeAttribute(node, "highlighted", false);
         graph.setNodeAttribute(node, "color", originalColor);
-        graph.setNodeAttribute(node, "size", isStatementNode ? size : size / 2);
+        graph.setNodeAttribute(node, "size", isEpisodeNode ? size : size / 2);
         graph.setNodeAttribute(node, "zIndex", 1);
       });
       graph.forEachEdge((edge) => {
@@ -551,19 +551,19 @@ export const GraphClustering = forwardRef<
 
       // Apply layout
       if (graph.order > 0) {
-        // Strong cluster-based positioning for Statement nodes only
+        // Strong cluster-based positioning for Episode nodes only
         const clusterNodeMap = new Map<string, string[]>();
         const entityNodes: string[] = [];
 
-        // Group Statement nodes by their cluster ID, separate Entity nodes
+        // Group Episode nodes by their cluster ID, separate Entity nodes
         graph.forEachNode((nodeId, attributes) => {
-          const isStatementNode =
-            attributes.nodeData?.nodeType === "Statement" ||
+          const isEpisodeNode =
+            attributes.nodeData?.nodeType === "Episode" ||
             (attributes.nodeData?.labels &&
-              attributes.nodeData.labels.includes("Statement"));
+              attributes.nodeData.labels.includes("Episode"));
 
-          if (isStatementNode && attributes.clusterId) {
-            // Statement nodes with cluster IDs go into clusters
+          if (isEpisodeNode && attributes.clusterId) {
+            // Episode nodes with cluster IDs go into clusters
             if (!clusterNodeMap.has(attributes.clusterId)) {
               clusterNodeMap.set(attributes.clusterId, []);
             }
@@ -640,7 +640,7 @@ export const GraphClustering = forwardRef<
         }
 
         // Position Entity nodes using ForceAtlas2 natural positioning
-        // They will be positioned by the algorithm based on their connections to Statement nodes
+        // They will be positioned by the algorithm based on their connections to Episode nodes
         entityNodes.forEach((nodeId) => {
           // Give them initial random positions, ForceAtlas2 will adjust based on connections
           graph.setNodeAttribute(nodeId, "x", Math.random() * width);

@@ -8,6 +8,7 @@ import { logger } from "~/services/logger.service";
 import { triggerSpaceAssignment } from "../spaces/space-assignment";
 import { prisma } from "../utils/prisma";
 import { EpisodeType } from "@core/types";
+import { deductCredits, hasCredits } from "../utils/utils";
 
 export const IngestBodyRequest = z.object({
   episodeBody: z.string(),
@@ -39,6 +40,32 @@ export const ingestTask = task({
   }) => {
     try {
       logger.log(`Processing job for user ${payload.userId}`);
+
+      // Check if workspace has sufficient credits before processing
+      const hasSufficientCredits = await hasCredits(
+        payload.workspaceId,
+        "addEpisode",
+      );
+
+      if (!hasSufficientCredits) {
+        logger.warn(
+          `Insufficient credits for workspace ${payload.workspaceId}`,
+        );
+
+        await prisma.ingestionQueue.update({
+          where: { id: payload.queueId },
+          data: {
+            status: IngestionStatus.NO_CREDITS,
+            error:
+              "Insufficient credits. Please upgrade your plan or wait for your credits to reset.",
+          },
+        });
+
+        return {
+          success: false,
+          error: "Insufficient credits",
+        };
+      }
 
       const ingestionQueue = await prisma.ingestionQueue.update({
         where: { id: payload.queueId },
@@ -111,6 +138,15 @@ export const ingestTask = task({
           status: currentStatus,
         },
       });
+
+      // Deduct credits for episode creation
+      if (currentStatus === IngestionStatus.COMPLETED) {
+        await deductCredits(
+          payload.workspaceId,
+          "addEpisode",
+          finalOutput.statementsCreated,
+        );
+      }
 
       // Trigger space assignment after successful ingestion
       try {

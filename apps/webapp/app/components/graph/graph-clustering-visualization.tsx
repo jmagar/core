@@ -71,21 +71,22 @@ export const GraphClusteringVisualization = forwardRef<
       // Search filter
       if (searchQuery.trim()) {
         // Helper functions for filtering
-        const isStatementNode = (node: any) => {
+        const isEpisodeNode = (node: any) => {
           return (
-            node.attributes?.fact ||
-            (node.labels && node.labels.includes("Statement"))
+            node.attributes?.content ||
+            node.attributes?.episodeUuid ||
+            (node.labels && node.labels.includes("Episode"))
           );
         };
 
         const query = searchQuery.toLowerCase();
         filtered = filtered.filter((triplet) => {
           const sourceMatches =
-            isStatementNode(triplet.sourceNode) &&
-            triplet.sourceNode.attributes?.fact?.toLowerCase().includes(query);
+            isEpisodeNode(triplet.sourceNode) &&
+            triplet.sourceNode.attributes?.content?.toLowerCase().includes(query);
           const targetMatches =
-            isStatementNode(triplet.targetNode) &&
-            triplet.targetNode.attributes?.fact?.toLowerCase().includes(query);
+            isEpisodeNode(triplet.targetNode) &&
+            triplet.targetNode.attributes?.content?.toLowerCase().includes(query);
 
           return sourceMatches || targetMatches;
         });
