@@ -316,20 +316,16 @@ export const Graph = forwardRef<GraphRef, GraphProps>(
       // Calculate iterations based on complexity
       const complexity = nodeCount + edgeCount;
       let iterations: number;
-      if (complexity < 50) {
-        iterations = 400;
-      } else if (complexity < 200) {
-        iterations = 600;
-      } else if (complexity < 500) {
-        iterations = 800;
+      if (complexity < 500) {
+        iterations = complexity;
       } else {
-        iterations = Math.min(1200, 1000 + complexity * 0.2);
+        iterations = Math.min(600, 500 + complexity * 0.2);
       }
 
       return {
         scalingRatio: Math.round(scalingRatio * 10) / 10,
         gravity: Math.round(gravity * 10) / 10,
-        iterations: Math.round(iterations),
+        iterations: Math.round(complexity),
       };
     }, []);
 
