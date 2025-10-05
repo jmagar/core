@@ -4,7 +4,7 @@ import { SpaceService } from "~/services/space.server";
 import { makeModelCall } from "~/lib/model.server";
 import { runQuery } from "~/lib/neo4j.server";
 import { updateSpaceStatus, SPACE_STATUS } from "../utils/space-status";
-import type { CoreMessage } from "ai";
+import type { ModelMessage } from "ai";
 import { z } from "zod";
 import { triggerSpacePattern } from "./space-pattern";
 import { getSpace, updateSpace } from "../utils/space-utils";
@@ -363,7 +363,7 @@ function createUnifiedSummaryPrompt(
   episodes: SpaceEpisodeData[],
   previousSummary: string | null,
   previousThemes: string[],
-): CoreMessage[] {
+): ModelMessage[] {
   // If there are no episodes and no previous summary, we cannot generate a meaningful summary
   if (episodes.length === 0 && previousSummary === null) {
     throw new Error(

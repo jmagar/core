@@ -1,4 +1,4 @@
-import { type CoreMessage } from "ai";
+import { type ModelMessage } from "ai";
 import {
   type ExtractedTripleData,
   type AddEpisodeParams,
@@ -460,11 +460,11 @@ export class KnowledgeGraphService {
     let responseText = "";
 
     // Entity extraction requires HIGH complexity (creative reasoning, nuanced NER)
-    await makeModelCall(false, messages as CoreMessage[], (text, _model, usage) => {
+    await makeModelCall(false, messages as ModelMessage[], (text, _model, usage) => {
       responseText = text;
       if (usage) {
-        tokenMetrics.high.input += usage.promptTokens;
-        tokenMetrics.high.output += usage.completionTokens;
+        tokenMetrics.high.input += usage.inputTokens;
+        tokenMetrics.high.output += usage.outputTokens;
         tokenMetrics.high.total += usage.totalTokens;
       }
     }, undefined, 'high');
@@ -542,11 +542,11 @@ export class KnowledgeGraphService {
       : extractStatementsOSS(context);
 
     let responseText = "";
-    await makeModelCall(false, messages as CoreMessage[], (text, _model, usage) => {
+    await makeModelCall(false, messages as ModelMessage[], (text, _model, usage) => {
       responseText = text;
       if (usage) {
-        tokenMetrics.high.input += usage.promptTokens;
-        tokenMetrics.high.output += usage.completionTokens;
+        tokenMetrics.high.input += usage.inputTokens;
+        tokenMetrics.high.output += usage.outputTokens;
         tokenMetrics.high.total += usage.totalTokens;
       }
     }, undefined, 'high');
@@ -810,11 +810,11 @@ export class KnowledgeGraphService {
     let responseText = "";
 
     // Entity deduplication is LOW complexity (pattern matching, similarity comparison)
-    await makeModelCall(false, messages as CoreMessage[], (text, _model, usage) => {
+    await makeModelCall(false, messages as ModelMessage[], (text, _model, usage) => {
       responseText = text;
       if (usage) {
-        tokenMetrics.low.input += usage.promptTokens;
-        tokenMetrics.low.output += usage.completionTokens;
+        tokenMetrics.low.input += usage.inputTokens;
+        tokenMetrics.low.output += usage.outputTokens;
         tokenMetrics.low.total += usage.totalTokens;
       }
     }, undefined, 'low');
@@ -1054,11 +1054,11 @@ export class KnowledgeGraphService {
       // Statement resolution is LOW complexity (rule-based duplicate/contradiction detection)
       await makeModelCall(false, messages, (text, _model, usage) => {
         responseText = text;
-        if (usage) {
-          tokenMetrics.low.input += usage.promptTokens;
-          tokenMetrics.low.output += usage.completionTokens;
-          tokenMetrics.low.total += usage.totalTokens;
-        }
+          if (usage) {
+            tokenMetrics.low.input += usage.inputTokens;
+            tokenMetrics.low.output += usage.outputTokens;
+            tokenMetrics.low.total += usage.totalTokens;
+          }
       }, undefined, 'low');
 
       try {
@@ -1181,11 +1181,11 @@ export class KnowledgeGraphService {
     let responseText = "";
 
     // Attribute extraction is LOW complexity (simple key-value extraction)
-    await makeModelCall(false, messages as CoreMessage[], (text, _model, usage) => {
+    await makeModelCall(false, messages as ModelMessage[], (text, _model, usage) => {
       responseText = text;
       if (usage) {
-        tokenMetrics.low.input += usage.promptTokens;
-        tokenMetrics.low.output += usage.completionTokens;
+        tokenMetrics.low.input += usage.inputTokens;
+        tokenMetrics.low.output += usage.outputTokens;
         tokenMetrics.low.total += usage.totalTokens;
       }
     }, undefined, 'low');
@@ -1266,8 +1266,8 @@ export class KnowledgeGraphService {
     await makeModelCall(false, messages, (text, _model, usage) => {
       responseText = text;
       if (usage) {
-        tokenMetrics.low.input += usage.promptTokens;
-        tokenMetrics.low.output += usage.completionTokens;
+        tokenMetrics.low.input += usage.inputTokens;
+        tokenMetrics.low.output += usage.outputTokens;
         tokenMetrics.low.total += usage.totalTokens;
       }
     }, undefined, 'high');

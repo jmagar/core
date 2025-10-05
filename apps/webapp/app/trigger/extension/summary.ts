@@ -1,5 +1,5 @@
 import { metadata, task } from "@trigger.dev/sdk";
-import { type CoreMessage } from "ai";
+import { type ModelMessage } from "ai";
 import * as cheerio from "cheerio";
 import { z } from "zod";
 import { makeModelCall } from "~/lib/model.server";
@@ -176,7 +176,7 @@ async function generateSummary(
       ? `${content}\n\n${imageSummaries.join("\n\n")}`
       : content;
 
-  const messages: CoreMessage[] = [
+  const messages: ModelMessage[] = [
     {
       role: "system",
       content: `You are C.O.R.E. (Contextual Observation & Recall Engine), a smart memory enrichment system.

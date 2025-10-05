@@ -1,4 +1,4 @@
-import { type DataContent, type CoreMessage } from "ai";
+import { type DataContent, type ModelMessage } from "ai";
 import axios from "axios";
 import { makeModelCall } from "~/lib/model.server";
 
@@ -18,7 +18,7 @@ export async function summarizeImage(
     },
   });
 
-  const messages: CoreMessage[] = [
+  const messages: ModelMessage[] = [
     {
       role: "system",
       content: `You are a helpful assistant that analyzes images and provides detailed descriptions. When describing images, focus on:

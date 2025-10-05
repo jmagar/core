@@ -1,7 +1,7 @@
 export interface AgentStep {
   agent: string;
   goal: string;
-  reasoning: string;
+  reasoningText: string;
 }
 
 export enum AgentMessageType {

@@ -105,7 +105,7 @@ export class MCP {
             `${clientKey}--${name}`,
             tool({
               description,
-              parameters: jsonSchema(inputSchema),
+              inputSchema: jsonSchema(inputSchema),
             }),
           ]);
         } catch (error) {

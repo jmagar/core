@@ -1,6 +1,6 @@
 import { type StatementNode } from "@core/types";
 import { combineAndDeduplicateStatements } from "./utils";
-import { type CoreMessage } from "ai";
+import { type ModelMessage } from "ai";
 import { makeModelCall } from "~/lib/model.server";
 import { logger } from "../logger.service";
 import { CohereClientV2 } from "cohere-ai";
@@ -252,7 +252,7 @@ export async function applyCrossEncoderReranking(
 
   await Promise.all(
     uniqueResults.map(async (statement) => {
-      const messages: CoreMessage[] = [
+      const messages: ModelMessage[] = [
         {
           role: "system",
           content: `You are an expert tasked with determining whether the statement is relevant to the query
@@ -271,7 +271,7 @@ export async function applyCrossEncoderReranking(
         (text) => {
           responseText = text;
         },
-        { temperature: 0, maxTokens: 1 },
+        { temperature: 0, maxOutputTokens: 1 },
       );
 
       if (responseText === "True") {

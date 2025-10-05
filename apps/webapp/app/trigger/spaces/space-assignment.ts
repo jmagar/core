@@ -16,7 +16,7 @@ import {
   updateMultipleSpaceStatuses,
   SPACE_STATUS,
 } from "../utils/space-status";
-import type { CoreMessage } from "ai";
+import type { ModelMessage } from "ai";
 import { z } from "zod";
 import { type Space } from "@prisma/client";
 
@@ -50,7 +50,7 @@ interface AssignmentResult {
   statementId: string;
   spaceIds: string[];
   confidence: number;
-  reasoning?: string;
+  reasoningText?: string;
 }
 
 const CONFIG = {
@@ -874,7 +874,7 @@ async function processBatch(
                 `LLM assigned statement ${assignment.statementId} to space ${spaceId}`,
                 {
                   confidence: assignment.confidence,
-                  reasoning: assignment.reasoning || "No reasoning",
+                  reasoningText: assignment.reasoningText || "No reasoning",
                   mode,
                 } as Record<string, unknown>,
               );
@@ -906,7 +906,7 @@ async function createLLMPrompt(
   mode: "new_space" | "episode",
   newSpaceId?: string,
   userId?: string,
-): Promise<CoreMessage[]> {
+): Promise<ModelMessage[]> {
   const statementsDescription = statements
     .map(
       (stmt) =>
