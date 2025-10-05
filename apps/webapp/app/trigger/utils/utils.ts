@@ -10,7 +10,7 @@ import {
 } from "@prisma/client";
 
 import { logger } from "@trigger.dev/sdk/v3";
-import { type CoreMessage } from "ai";
+import { type ModelMessage } from "ai";
 
 import {
   type WebSearchArgs,
@@ -266,7 +266,7 @@ export const getConversationHistoryFormat = (
 export const getPreviousExecutionHistory = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   previousHistory: any[],
-): CoreMessage[] => {
+): ModelMessage[] => {
   return previousHistory.map((history) => ({
     role: history.userType === "User" ? "user" : "assistant",
     content: history.message,

@@ -1,6 +1,7 @@
 import {
-  type CoreMessage,
-  type LanguageModelV1,
+  type EmbeddingModel,
+  type LanguageModel,
+  type ModelMessage,
   embed,
   generateText,
   streamText,
@@ -53,19 +54,19 @@ export function getModelForTask(complexity: ModelComplexity = 'high'): string {
 }
 
 export interface TokenUsage {
-  promptTokens: number;
-  completionTokens: number;
+  inputTokens: number;
+  outputTokens: number;
   totalTokens: number;
 }
 
 export async function makeModelCall(
   stream: boolean,
-  messages: CoreMessage[],
+  messages: ModelMessage[],
   onFinish: (text: string, model: string, usage?: TokenUsage) => void,
   options?: any,
   complexity: ModelComplexity = 'high',
 ) {
-  let modelInstance: LanguageModelV1 | undefined;
+  let modelInstance: LanguageModel | undefined;
   let model = getModelForTask(complexity);
   const ollamaUrl = process.env.OLLAMA_URL;
   let ollama: OllamaProvider | undefined;
@@ -115,7 +116,7 @@ export async function makeModelCall(
     case "us.mistral.pixtral-large-2502-v1:0":
     case "us.amazon.nova-premier-v1:0":
       modelInstance = bedrock(`${model}`);
-      generateTextOptions.maxTokens = 100000
+      generateTextOptions.maxOutputTokens = 100000
       break;
 
     default:
@@ -135,15 +136,20 @@ export async function makeModelCall(
       model: modelInstance,
       messages,
       ...generateTextOptions,
-      onFinish: async ({ text, usage }) => {
-        const tokenUsage = usage ? {
-          promptTokens: usage.promptTokens,
-          completionTokens: usage.completionTokens,
-          totalTokens: usage.totalTokens,
-        } : undefined;
+      onFinish: async (event) => {
+        const { text, totalUsage } = event;
+        const tokenUsage = totalUsage
+          ? {
+              inputTokens: totalUsage.inputTokens,
+              outputTokens: totalUsage.outputTokens,
+              totalTokens: totalUsage.totalTokens,
+            }
+          : undefined;
 
         if (tokenUsage) {
-          logger.log(`[${complexity.toUpperCase()}] ${model} - Tokens: ${tokenUsage.totalTokens} (prompt: ${tokenUsage.promptTokens}, completion: ${tokenUsage.completionTokens})`);
+          logger.log(
+            `[${complexity.toUpperCase()}] ${model} - Tokens: ${tokenUsage.totalTokens} (prompt: ${tokenUsage.inputTokens}, completion: ${tokenUsage.outputTokens})`,
+          );
         }
 
         onFinish(text, model, tokenUsage);
@@ -158,13 +164,13 @@ export async function makeModelCall(
   });
 
   const tokenUsage = usage ? {
-    promptTokens: usage.promptTokens,
-    completionTokens: usage.completionTokens,
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
     totalTokens: usage.totalTokens,
   } : undefined;
 
   if (tokenUsage) {
-    logger.log(`[${complexity.toUpperCase()}] ${model} - Tokens: ${tokenUsage.totalTokens} (prompt: ${tokenUsage.promptTokens}, completion: ${tokenUsage.completionTokens})`);
+    logger.log(`[${complexity.toUpperCase()}] ${model} - Tokens: ${tokenUsage.totalTokens} (prompt: ${tokenUsage.inputTokens}, completion: ${tokenUsage.outputTokens})`);
   }
 
   onFinish(text, model, tokenUsage);
@@ -213,7 +219,7 @@ export async function getEmbedding(text: string) {
     baseURL: ollamaUrl,
   });
   const { embedding } = await embed({
-    model: ollama.embedding(model as string),
+    model: ollama.embedding(model as string) as unknown as EmbeddingModel<string>,
     value: text,
   });
 

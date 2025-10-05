@@ -2,7 +2,7 @@ import { task } from "@trigger.dev/sdk/v3";
 import { logger } from "~/services/logger.service";
 import { makeModelCall } from "~/lib/model.server";
 import { runQuery } from "~/lib/neo4j.server";
-import type { CoreMessage } from "ai";
+import type { ModelMessage } from "ai";
 import { z } from "zod";
 import {
   EXPLICIT_PATTERN_TYPES,
@@ -314,7 +314,7 @@ function createExplicitPatternPrompt(
   themes: string[],
   summary: string,
   statements: SpaceStatementData[],
-): CoreMessage[] {
+): ModelMessage[] {
   const statementsText = statements
     .map((stmt) => `[${stmt.uuid}] ${stmt.fact}`)
     .join("\n");
@@ -375,7 +375,7 @@ Please extract explicit patterns from these themes and map them to supporting st
 
 function createImplicitPatternPrompt(
   statements: SpaceStatementData[],
-): CoreMessage[] {
+): ModelMessage[] {
   const statementsText = statements
     .map(
       (stmt) =>

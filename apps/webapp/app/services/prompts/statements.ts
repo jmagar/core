@@ -1,5 +1,5 @@
 import { type Triple } from "@core/types";
-import { type CoreMessage } from "ai";
+import { type ModelMessage } from "ai";
 
 /**
  * Extract statements (triples) from episode content in a reified knowledge graph model
@@ -8,7 +8,7 @@ import { type CoreMessage } from "ai";
  */
 export const extractStatements = (
   context: Record<string, any>,
-): CoreMessage[] => {
+): ModelMessage[] => {
   return [
     {
       role: "system",
@@ -224,7 +224,7 @@ ${JSON.stringify(context.entities.expanded, null, 2)}
 
 export const extractStatementsOSS = (
   context: Record<string, any>,
-): CoreMessage[] => {
+): ModelMessage[] => {
   return [
     {
       role: "system",
@@ -521,7 +521,7 @@ ${JSON.stringify(context.entities.expanded, null, 2)}
  */
 export const resolveStatementPrompt = (
   context: Record<string, any>,
-): CoreMessage[] => {
+): ModelMessage[] => {
   return [
     {
       role: "system",

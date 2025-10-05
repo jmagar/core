@@ -6,10 +6,11 @@ import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { logger } from "@trigger.dev/sdk/v3";
 import {
-  type CoreMessage,
-  type LanguageModelV1,
+  type LanguageModel,
+  type ModelMessage,
   streamText,
   type ToolSet,
+  stepCountIs,
 } from "ai";
 import { createOllama } from "ollama-ai-provider";
 
@@ -116,7 +117,7 @@ export async function* processTag(
 }
 
 export async function* generate(
-  messages: CoreMessage[],
+  messages: ModelMessage[],
   isProgressUpdate: boolean = false,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onFinish?: (event: any) => void,
@@ -130,9 +131,10 @@ export async function* generate(
       type: string;
       toolName: string;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      args?: any;
+      input?: any;
       toolCallId?: string;
       message?: string;
+      dynamic?: boolean;
     }
 > {
   // Check for API keys
@@ -142,7 +144,7 @@ export async function* generate(
   let ollamaUrl = process.env.OLLAMA_URL;
   model = model || process.env.MODEL;
 
-  let modelInstance;
+  let modelInstance: LanguageModel | undefined;
   let modelTemperature = Number(process.env.MODEL_TEMPERATURE) || 1;
   ollamaUrl = undefined;
 
@@ -196,17 +198,17 @@ export async function* generate(
   if (modelInstance) {
     try {
       const { textStream, fullStream } = streamText({
-        model: modelInstance as LanguageModelV1,
+        model: modelInstance,
         messages,
         temperature: modelTemperature,
-        maxSteps: 10,
+        stopWhen: stepCountIs(10),
         tools,
+
         ...(isProgressUpdate
           ? { toolChoice: { type: "tool", toolName: "core--progress_update" } }
           : {}),
-        toolCallStreaming: true,
         onFinish,
-        ...(system ? { system } : {}),
+        ...(system ? { system } : {})
       });
 
       for await (const chunk of textStream) {
@@ -219,7 +221,8 @@ export async function* generate(
             type: "tool-call",
             toolName: fullChunk.toolName,
             toolCallId: fullChunk.toolCallId,
-            args: fullChunk.args,
+            input: fullChunk.input,
+            dynamic: fullChunk.dynamic,
           };
         }
 

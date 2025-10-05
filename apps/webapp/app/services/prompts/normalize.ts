@@ -1,8 +1,8 @@
-import { type CoreMessage } from "ai";
+import { type ModelMessage } from "ai";
 
 export const normalizePrompt = (
   context: Record<string, any>,
-): CoreMessage[] => {
+): ModelMessage[] => {
   const sysPrompt = `You are C.O.R.E. (Contextual Observation & Recall Engine), a smart memory enrichment system.
 
 Create ONE enriched sentence that transforms the episode into a contextually-rich memory using SELECTIVE enrichment.
@@ -248,7 +248,7 @@ ${context.relatedMemories}
 
 export const normalizeDocumentPrompt = (
   context: Record<string, any>,
-): CoreMessage[] => {
+): ModelMessage[] => {
   const sysPrompt = `You are C.O.R.E. (Contextual Observation & Recall Engine), a document memory processing system.
 
 Transform this document content into enriched factual statements for knowledge graph storage.

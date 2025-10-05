@@ -3,7 +3,7 @@
 import { ActionStatusEnum } from "@core/types";
 import { logger } from "@trigger.dev/sdk/v3";
 import {
-  type CoreMessage,
+  type ModelMessage,
   type DataContent,
   jsonSchema,
   tool,
@@ -45,7 +45,7 @@ interface LLMOutputInterface {
 const progressUpdateTool = tool({
   description:
     "Send a progress update to the user about what has been discovered or will be done next in a crisp and user friendly way no technical terms",
-  parameters: jsonSchema({
+  inputSchema: jsonSchema({
     type: "object",
     properties: {
       message: {
@@ -61,7 +61,7 @@ const progressUpdateTool = tool({
 const searchMemoryTool = tool({
   description:
     "Search the user's memory graph for episodes or statements based on a query",
-  parameters: jsonSchema({
+  inputSchema: jsonSchema({
     type: "object",
     properties: {
       query: {
@@ -96,7 +96,7 @@ const searchMemoryTool = tool({
 
 const addMemoryTool = tool({
   description: "Add information to the user's memory graph",
-  parameters: jsonSchema({
+  inputSchema: jsonSchema({
     type: "object",
     properties: {
       message: {
@@ -111,7 +111,7 @@ const addMemoryTool = tool({
 
 const searchSpacesTool = tool({
   description: "Get spaces in memory",
-  parameters: jsonSchema({
+  inputSchema: jsonSchema({
     type: "object",
     properties: {},
     required: [],
@@ -122,13 +122,13 @@ const searchSpacesTool = tool({
 const websearchTool = tool({
   description:
     "Search the web for current information and news. Use this when you need up-to-date information that might not be in your training data. Try different search strategies: broad terms first, then specific phrases, keywords, exact quotes. Use multiple searches with varied approaches to get comprehensive results.",
-  parameters: WebSearchSchema,
+  inputSchema: WebSearchSchema,
 });
 
 const loadMCPTools = tool({
   description:
     "Load tools for a specific integration. Call this when you need to use a third-party service.",
-  parameters: jsonSchema({
+  inputSchema: jsonSchema({
     type: "object",
     properties: {
       integration: {
@@ -152,7 +152,7 @@ const internalTools = [
   "core--load_mcp",
 ];
 
-async function addResources(messages: CoreMessage[], resources: Resource[]) {
+async function addResources(messages: ModelMessage[], resources: Resource[]) {
   const resourcePromises = resources.map(async (resource) => {
     // Remove everything before "/api" in the publicURL
     if (resource.publicURL) {
@@ -182,10 +182,10 @@ async function addResources(messages: CoreMessage[], resources: Resource[]) {
 
   const content = await Promise.all(resourcePromises);
 
-  return [...messages, { role: "user", content } as CoreMessage];
+  return [...messages, { role: "user", content } as ModelMessage];
 }
 
-function toolToMessage(history: HistoryStep[], messages: CoreMessage[]) {
+function toolToMessage(history: HistoryStep[], messages: ModelMessage[]) {
   for (let i = 0; i < history.length; i++) {
     const step = history[i];
 
@@ -198,7 +198,7 @@ function toolToMessage(history: HistoryStep[], messages: CoreMessage[]) {
             type: "tool-call",
             toolCallId: step.skillId,
             toolName: step.skill ?? "",
-            args:
+            input:
               typeof step.skillInput === "string"
                 ? JSON.parse(step.skillInput)
                 : step.skillInput,
@@ -213,7 +213,7 @@ function toolToMessage(history: HistoryStep[], messages: CoreMessage[]) {
             type: "tool-result",
             toolName: step.skill,
             toolCallId: step.skillId,
-            result: step.observation,
+            output: step.observation,
             isError: step.isError,
           },
         ],
@@ -248,7 +248,7 @@ async function makeNextCall(
     AVAILABLE_MCP_TOOLS: mcpServers.join(", "),
   };
 
-  let messages: CoreMessage[] = [];
+  let messages: ModelMessage[] = [];
 
   const systemTemplateHandler = Handlebars.compile(REACT_SYSTEM_PROMPT);
   let systemPrompt = systemTemplateHandler(promptInfo);
@@ -281,9 +281,14 @@ async function makeNextCall(
     messages,
     guardLoop > 0 && guardLoop % 3 === 0,
     (event) => {
-      const usage = event.usage;
-      totalCost.inputTokens += usage.promptTokens;
-      totalCost.outputTokens += usage.completionTokens;
+      const usage = event.totalUsage ?? event.usage;
+      if (!usage) {
+        return;
+      }
+
+      totalCost.inputTokens += usage.inputTokens ?? 0;
+      totalCost.outputTokens += usage.outputTokens ?? 0;
+      totalCost.totalTokens += usage.totalTokens ?? 0;
     },
     TOOLS,
   );
@@ -295,7 +300,7 @@ export async function* run(
   message: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   context: Record<string, any>,
-  previousHistory: CoreMessage[],
+  previousHistory: ModelMessage[],
   mcp: MCP,
   stepHistory: HistoryStep[],
   mcpServers: string[],
@@ -336,7 +341,12 @@ export async function* run(
     completed: false,
   };
 
-  const totalCost: TotalCost = { inputTokens: 0, outputTokens: 0, cost: 0 };
+  const totalCost: TotalCost = {
+    inputTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+    cost: 0,
+  };
 
   try {
     while (!executionState.completed && guardLoop < 50) {
@@ -496,9 +506,16 @@ export async function* run(
       if (toolCalls && toolCalls.length > 0) {
         // Run all tool calls in parallel
         for (const toolCallInfo of toolCalls) {
+          if (toolCallInfo.dynamic) {
+            logger.warn(
+              `Skipping dynamic tool call ${toolCallInfo.toolCallId} (${toolCallInfo.toolName})`,
+            );
+            continue;
+          }
+
           const skillName = toolCallInfo.toolName;
           const skillId = toolCallInfo.toolCallId;
-          const skillInput = toolCallInfo.args;
+          const skillInput = toolCallInfo.input;
 
           const toolName = skillName.split("--")[1];
           const agent = skillName.split("--")[0];

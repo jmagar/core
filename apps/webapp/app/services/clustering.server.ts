@@ -1,4 +1,4 @@
-import { type CoreMessage } from "ai";
+import { type ModelMessage } from "ai";
 import { logger } from "./logger.service";
 import { runQuery } from "~/lib/neo4j.server";
 import { makeModelCall } from "~/lib/model.server";
@@ -627,7 +627,7 @@ export class ClusteringService {
     predicates: Array<{ term: string; score: number }>;
     objects: Array<{ term: string; score: number }>;
     size: number;
-  }): CoreMessage[] {
+  }): ModelMessage[] {
     const formatTerms = (terms: Array<{ term: string; score: number }>) =>
       terms.map((t) => `"${t.term}" (${t.score.toFixed(3)})`).join(", ");
 

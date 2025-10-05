@@ -2,7 +2,7 @@
  * Prompts for extracting entity nodes from episodes
  */
 
-import { type CoreMessage } from "ai";
+import { type ModelMessage } from "ai";
 
 /**
  * Extract entities from content using unified approach (works for both conversations and documents)
@@ -10,7 +10,7 @@ import { type CoreMessage } from "ai";
 export const extractEntities = (
   context: Record<string, any>, 
   extractionMode: 'conversation' | 'document' = 'conversation'
-): CoreMessage[] => {
+): ModelMessage[] => {
   const sysPrompt = `You are an AI assistant that extracts entity nodes from conversational messages for a reified knowledge graph.
 Your primary task is to extract all significant entities mentioned in the conversation, treating both concrete entities and type/concept entities as first-class nodes.
 
@@ -209,7 +209,7 @@ ${context.episodeContent}
 /**
  * Resolve entity duplications
  */
-export const dedupeNodes = (context: Record<string, any>): CoreMessage[] => {
+export const dedupeNodes = (context: Record<string, any>): ModelMessage[] => {
   return [
     {
       role: "system",
@@ -311,7 +311,7 @@ ${JSON.stringify(context.extracted_nodes, null, 2)}
 
 export const extractAttributes = (
   context: Record<string, any>,
-): CoreMessage[] => {
+): ModelMessage[] => {
   const sysPrompt = `
 You are an AI assistant that extracts and enhances entity attributes based on context.
 Your task is to analyze entities and provide appropriate attribute values based on available information.

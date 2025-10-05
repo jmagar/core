@@ -1,5 +1,5 @@
 import { metadata, task } from "@trigger.dev/sdk";
-import { streamText, type CoreMessage, tool } from "ai";
+import { streamText, type ModelMessage, tool, stepCountIs } from "ai";
 import { z } from "zod";
 
 import { openai } from "@ai-sdk/openai";
@@ -40,7 +40,7 @@ export const extensionSearch = task({
     const searchMemoryTool = tool({
       description:
         "Search the user's memory for relevant facts and episodes based on a query",
-      parameters: z.object({
+      inputSchema: z.object({
         query: z.string().describe("Search query to find relevant information"),
       }),
       execute: async ({ query }) => {
@@ -70,7 +70,7 @@ export const extensionSearch = task({
       },
     });
 
-    const messages: CoreMessage[] = [
+    const messages: ModelMessage[] = [
       {
         role: "system",
         content: `You are a specialized memory search and summarization agent. Your job is to:
@@ -114,12 +114,14 @@ If no relevant information is found at all, provide a brief statement indicating
       const result = streamText({
         model: openai(process.env.MODEL as string),
         messages,
+
         tools: {
           searchMemory: searchMemoryTool,
         },
-        maxSteps: 5,
+
+        stopWhen: stepCountIs(5),
         temperature: 0.3,
-        maxTokens: 1000,
+        maxOutputTokens: 1000
       });
 
       const stream = await metadata.stream("messages", result.textStream);
